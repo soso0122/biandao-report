@@ -681,7 +681,7 @@ tbody tr:last-child td{{border-bottom:none}}
   </div>
   <div class="head-right">
     <div class="date-badge">历史 2026/3/17 – 7/9</div>
-    <div class="date-badge" style="color:var(--azure);border-color:rgba(75,143,237,0.3)">本周 {WEEK_START} – 7/9</div>
+    <div class="date-badge" style="color:var(--azure);border-color:rgba(75,143,237,0.3)">本周周报 截至 2026/7/10</div>
   </div>
 </div>
 
@@ -700,7 +700,7 @@ tbody tr:last-child td{{border-bottom:none}}
   <div class="kpi-half" style="grid-template-rows:auto auto">
     <div class="kpi-half-head" style="grid-column:1/-1">
       <div class="kpi-dot" style="background:var(--azure)"></div>
-      <span class="kpi-half-title t-azure">近 7 天新起量</span>
+      <span class="kpi-half-title t-azure">本周周报</span>
     </div>
     <div class="kpi-cell week"><div class="kpi-label">总消耗</div><div class="kpi-val">¥{wk_c:,.0f}</div><div class="kpi-sub">元</div></div>
     <div class="kpi-cell week"><div class="kpi-label">总 GMV</div><div class="kpi-val">¥{wk_g:,.0f}</div><div class="kpi-sub">元</div></div>
@@ -715,7 +715,7 @@ tbody tr:last-child td{{border-bottom:none}}
     历史汇总 <span class="tab-count">{len(all_dirs)} 人</span>
   </button>
   <button class="tab-btn tab-week" onclick="switchTab('week')">
-    近 7 天周报 <span class="tab-count">{len(week_dirs)} 人</span>
+    本周周报 <span class="tab-count">{len(week_dirs)} 人</span>
   </button>
 </div>
 
@@ -768,7 +768,7 @@ tbody tr:last-child td{{border-bottom:none}}
 <!-- ═══ TAB: WEEK ═══ -->
 <div class="tab-pane" id="tab-week">
 
-  <div class="sec-label">近 7 天新起量素材 TOP 20</div>
+  <div class="sec-label">本周素材 TOP 20（按消耗）</div>
   <div class="tbl-wrap">
     <div class="tbl-scroll">
       <table>
@@ -786,7 +786,7 @@ tbody tr:last-child td{{border-bottom:none}}
     </div>
   </div>
 
-  <div class="sec-label">各编导本周数据</div>
+  <div class="sec-label">各编导本周详细数据</div>
   <div class="dcards">{week_cards}</div>
 
   <div class="sec-label">对比图表</div>
@@ -958,7 +958,7 @@ if __name__ == '__main__':
 
     upload_rows = read_upload(os.path.join(DATA, '上传数据_增强版_0710.csv'))
     hist_rows   = read_delivery(os.path.join(DATA, '投后数据-编导-历史.csv'), week_only=False)
-    week_rows   = read_delivery(os.path.join(DATA, '投后数据-编导-历史.csv'), week_only=True)
+    week_rows   = read_delivery(os.path.join(DATA, '【周报】投后素材看板数据-0710.csv'), week_only=False)
 
     print(f'上传数据: {len(upload_rows)} 条')
     print(f'历史投放: {len(hist_rows)} 条（筛选后）')
