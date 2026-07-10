@@ -100,17 +100,19 @@ def analyze_by_director(upload_data, delivery_data):
 
     # 分析投放数据
     delivery_stats = defaultdict(lambda: {
-        '投放次数': 0,
         '总消耗': 0.0,
         '总成交GMV': 0.0,
         '总成交单量': 0,
         '有消耗素材数': 0,
         '有成交素材数': 0,
-        '投放素材总数': 0,  # 整体累计投放的素材数（去重）
+        '平均投放天数': 0.0,
         '素材详情': []
     })
 
     material_delivery = defaultdict(list)  # 素材名->投放记录列表
+    # 素材维度的首次消耗时间和投放天数：(director, material_name) -> 值
+    material_first_time = {}
+    material_days = {}
 
     for row in delivery_data:
         director = normalize_director_name(row.get('编导确认', ''))
@@ -121,13 +123,24 @@ def analyze_by_director(upload_data, delivery_data):
         material_link = row.get('素材预览', '')
         product = row.get('素材投放产品', '')
         date = row.get('日期', '')
+        first_time = row.get('首次消耗时间', '').strip()
+        days_str = row.get('已上线投放天数', '').strip()
+
+        key = director + '###' + material_name
+        # 每条素材只记录一次首次消耗时间和投放天数
+        if key not in material_first_time and first_time and first_time != '-':
+            material_first_time[key] = first_time
+        if key not in material_days and days_str and days_str != '-':
+            try:
+                material_days[key] = int(days_str)
+            except ValueError:
+                pass
 
         try:
             consume = float(row.get('消耗', 0) or 0)
             gmv = float(row.get('成交GMV', 0) or 0)
             orders = int(float(row.get('成交单量', 0) or 0))
 
-            delivery_stats[director]['投放次数'] += 1
             delivery_stats[director]['总消耗'] += consume
             delivery_stats[director]['总成交GMV'] += gmv
             delivery_stats[director]['总成交单量'] += orders
@@ -137,7 +150,7 @@ def analyze_by_director(upload_data, delivery_data):
                 director_product_orders[director][product] += orders
 
             # 记录素材投放详情
-            material_delivery[director + '###' + material_name].append({
+            material_delivery[key].append({
                 '消耗': consume,
                 'GMV': gmv,
                 '单量': orders,
@@ -150,9 +163,9 @@ def analyze_by_director(upload_data, delivery_data):
 
     # 统计有效素材
     for director in delivery_stats:
-        # 统计有消耗和有成交的素材数(去重)
         materials_with_consume = set()
         materials_with_orders = set()
+        days_list = []
 
         for key, records in material_delivery.items():
             if not key.startswith(director + '###'):
@@ -168,23 +181,29 @@ def analyze_by_director(upload_data, delivery_data):
             if total_orders > 0:
                 materials_with_orders.add(material_name)
 
-            # 获取素材链接(取第一条记录的链接)
-            material_link = records[0].get('链接', '') if records else ''
+            # 收集有消耗素材的投放天数用于计算平均值
+            if total_consume > 0 and key in material_days:
+                days_list.append(material_days[key])
 
-            # 保存素材汇总详情
+            material_link = records[0].get('链接', '') if records else ''
+            first_time = material_first_time.get(key, '')
+            days = material_days.get(key, None)
+
             delivery_stats[director]['素材详情'].append({
                 '素材名称': material_name,
-                '投放次数': len(records),
                 '总消耗': total_consume,
                 '总GMV': total_gmv,
                 '总单量': total_orders,
-                '链接': material_link
+                '链接': material_link,
+                '首次消耗时间': first_time,
+                '投放天数': days
             })
 
         delivery_stats[director]['有消耗素材数'] = len(materials_with_consume)
         delivery_stats[director]['有成交素材数'] = len(materials_with_orders)
-        # 投放素材总数 = 素材详情的数量（已去重）
-        delivery_stats[director]['投放素材总数'] = len(delivery_stats[director]['素材详情'])
+        delivery_stats[director]['平均投放天数'] = (
+            sum(days_list) / len(days_list) if days_list else 0
+        )
 
     # 按成交单量排序，获取Top 3素材
     for director in delivery_stats:
@@ -199,10 +218,74 @@ def analyze_by_director(upload_data, delivery_data):
     for director in delivery_stats:
         delivery_stats[director]['产品成单'] = dict(director_product_orders[director])
 
-    return director_stats, delivery_stats, director_materials
+    # 全局素材分析（不区分编导）
+    global_materials = {}  # material_name -> 汇总信息
+    for key, records in material_delivery.items():
+        director, material_name = key.split('###', 1)
+        total_consume = sum(r['消耗'] for r in records)
+        if total_consume <= 0:
+            continue
+        material_link = records[0].get('链接', '') if records else ''
+        first_time = material_first_time.get(key, '')
+        days = material_days.get(key, None)
+        if material_name not in global_materials:
+            global_materials[material_name] = {
+                '素材名称': material_name,
+                '编导': director,
+                '总消耗': total_consume,
+                '总GMV': sum(r['GMV'] for r in records),
+                '总单量': sum(r['单量'] for r in records),
+                '链接': material_link,
+                '首次消耗时间': first_time,
+                '投放天数': days,
+            }
+        else:
+            global_materials[material_name]['总消耗'] += total_consume
+            global_materials[material_name]['总GMV'] += sum(r['GMV'] for r in records)
+            global_materials[material_name]['总单量'] += sum(r['单量'] for r in records)
+
+    all_materials = list(global_materials.values())
+
+    # 生命周期分桶
+    lifecycle_buckets = {'1-7天': [], '8-14天': [], '15-30天': [], '30天以上': []}
+    for m in all_materials:
+        d = m['投放天数']
+        if d is None:
+            continue
+        if d <= 7:
+            lifecycle_buckets['1-7天'].append(m)
+        elif d <= 14:
+            lifecycle_buckets['8-14天'].append(m)
+        elif d <= 30:
+            lifecycle_buckets['15-30天'].append(m)
+        else:
+            lifecycle_buckets['30天以上'].append(m)
+
+    # 本周新起量素材（首次消耗时间在 2026/7/4 - 2026/7/10）
+    new_this_week = []
+    for m in all_materials:
+        ft = m['首次消耗时间']
+        if not ft or ft == '-':
+            continue
+        try:
+            from datetime import datetime
+            dt = datetime.strptime(ft, '%Y/%m/%d')
+            if datetime(2026, 7, 4) <= dt <= datetime(2026, 7, 10):
+                new_this_week.append(m)
+        except ValueError:
+            pass
+    new_this_week.sort(key=lambda x: x['总消耗'], reverse=True)
+
+    global_analysis = {
+        'lifecycle_buckets': {k: v for k, v in lifecycle_buckets.items()},
+        'new_this_week': new_this_week,
+        'total_with_consume': len(all_materials),
+    }
+
+    return director_stats, delivery_stats, director_materials, global_analysis
 
 
-def generate_html(director_stats, delivery_stats, output_file='report.html'):
+def generate_html(director_stats, delivery_stats, global_analysis, output_file='report.html'):
     """生成HTML报告"""
 
     # 排序编导列表
@@ -562,6 +645,162 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
             font-weight: bold;
         }}
 
+        .lifecycle-section {{
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }}
+
+        .lifecycle-section h2 {{
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }}
+
+        .lifecycle-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }}
+
+        .lifecycle-bucket {{
+            border: 2px solid #e8eaff;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+
+        .lifecycle-bucket:hover {{
+            border-color: #667eea;
+            background: #f8f9ff;
+        }}
+
+        .lifecycle-bucket.active {{
+            border-color: #667eea;
+            background: #f0f2ff;
+        }}
+
+        .lifecycle-bucket-label {{
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 6px;
+        }}
+
+        .lifecycle-bucket-count {{
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }}
+
+        .lifecycle-bucket-sub {{
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }}
+
+        .lifecycle-chart-row {{
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }}
+
+        .lifecycle-chart-wrap {{
+            flex: 0 0 280px;
+            height: 220px;
+            position: relative;
+        }}
+
+        .lifecycle-detail {{
+            flex: 1;
+        }}
+
+        .lifecycle-detail-title {{
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+        }}
+
+        .material-list {{
+            max-height: 280px;
+            overflow-y: auto;
+        }}
+
+        .material-list-item {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 13px;
+            gap: 8px;
+        }}
+
+        .material-list-item:last-child {{
+            border-bottom: none;
+        }}
+
+        .material-list-name {{
+            color: #333;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }}
+
+        .material-list-meta {{
+            color: #999;
+            font-size: 12px;
+            white-space: nowrap;
+        }}
+
+        .material-list-link {{
+            color: #667eea;
+            text-decoration: none;
+            font-size: 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }}
+
+        .material-list-link:hover {{
+            text-decoration: underline;
+        }}
+
+        .new-week-section {{
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }}
+
+        .new-week-title {{
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }}
+
+        .new-week-sub {{
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 15px;
+        }}
+
+        .new-week-badge {{
+            display: inline-block;
+            background: #43e97b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 6px;
+        }}
+
         .modal {{
             display: none;
             position: fixed;
@@ -636,6 +875,72 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
             </div>
         </div>
 
+        <!-- 素材生命周期分析 -->
+        <h2 class="section-title">🔍 素材投放分析</h2>
+        <div class="lifecycle-section">
+            <h2>素材生命周期 & 本周新起量</h2>
+
+            <!-- 分桶按钮 -->
+            <div class="lifecycle-grid">
+"""
+    buckets = global_analysis['lifecycle_buckets']
+    bucket_keys = ['1-7天', '8-14天', '15-30天', '30天以上']
+    bucket_colors = ['#43e97b', '#4facfe', '#667eea', '#fa709a']
+    total_with_consume = global_analysis['total_with_consume']
+
+    for i, bk in enumerate(bucket_keys):
+        items = buckets[bk]
+        pct = len(items) / total_with_consume * 100 if total_with_consume else 0
+        html += f"""
+                <div class="lifecycle-bucket" id="bucket-{i}" onclick="selectBucket({i})">
+                    <div class="lifecycle-bucket-label">{bk}</div>
+                    <div class="lifecycle-bucket-count" style="color:{bucket_colors[i]}">{len(items)}</div>
+                    <div class="lifecycle-bucket-sub">占有消耗素材 {pct:.0f}%</div>
+                </div>
+"""
+
+    html += """
+            </div>
+
+            <!-- 图表 + 素材列表 -->
+            <div class="lifecycle-chart-row">
+                <div class="lifecycle-chart-wrap">
+                    <canvas id="lifecycleChart"></canvas>
+                </div>
+                <div class="lifecycle-detail">
+                    <div class="lifecycle-detail-title" id="bucketDetailTitle">点击上方分桶查看素材列表</div>
+                    <div class="material-list" id="bucketMaterialList"></div>
+                </div>
+            </div>
+"""
+
+    # 本周新起量
+    new_this_week = global_analysis['new_this_week']
+    html += f"""
+            <!-- 本周新起量 -->
+            <div class="new-week-section">
+                <div class="new-week-title">
+                    本周新起量素材
+                    <span class="new-week-badge">{len(new_this_week)} 条</span>
+                </div>
+                <div class="new-week-sub">首次消耗时间在 7月4日 - 7月10日，共 {len(new_this_week)} 条素材本周开始产生消耗（占有消耗素材 {len(new_this_week)/total_with_consume*100:.0f}%）</div>
+                <div class="material-list">
+"""
+    for m in new_this_week:
+        link = m.get('链接', '')
+        link_html = f'<a href="{link}" target="_blank" class="material-list-link">🎬 查看</a>' if link else ''
+        html += f"""
+                    <div class="material-list-item">
+                        <span class="material-list-name" title="{m['素材名称']}">{m['素材名称']}</span>
+                        <span class="material-list-meta">{m['编导']} | 首消 {m['首次消耗时间']} | ¥{m['总消耗']:,.0f} | {m['总单量']}单</span>
+                        {link_html}
+                    </div>
+"""
+    html += """
+                </div>
+            </div>
+        </div>
+
         <!-- 各编导数据卡片 -->
         <h2 class="section-title">👥 各编导详细数据</h2>
         <div class="director-cards">
@@ -662,10 +967,6 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
                         <span class="stat-value highlight">{upload_s['唯一素材数']} 条</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">总上传次数</span>
-                        <span class="stat-value">{upload_s['总上传数']} 次</span>
-                    </div>
-                    <div class="stat-row">
                         <span class="stat-label">新素材 / 拒审二传</span>
                         <span class="stat-value">{upload_s['新素材数']} / {upload_s['拒审后二次上传数']}</span>
                     </div>
@@ -679,14 +980,6 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
                 <div class="data-section">
                     <div class="section-header">📊 投放效果</div>
                     <div class="stat-row">
-                        <span class="stat-label">投放素材总数</span>
-                        <span class="stat-value highlight">{delivery_s.get('投放素材总数', 0)} 条</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">投放次数</span>
-                        <span class="stat-value">{delivery_s.get('投放次数', 0)} 次</span>
-                    </div>
-                    <div class="stat-row">
                         <span class="stat-label">总消耗</span>
                         <span class="stat-value">¥{delivery_s.get('总消耗', 0):,.2f}</span>
                     </div>
@@ -699,8 +992,12 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
                         <span class="stat-value">{delivery_s.get('总成交单量', 0)} 单</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">有消耗素材数 / 有成交素材数</span>
+                        <span class="stat-label">有消耗素材 / 有成交素材</span>
                         <span class="stat-value">{delivery_s.get('有消耗素材数', 0)} / {delivery_s.get('有成交素材数', 0)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">平均投放天数</span>
+                        <span class="stat-value">{delivery_s.get('平均投放天数', 0):.1f} 天</span>
                     </div>
 """
 
@@ -740,13 +1037,18 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
                 total_orders = material['总单量']
                 total_gmv = material['总GMV']
                 material_link = material.get('链接', '')
+                first_time = material.get('首次消耗时间', '')
+                days = material.get('投放天数', None)
+
+                first_time_str = f' | 首消 {first_time}' if first_time else ''
+                days_str = f' | 已投 {days} 天' if days is not None else ''
 
                 html += f"""
                     <div class="top3-item">
                         <div class="top3-name">
                             <span class="top3-rank">{idx}</span>{material_name}
                         </div>
-                        <div class="top3-stats">成交 {total_orders} 单 | GMV ¥{total_gmv:,.2f}</div>
+                        <div class="top3-stats">成交 {total_orders} 单 | GMV ¥{total_gmv:,.2f}{first_time_str}{days_str}</div>
 """
                 if material_link:
                     html += f"""
@@ -794,14 +1096,12 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
                     <tr>
                         <th>编导</th>
                         <th>唯一素材数</th>
-                        <th>总上传数</th>
-                        <th>投放素材总数</th>
-                        <th>投放次数</th>
                         <th>总消耗</th>
                         <th>总GMV</th>
                         <th>总订单</th>
                         <th>有消耗素材</th>
                         <th>有成交素材</th>
+                        <th>平均投放天数</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -812,21 +1112,16 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
         upload_s = director_stats[director]
         delivery_s = delivery_stats.get(director, {})
 
-        # 投放素材总数 = 素材详情的数量(去重后的素材)
-        total_materials = len(delivery_s.get('素材详情', []))
-
         html += f"""
                     <tr>
                         <td><strong>{director}</strong></td>
                         <td>{upload_s['唯一素材数']}</td>
-                        <td>{upload_s['总上传数']}</td>
-                        <td>{delivery_s.get('投放素材总数', 0)}</td>
-                        <td>{delivery_s.get('投放次数', 0)}</td>
                         <td>¥{delivery_s.get('总消耗', 0):,.2f}</td>
                         <td>¥{delivery_s.get('总成交GMV', 0):,.2f}</td>
                         <td>{delivery_s.get('总成交单量', 0)}</td>
                         <td>{delivery_s.get('有消耗素材数', 0)}</td>
                         <td>{delivery_s.get('有成交素材数', 0)}</td>
+                        <td>{delivery_s.get('平均投放天数', 0):.1f} 天</td>
                     </tr>
 """
 
@@ -849,6 +1144,74 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
     </div>
 
     <script>
+        // 生命周期分桶数据
+        const lifecycleBuckets = """ + json.dumps({
+            bk: [
+                {
+                    '素材名称': m['素材名称'],
+                    '编导': m['编导'],
+                    '总消耗': m['总消耗'],
+                    '总单量': m['总单量'],
+                    '首次消耗时间': m['首次消耗时间'],
+                    '投放天数': m['投放天数'],
+                    '链接': m['链接'],
+                }
+                for m in sorted(global_analysis['lifecycle_buckets'][bk], key=lambda x: x['总消耗'], reverse=True)
+            ]
+            for bk in ['1-7天', '8-14天', '15-30天', '30天以上']
+        }) + """;
+        const bucketColors = ['#43e97b', '#4facfe', '#667eea', '#fa709a'];
+        const bucketKeys = ['1-7天', '8-14天', '15-30天', '30天以上'];
+        let currentBucket = null;
+
+        // 生命周期环形图
+        new Chart(document.getElementById('lifecycleChart'), {
+            type: 'doughnut',
+            data: {
+                labels: bucketKeys,
+                datasets: [{
+                    data: bucketKeys.map(k => lifecycleBuckets[k].length),
+                    backgroundColor: bucketColors,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 12 } } },
+                    title: { display: true, text: '素材生命周期分布' }
+                }
+            }
+        });
+
+        function selectBucket(idx) {
+            const bk = bucketKeys[idx];
+            // 高亮选中
+            document.querySelectorAll('.lifecycle-bucket').forEach((el, i) => {
+                el.classList.toggle('active', i === idx);
+            });
+            currentBucket = bk;
+            const items = lifecycleBuckets[bk];
+            document.getElementById('bucketDetailTitle').textContent =
+                bk + ' 的素材（共 ' + items.length + ' 条，按消耗排序）';
+            const list = document.getElementById('bucketMaterialList');
+            if (items.length === 0) {
+                list.innerHTML = '<div style="color:#aaa;padding:12px">暂无数据</div>';
+                return;
+            }
+            list.innerHTML = items.map(m => {
+                const linkHtml = m.链接
+                    ? '<a href="' + m.链接 + '" target="_blank" class="material-list-link">🎬 查看</a>'
+                    : '';
+                return '<div class="material-list-item">' +
+                    '<span class="material-list-name" title="' + m.素材名称 + '">' + m.素材名称 + '</span>' +
+                    '<span class="material-list-meta">' + m.编导 + ' | ' + (m.首次消耗时间 || '-') + ' | ¥' + m.总消耗.toFixed(0) + ' | ' + m.总单量 + '单</span>' +
+                    linkHtml +
+                    '</div>';
+            }).join('');
+        }
+
         // 准备数据
         const directors = """ + json.dumps(directors) + """;
         const materialsData = """ + json.dumps([director_stats[d]['唯一素材数'] for d in directors]) + """;
@@ -971,13 +1334,14 @@ def generate_html(director_stats, delivery_stats, output_file='report.html'):
 
             let html = '<h2>' + director + ' - 素材详情(前20条)</h2>';
             html += '<table><thead><tr>';
-            html += '<th>素材名称</th><th>投放次数</th><th>总消耗</th><th>总GMV</th><th>总单量</th>';
+            html += '<th>素材名称</th><th>首次消耗时间</th><th>已投放天数</th><th>总消耗</th><th>总GMV</th><th>总单量</th>';
             html += '</tr></thead><tbody>';
 
             details.forEach(item => {
                 html += '<tr>';
                 html += '<td>' + item.素材名称 + '</td>';
-                html += '<td>' + item.投放次数 + '</td>';
+                html += '<td>' + (item.首次消耗时间 || '-') + '</td>';
+                html += '<td>' + (item.投放天数 != null ? item.投放天数 + ' 天' : '-') + '</td>';
                 html += '<td>¥' + item.总消耗.toFixed(2) + '</td>';
                 html += '<td>¥' + item.总GMV.toFixed(2) + '</td>';
                 html += '<td>' + item.总单量 + '</td>';
@@ -1024,12 +1388,12 @@ if __name__ == '__main__':
 
     # 分析数据
     print("\n正在分析数据...")
-    director_stats, delivery_stats, director_materials = analyze_by_director(upload_data, delivery_data)
+    director_stats, delivery_stats, director_materials, global_analysis = analyze_by_director(upload_data, delivery_data)
 
     # 生成HTML
     print("\n正在生成HTML报告...")
     output_file = '编导数据分析报告_0710.html'
-    generate_html(director_stats, delivery_stats, output_file)
+    generate_html(director_stats, delivery_stats, global_analysis, output_file)
 
     print("\n" + "="*70)
     print("数据分析完成!")
