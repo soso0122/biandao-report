@@ -392,7 +392,7 @@ tbody tr:last-child td{border-bottom:none}
 </div>
 </div>
 
-<div class="footer">Generated 2026-07-16 18:18:39</div>
+<div class="footer">Generated 2026-07-16 18:34:04</div>
 </div><!-- /wrap -->
 
 <!-- MODAL -->
@@ -520,20 +520,27 @@ const lcData = {"\u22647\u5929": [{"\u7d20\u6750\u540d\u79f0": "0624-9\u7269-\u8
 const bkColors = ['#0D9488','#3B82F6','#D97706','#E11D48'];
 const bkKeys = ['≤7天','8-14天','15-30天','>30天'];
 
-const lcChart = new Chart(document.getElementById('lcChart'), {
-  type: 'bar',
-  data: {
-    labels: bkKeys,
-    datasets: [{ data: bkKeys.map(k => lcData[k].length), backgroundColor: bkColors, borderRadius: 4, borderSkipped: false }]
-  },
-  options: {
-    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, title: { display: true, text: '生命周期分布', color: '#64748B', font: { size: 10 } } },
-    scales: {
-      x: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 10 } } },
-      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+let lcChart;
+window.addEventListener('load', function() {
+  lcChart = new Chart(document.getElementById('lcChart'), {
+    type: 'bar',
+    data: {
+      labels: bkKeys,
+      datasets: [{ data: bkKeys.map(k => lcData[k].length), backgroundColor: bkColors, borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, title: { display: true, text: '生命周期分布', color: '#64748B', font: { size: 10 } } },
+      scales: {
+        x: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
     }
-  }
+  });
+  makeBar('hConsumeChart', hDirs, hDirs.map(d => hStats[d].c), '#D97706', '历史消耗');
+  makeBar('hGmvChart',     hDirs, hDirs.map(d => hStats[d].g), '#D97706', '历史GMV');
+  makeBar('hOrderChart',   hDirs, hDirs.map(d => hStats[d].o), '#0D9488', '历史订单');
+  makeBar('hMatChart',     hDirs, hDirs.map(d => hStats[d].m), '#0D9488', '有消耗素材');
 });
 
 function selectBucket(idx) {
@@ -567,11 +574,6 @@ const hDirs = ["\u5609\u4e3d", "\u5a77\u7389", "\u5b50\u887f", "\u5c0f\u654f", "
 const wDirs = ["\u5609\u4e3d", "\u5a77\u7389", "\u5b50\u887f", "\u5c0f\u654f", "\u6d69\u6b63", "\u96c5\u8fea"];
 const hStats = {"\u5609\u4e3d": {"c": 17968.81, "g": 2985.0, "o": 15, "m": 89}, "\u5a77\u7389": {"c": 1033.2700000000002, "g": 398.0, "o": 2, "m": 43}, "\u5b50\u887f": {"c": 553644.6800000003, "g": 47378.67, "o": 1752, "m": 417}, "\u5c0f\u654f": {"c": 15929.680000000004, "g": 3600.0, "o": 20, "m": 112}, "\u6d69\u6b63": {"c": 232977.95999999996, "g": 43082.01, "o": 576, "m": 177}, "\u96c5\u8fea": {"c": 88299.17999999996, "g": 12661.01, "o": 189, "m": 205}};
 const wStats = {"\u5609\u4e3d": {"c": 3578.25, "g": 995.0, "o": 5, "m": 9}, "\u5a77\u7389": {"c": 630.49, "g": 398.0, "o": 2, "m": 12}, "\u5b50\u887f": {"c": 62286.24000000001, "g": 5554.0, "o": 215, "m": 118}, "\u5c0f\u654f": {"c": 3273.6200000000003, "g": 398.0, "o": 2, "m": 20}, "\u6d69\u6b63": {"c": 71104.80000000003, "g": 3308.0, "o": 262, "m": 49}, "\u96c5\u8fea": {"c": 8263.82, "g": 261.0, "o": 29, "m": 28}};
-
-makeBar('hConsumeChart', hDirs, hDirs.map(d => hStats[d].c), '#D97706', '历史消耗');
-makeBar('hGmvChart',     hDirs, hDirs.map(d => hStats[d].g), '#D97706', '历史GMV');
-makeBar('hOrderChart',   hDirs, hDirs.map(d => hStats[d].o), '#0D9488', '历史订单');
-makeBar('hMatChart',     hDirs, hDirs.map(d => hStats[d].m), '#0D9488', '有消耗素材');
 
 let weekChartsInited = false;
 function initWeekCharts() {
