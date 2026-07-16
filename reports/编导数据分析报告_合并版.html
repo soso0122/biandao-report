@@ -392,7 +392,7 @@ tbody tr:last-child td{border-bottom:none}
 </div>
 </div>
 
-<div class="footer">Generated 2026-07-16 18:34:04</div>
+<div class="footer">Generated 2026-07-16 18:37:41</div>
 </div><!-- /wrap -->
 
 <!-- MODAL -->
@@ -557,18 +557,20 @@ function selectBucket(idx) {
 }
 
 // ── Charts
-const makeBar = (id, labels, data, color, title) => new Chart(document.getElementById(id), {
-  type: 'bar',
-  data: { labels, datasets: [{ data, backgroundColor: color + 'CC', borderRadius: 4, borderSkipped: false }] },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-      y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 10 } } }
+function makeBar(id, labels, data, color, title) {
+  return new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: color + 'CC', borderRadius: 4, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 10 } } }
+      }
     }
-  }
-});
+  });
+}
 
 const hDirs = ["\u5609\u4e3d", "\u5a77\u7389", "\u5b50\u887f", "\u5c0f\u654f", "\u6d69\u6b63", "\u96c5\u8fea"];
 const wDirs = ["\u5609\u4e3d", "\u5a77\u7389", "\u5b50\u887f", "\u5c0f\u654f", "\u6d69\u6b63", "\u96c5\u8fea"];
