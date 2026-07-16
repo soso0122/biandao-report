@@ -132,7 +132,6 @@ body{
 .tab-btn.active{color:var(--text)}
 .tab-btn.active::after{transform:scaleX(1)}
 .tab-btn.tab-week.active::after{background:var(--azure)}
-.tab-btn.tab-agent.active::after{background:var(--teal)}
 .tab-count{
   display:inline-flex;align-items:center;justify-content:center;
   font-family:var(--font-m);font-size:9px;
@@ -409,9 +408,6 @@ tbody tr:last-child td{border-bottom:none}
   </button>
   <button class="tab-btn tab-week" onclick="switchTab('week')">
     本周周报 <span class="tab-count">6 人</span>
-  </button>
-  <button class="tab-btn tab-agent" onclick="switchTab('agent')">
-    代理数据
   </button>
 </div>
 
@@ -1464,12 +1460,7 @@ tbody tr:last-child td{border-bottom:none}
 
 </div>
 
-<!-- ═══ TAB: AGENT ═══ -->
-<div class="tab-pane" id="tab-agent">
-  <iframe id="agentFrame" src="" style="width:100%;height:calc(100vh - 120px);border:none;border-radius:12px;background:var(--s1)"></iframe>
-</div>
-
-<div class="footer">Generated 2026-07-10 16:33:39</div>
+<div class="footer">Generated 2026-07-16 17:49:43</div>
 </div>
 
 <!-- MODAL -->
@@ -1499,12 +1490,6 @@ function switchTab(t) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelector('.tab-btn.tab-' + t).classList.add('active');
   document.getElementById('tab-' + t).classList.add('active');
-  if (t === 'agent') {
-    const fr = document.getElementById('agentFrame');
-    if (!fr.src || fr.src === window.location.href) {
-      fr.src = 'https://soso0122.github.io/agent-report/';
-    }
-  }
 }
 
 // ── Lifecycle buckets
