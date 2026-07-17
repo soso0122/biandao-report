@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据报告导航</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: #16161f;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.15);
+      --accent-1: #7c6af7;
+      --accent-2: #f0522b;
+      --accent-3: #2be8b0;
+      --text-primary: #f0eff8;
+      --text-secondary: rgba(240,239,248,0.45);
+      --text-dim: rgba(240,239,248,0.22);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,106,247,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,106,247,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -30vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 60vh;
+      background: radial-gradient(ellipse, rgba(124,106,247,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+    }
+
+    /* ── HEADER ── */
+    header { margin-bottom: 64px; animation: fadeUp 0.6s ease both; }
+
+    .eyebrow {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-1);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 1px;
+      background: var(--accent-1);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 6vw, 60px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, var(--accent-1) 0%, #b89dff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-sub {
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    /* ── CARDS ── */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 36px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      transition: border-color 0.25s, transform 0.22s, box-shadow 0.25s;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 20px;
+    }
+
+    .card .accent-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 20px 20px 0 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .card:hover { border-color: var(--border-hover); transform: translateY(-3px); box-shadow: 0 24px 56px rgba(0,0,0,0.45); }
+    .card:hover::before { opacity: 1; }
+    .card:hover .accent-bar { opacity: 1; }
+
+    /* color variants */
+    .card[data-color="purple"] .accent-bar { background: linear-gradient(90deg, var(--accent-1), #b89dff); }
+    .card[data-color="purple"]:hover::before { background: linear-gradient(135deg, rgba(124,106,247,0.06), transparent); }
+
+    .card[data-color="green"] .accent-bar { background: linear-gradient(90deg, var(--accent-3), #7cf5d8); }
+    .card[data-color="green"]:hover::before { background: linear-gradient(135deg, rgba(43,232,176,0.06), transparent); }
+
+    .card[data-color="orange"] .accent-bar { background: linear-gradient(90deg, var(--accent-2), #f9a07c); }
+    .card[data-color="orange"]:hover::before { background: linear-gradient(135deg, rgba(240,82,43,0.06), transparent); }
+
+    /* icon */
+    .card-icon {
+      flex-shrink: 0;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .card[data-color="purple"] .card-icon { background: rgba(124,106,247,0.15); }
+    .card[data-color="green"]  .card-icon { background: rgba(43,232,176,0.12); }
+    .card[data-color="orange"] .card-icon { background: rgba(240,82,43,0.12); }
+
+    .card-body { flex: 1; min-width: 0; }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 100px;
+    }
+    .card[data-color="purple"] .tag { background: rgba(124,106,247,0.15); color: #b89dff; }
+    .card[data-color="green"]  .tag { background: rgba(43,232,176,0.12);  color: var(--accent-3); }
+    .card[data-color="orange"] .tag { background: rgba(240,82,43,0.12);   color: #f07c62; }
+
+    .card-date {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      font-weight: 300;
+    }
+
+    .card-arrow {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, background 0.2s, transform 0.25s;
+    }
+    .card:hover .card-arrow {
+      border-color: var(--border-hover);
+      background: rgba(255,255,255,0.05);
+      transform: rotate(45deg);
+    }
+    .card-arrow svg {
+      width: 14px; height: 14px;
+      fill: none; stroke: var(--text-secondary);
+      stroke-width: 1.8;
+      transition: stroke 0.2s;
+    }
+    .card:hover .card-arrow svg { stroke: var(--text-primary); }
+
+    /* ── FOOTER ── */
+    .page-footer {
+      margin-top: 72px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .page-footer p {
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+    .pulse-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-3);
+      margin-right: 6px;
+      animation: pulse 2.4s ease-in-out infinite;
+      vertical-align: middle;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card:nth-child(1) { animation: fadeUp 0.5s 0.12s ease both; }
+    .card:nth-child(2) { animation: fadeUp 0.5s 0.22s ease both; }
+    .card:nth-child(3) { animation: fadeUp 0.5s 0.32s ease both; }
+
+    @media (max-width: 600px) {
+      .wrapper { padding: 48px 20px 80px; }
+      .card { padding: 24px 20px; gap: 16px; }
+      .card-icon { width: 44px; height: 44px; font-size: 20px; }
+      .card-title { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <p class="eyebrow">Eagle Data · Reports Hub</p>
+      <h1>数据报告<br /><span>导航中心</span></h1>
+      <p class="header-sub">点击任意卡片，在新窗口打开对应报告。</p>
+    </header>
+
+    <div class="cards">
+
+      <a class="card" data-color="green"
+         href="https://soso0122.github.io/biandao-report/reports/%E5%BC%95%E5%AF%BC%E7%B4%A0%E6%9D%90%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A_0716_v2.html"
+         target="_blank" rel="noopener">
+        <div class="accent-bar"></div>
+        <div class="card-icon">🎬</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="tag">引导素材</span>
+            <span class="card-date">07 / 16</span>
+          </div>
+          <div class="card-title">引导素材分析报告</div>
+          <div class="card-desc">引导素材投放数据，含 CPM、CTR、消耗等核心指标可视化。</div>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 14 14"><path d="M2 12L12 2M12 2H5M12 2v7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </a>
+
+      <a class="card" data-color="purple"
+         href="https://soso0122.github.io/biandao-report/"
+         target="_blank" rel="noopener">
+        <div class="accent-bar"></div>
+        <div class="card-icon">📊</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="tag">编导分析</span>
+          </div>
+          <div class="card-title">编导数据分析报告</div>
+          <div class="card-desc">编导投放综合表现，含消耗、ROI、素材归因与历史趋势。</div>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 14 14"><path d="M2 12L12 2M12 2H5M12 2v7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </a>
+
+      <a class="card" data-color="orange"
+         href="https://soso0122.github.io/agent-report/"
+         target="_blank" rel="noopener">
+        <div class="accent-bar"></div>
+        <div class="card-icon">🏢</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="tag">代理商</span>
+          </div>
+          <div class="card-title">代理商数据分析报告</div>
+          <div class="card-desc">代理商消耗与 ROI 数据汇总，多账户维度对比分析。</div>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 14 14"><path d="M2 12L12 2M12 2H5M12 2v7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </a>
+
+    </div>
+
+    <footer class="page-footer">
+      <p><span class="pulse-dot"></span>Eagle Data · Reports Hub</p>
+      <p>共 3 份报告 · 2026.07.16</p>
+    </footer>
+  </div>
+</body>
+</html>
