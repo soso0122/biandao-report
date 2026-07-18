@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>引导素材分析 · 0716</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -25,8 +26,6 @@ body{
   background-size:40px 40px;
 }
 .wrap{max-width:1400px;margin:0 auto;padding:40px 24px 80px}
-
-/* header */
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;
   padding-bottom:28px;margin-bottom:36px;border-bottom:1px solid var(--border)}
 .head-left h1{font-family:var(--font-d);font-size:clamp(26px,3.5vw,44px);font-weight:800;
@@ -35,26 +34,18 @@ body{
 .head-meta{font-family:var(--font-m);font-size:11px;letter-spacing:1.5px;color:var(--muted);
   margin-top:8px;text-transform:uppercase}
 .date-badge{font-family:var(--font-m);font-size:11px;letter-spacing:1px;
-  background:var(--s2);border:1px solid var(--border2);color:var(--muted);
-  padding:5px 12px;border-radius:4px}
-
-/* kpi bar */
+  background:var(--s2);border:1px solid var(--border2);color:var(--muted);padding:5px 12px;border-radius:4px}
 .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-  background:var(--border);border:1px solid var(--border);border-radius:12px;
-  overflow:hidden;margin-bottom:36px}
+  background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:36px}
 .kpi-cell{background:var(--s1);padding:20px 24px}
 .kpi-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .kpi-val{font-family:var(--font-d);font-size:32px;font-weight:800;color:var(--amber);line-height:1}
 .kpi-sub{font-size:12px;color:var(--muted);margin-top:4px}
-
-/* charts */
 .chart-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px}
 .chart-box{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;
   box-shadow:0 1px 4px rgba(0,0,0,0.06)}
 .chart-title{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
 .chart-canvas{position:relative;height:220px}
-
-/* funnel */
 .sec-label{font-family:var(--font-m);font-size:11px;letter-spacing:2px;text-transform:uppercase;
   color:var(--muted);margin-bottom:16px;padding-left:2px}
 .funnel-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:36px}
@@ -66,15 +57,11 @@ body{
 .funnel-bar-wrap{background:var(--dim);border-radius:3px;height:6px;overflow:hidden}
 .funnel-bar{height:6px;border-radius:3px;transition:width .4s}
 .funnel-pct{font-family:var(--font-m);font-size:13px;font-weight:500;margin-top:6px}
-
-/* filter */
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .pf-btn{background:var(--s1);border:1px solid var(--border2);color:var(--muted);
   padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .2s}
 .pf-btn:hover{border-color:var(--amber);color:var(--text)}
 .pf-btn.active{background:var(--amber);border-color:var(--amber);color:#fff;font-weight:600}
-
-/* table */
 .tbl-wrap{overflow-x:auto;margin-bottom:40px;background:var(--s1);border:1px solid var(--border);
   border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
 table{width:100%;border-collapse:collapse}
@@ -86,27 +73,20 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;vertic
 td.num{text-align:right;font-family:var(--font-m);font-size:12px}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(37,99,235,0.04)}
-.mat-name{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text)}
-.type-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;
-  font-family:var(--font-m);letter-spacing:.5px}
+.mat-name{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.type-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--font-m)}
 .type-v{background:rgba(13,148,136,0.12);color:var(--teal)}
 .type-h{background:rgba(217,119,6,0.12);color:var(--amber)}
 .preview-link{color:var(--azure);font-size:11px;text-decoration:none;opacity:.8}
 .preview-link:hover{opacity:1}
-.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;
-  font-family:var(--font-m);background:var(--s3);color:var(--muted)}
-.good{color:var(--teal)}
-.bad{color:var(--rose)}
+.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font-m);background:var(--s3);color:var(--muted)}
 .sortable{cursor:pointer;user-select:none}
 .sortable:hover{color:var(--text)}
-.sort-icon{font-size:10px;opacity:.5;margin-left:3px}
+.sort-icon{font-size:10px;opacity:.4;margin-left:3px}
 .sortable.asc .sort-icon::after{content:'↑';opacity:1;color:var(--amber)}
 .sortable.desc .sort-icon::after{content:'↓';opacity:1;color:var(--amber)}
-
-/* footer */
 .footer{text-align:center;font-family:var(--font-m);font-size:11px;color:var(--muted);
   margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
-
 @media(max-width:900px){
   .chart-row{grid-template-columns:1fr}
   .funnel-row{grid-template-columns:repeat(2,1fr)}
@@ -116,7 +96,6 @@ tr:hover td{background:rgba(37,99,235,0.04)}
 </head>
 <body>
 <div class="wrap">
-
 <div class="page-head">
   <div class="head-left">
     <h1>引导素材 <em>投放分析</em></h1>
@@ -124,92 +103,67 @@ tr:hover td{background:rgba(37,99,235,0.04)}
   </div>
   <div class="date-badge">数据截止 2026-07-16</div>
 </div>
-
-<!-- KPI -->
 <div class="kpi-bar">
   <div class="kpi-cell"><div class="kpi-label">总消耗</div><div class="kpi-val">8,391</div><div class="kpi-sub">元</div></div>
   <div class="kpi-cell"><div class="kpi-label">总转化</div><div class="kpi-val">397</div><div class="kpi-sub">单</div></div>
   <div class="kpi-cell"><div class="kpi-label">平均 CPA</div><div class="kpi-val">21.14</div><div class="kpi-sub">元 / 单</div></div>
   <div class="kpi-cell"><div class="kpi-label">有消耗素材</div><div class="kpi-val">43</div><div class="kpi-sub">条</div></div>
 </div>
-
-<!-- Charts -->
 <div class="chart-row">
   <div class="chart-box"><div class="chart-title">消耗对比（元）</div><div class="chart-canvas"><canvas id="spendChart"></canvas></div></div>
   <div class="chart-box"><div class="chart-title">CTR 对比（%）</div><div class="chart-canvas"><canvas id="ctrChart"></canvas></div></div>
   <div class="chart-box"><div class="chart-title">CPA 对比（元）</div><div class="chart-canvas"><canvas id="cpaChart"></canvas></div></div>
 </div>
-
-<!-- Funnel -->
 <div class="sec-label">点击 → 转化漏斗（按编导）</div>
 <div class="funnel-row" id="funnelRow"></div>
-
-<!-- Table -->
 <div class="sec-label">素材明细</div>
 <div class="filter-row" id="filterRow">
   <button class="pf-btn active" onclick="filterTable(this,'all')">全部</button>
 </div>
 <div class="tbl-wrap">
 <table>
-  <thead>
-    <tr>
-      <th>编导</th><th>素材名称</th><th>类型</th>
-      <th class="num sortable" data-key="spend" onclick="sortTable('spend')">消耗 <span class="sort-icon" id="si-spend"></span></th>
-      <th class="num sortable" data-key="imp" onclick="sortTable('imp')">展示数 <span class="sort-icon" id="si-imp"></span></th>
-      <th class="num sortable" data-key="cpm" onclick="sortTable('cpm')">CPM <span class="sort-icon" id="si-cpm"></span></th>
-      <th class="num sortable" data-key="click" onclick="sortTable('click')">点击数 <span class="sort-icon" id="si-click"></span></th>
-      <th class="num sortable" data-key="ctr_n" onclick="sortTable('ctr_n')">CTR <span class="sort-icon" id="si-ctr_n"></span></th>
-      <th class="num sortable" data-key="conv" onclick="sortTable('conv')">转化数 <span class="sort-icon" id="si-conv"></span></th>
-      <th class="num sortable" data-key="cpa" onclick="sortTable('cpa')">CPA <span class="sort-icon" id="si-cpa"></span></th>
-      <th class="num sortable" data-key="cvr_n" onclick="sortTable('cvr_n')">CVR <span class="sort-icon" id="si-cvr_n"></span></th>
-      <th>预览</th>
-    </tr>
-  </thead>
+  <thead><tr>
+    <th>编导</th><th>素材名称</th><th>类型</th>
+    <th class="num sortable" data-key="spend" onclick="sortTable('spend')">消耗 <span class="sort-icon" id="si-spend"></span></th>
+    <th class="num sortable" data-key="imp" onclick="sortTable('imp')">展示数 <span class="sort-icon" id="si-imp"></span></th>
+    <th class="num sortable" data-key="cpm" onclick="sortTable('cpm')">CPM <span class="sort-icon" id="si-cpm"></span></th>
+    <th class="num sortable" data-key="click" onclick="sortTable('click')">点击数 <span class="sort-icon" id="si-click"></span></th>
+    <th class="num sortable" data-key="ctr_n" onclick="sortTable('ctr_n')">CTR <span class="sort-icon" id="si-ctr_n"></span></th>
+    <th class="num sortable" data-key="conv" onclick="sortTable('conv')">转化数 <span class="sort-icon" id="si-conv"></span></th>
+    <th class="num sortable" data-key="cpa" onclick="sortTable('cpa')">CPA <span class="sort-icon" id="si-cpa"></span></th>
+    <th class="num sortable" data-key="cvr_n" onclick="sortTable('cvr_n')">CVR <span class="sort-icon" id="si-cvr_n"></span></th>
+    <th>预览</th>
+  </tr></thead>
   <tbody id="tableBody"></tbody>
 </table>
 </div>
-
 <div class="footer">Generated 2026-07-16 · 引导素材投放分析报告</div>
 </div>
-
 <script>
 Chart.defaults.color='#6B7A99';
 Chart.defaults.borderColor='rgba(0,0,0,0.06)';
-
-const COLORS=['#F5A524','#4B8FED','#2DD4BF','#A78BFA','#F87171'];
+const COLORS=['#D97706','#2563EB','#0D9488','#7C3AED','#DC2626'];
 const RAW=[{"editor":"嘉丽","name":"0708-引导-嘉丽-4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnKJMnbm8SXBkmXJerqIokVmscQLrfVpQVL0bLuikNLqLuDs05IHVd8w8kDK8XkLhXiUKNZjR%2B2bBaVGSBfxrizzAtnvT%2FX1xWjTH5coM7Hzz3oSRz1cvKugl%2FVdd1tQpWqasyyx2HR0idFJM3EYyZw%2BgCEaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2FzQzNw%3D","type":"竖版视频","spend":4033.22,"imp":200122,"cpm":20.15,"click":4623,"ctr":"2.31%","cpc":0.87,"conv":197,"cpa":20.47,"cvr":"4.26%"},{"editor":"嘉丽","name":"0708-引导-嘉丽-2.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLywnbMKmDZEawRjRPxE2PE6RAjps9Zn%2BEAglSufZCvBJYkCzydwydxeLO0a45Ry5JNT3Gxrs1GmAWGC6jBERusojD8AguRAi0ooVi%2FMP6lcl3MUbE6oVN04Csk8DqFQ0y7LRR5MTE6twSNkwwzJwQZMP0aSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA4l05UU%3D","type":"横版视频","spend":1054.01,"imp":54617,"cpm":19.3,"click":1150,"ctr":"2.11%","cpc":0.92,"conv":58,"cpa":18.17,"cvr":"5.04%"},{"editor":"小敏","name":"0709引导-小敏-4-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJU9F8V0Uh3ijh9DQ3WY1cIxnQ0NG8JbElppRhqdwSZIehBSdXCmVdB%2BaN0Ghifwp35%2FLRKYmZpyU2yJDC%2F%2BYh6fVqFtqHPdvSTNv8VYVNWUoAHN4EmzgVW9xOV8jy0WBRmKJiNyxm5GDkSIXetuA1hytYaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA7TzlbE%3D","type":"竖版视频","spend":512.0,"imp":17727,"cpm":28.88,"click":285,"ctr":"1.61%","cpc":1.8,"conv":18,"cpa":28.44,"cvr":"6.32%"},{"editor":"瑞晨","name":"0709引导+v-瑞晨-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJ0xKPG3%2FR0CsZ%2BKJHXTp4xmJ6h36QfOJqEMqEgTf96HyuYBGgm7skcqeVHpxY%2Fo0RMSJBqnVLcXOuITZTWWf8G%2BqcpeKMifIX5uItAyR5FEAYZT0kzGnjzLWuunwaFQbtc7cczruN%2BUQwDmbVOnrH59msaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA3oFX6U%3D","type":"竖版视频","spend":397.42,"imp":31269,"cpm":12.71,"click":1140,"ctr":"3.65%","cpc":0.35,"conv":20,"cpa":19.87,"cvr":"1.75%"},{"editor":"嘉丽","name":"0708-引导-嘉丽-3.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLmOHD5c%2BeCPL%2FLkt91bZzDHcyqCXSzmgq%2Fm%2BXBf1Tcbw2k1xnz00inyHRr5NblApbaOnQGgnBT2TdfLL1IuYA1MB63LDbNYv43ZceJ7hiUDa%2FS3GyqZ4mz8Nth4awuBrMnAIiv8mbgKDkYkzhZnJD12T0aSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2BKQzUs%3D","type":"竖版视频","spend":377.68,"imp":28853,"cpm":13.09,"click":963,"ctr":"3.34%","cpc":0.39,"conv":15,"cpa":25.18,"cvr":"1.56%"},{"editor":"小敏","name":"0709引导-小敏-1-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnI16w0Vv80tT3nYZSKqg4MAs9nLzQqRZnrM%2F91CMozoZ0kzFTL3w0qGwPaI98mDzDSblEl%2BBHlcZ4kEVUOX%2FJrujTgs%2FN2T%2F5T%2FVTXpwOuViXfXJOLphLsxsb%2BO%2BiBqDhujmDjsDNDgQjBP%2BFe9oFU%2BzgEaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA7OtPLA%3D","type":"竖版视频","spend":376.95,"imp":30952,"cpm":12.18,"click":1021,"ctr":"3.30%","cpc":0.37,"conv":18,"cpa":20.94,"cvr":"1.76%"},{"editor":"小敏","name":"0709引导-小敏-5-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJgpxig2%2BXgFGG9RuIrpL9C8VLMA9ImeSEmG3P6b9qHhUcdZSaerLVY%2FF1Sm5GILnacjws%2FyHG0ApzFbiPpH3xrWUbM1qVNvmKiwdF4CjMF5hHy%2FHcRWv%2FDgppo61zk0GPCDATZYpJw8Pjm6mcuHmSpObUaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2FjuE%2Bs%3D","type":"竖版视频","spend":238.23,"imp":8487,"cpm":28.07,"click":190,"ctr":"2.24%","cpc":1.25,"conv":10,"cpa":23.82,"cvr":"5.26%"},{"editor":"瑞晨浩正","name":"0713-浩正瑞晨引导-1.mp4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnKtv0QNbdQxXGLW%2F9wh9kbTC2i7ZD2iitntc4ccGi%2F8dD1QrqGu6whZNSddAjL1BjgruUB8ZyJts51fgx90VZHS2Dbw5EvUyqMaQcsK64WVV34rBZYb4cucWrCM61AdI9xXZtvV%2FAkaC8JB7Q2RiZIFZWIaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAzLsKPM%3D","type":"竖版视频","spend":204.3,"imp":4822,"cpm":42.37,"click":92,"ctr":"1.91%","cpc":2.22,"conv":12,"cpa":17.03,"cvr":"13.04%"},{"editor":"小敏","name":"0713-引导-小敏-5.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJyw3Bf5A%2FYLf2v3CWFNe8%2FBc3qjikw72XJk7fVc1VeF%2BhC3cWLIklGzD6uDRKy%2BZkWM8o7jW%2Bi0u0Ec4jap4cEv8pYyhF4UBS4JtiMjcTea%2BwA5beOoaan0APg2DoSs3dgOkYjcQhIdFuG%2FCtIvBC3yEoaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2B9Cd6I%3D","type":"竖版视频","spend":171.76,"imp":6573,"cpm":26.13,"click":108,"ctr":"1.64%","cpc":1.59,"conv":11,"cpa":15.61,"cvr":"10.19%"},{"editor":"小敏","name":"0709引导-小敏-3-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJeVj%2FSzKLvdhKncbEMfsIhT2EqcT407JyFDcQZHlTc1ZH7DAWgr%2BVbhiH6t8QpQr7lzi6KBkINF9vRQIxjVP07N38B%2FefcKB2I5C%2Bq5vDz3Vk%2FEjLc8kvxykxAx%2Bfnw4mdcQfdhFJ%2BfoYcfVAmwwsdE%2BgaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA7cTh1A%3D","type":"竖版视频","spend":143.47,"imp":6383,"cpm":22.48,"click":148,"ctr":"2.32%","cpc":0.97,"conv":5,"cpa":28.69,"cvr":"3.38%"},{"editor":"小敏","name":"0708引导-小敏-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJcPWmHx1pnUt1q1WAIQK4QxA6eAXt9W4CY1oKHGDj4EmA7PLu1gcOg1jIX%2BZN6D6Eu9gm0hFxfm8lB80vGROVgu9rZ%2F0sUC5E2mG%2BAuZi9e6lc5ezymzFPFPkGqKGSNHWb2yq%2FTPa3PV7j4XAgHDLeztsaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA6yX90w%3D","type":"竖版视频","spend":138.93,"imp":7380,"cpm":18.83,"click":191,"ctr":"2.59%","cpc":0.73,"conv":6,"cpa":23.16,"cvr":"3.14%"},{"editor":"雅迪","name":"0713-引导-雅迪-2-改.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLN5dx19MuZDTpiyEkjC7%2FnrMK9gggzas2KXP43zRfxJcNGmJE2z6RTkmLpx7lD%2BgPWcUgXE%2F7YXPSACpHn%2Bwf4pb7W1Vk4FKlYvphEscZPCjUobl3aErha9%2BpcDXE3X%2F18A5B0IzY75kfNSGgCVup7pnQaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAxErcRY%3D","type":"横版视频","spend":90.18,"imp":2505,"cpm":36.0,"click":26,"ctr":"1.04%","cpc":3.47,"conv":4,"cpa":22.55,"cvr":"15.38%"},{"editor":"瑞晨","name":"0709引导+v-瑞晨-9.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIGnenC6UqFJ5lluJ8ZMirsQTI%2FkxSKx%2FZluRm8iSxU2ed5Rxin43um9hiyM522MBHOqum7yUBcw%2BqpkXrbWDZrBXIAJ799KSvtk8WQMjGj%2B%2BX9xTGVGDKaHG56viN9awXQcbClSdVO2mSjNwhd2%2F%2FNVBsaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA7k7yJc%3D","type":"竖版视频","spend":74.21,"imp":4466,"cpm":16.62,"click":153,"ctr":"3.43%","cpc":0.49,"conv":2,"cpa":37.11,"cvr":"1.31%"},{"editor":"嘉丽","name":"0708-引导-嘉丽-5.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJuHoQ2WUfGZJHcMMnEPZ3dmziY%2FtYgBLu2y6WVK%2BhEB4K6GBchUEvDAnW9kWM3FNkDpYsxkW7Ktmx32kGQtJtsPS%2FYxQnZ3MtqCa2S9G%2FZy%2BbP3vX3BPtFHXSfoAqUpzCfEafGtbp%2Bnq39UXsETYZHTBoaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA6O7M8c%3D","type":"竖版视频","spend":61.45,"imp":1476,"cpm":41.63,"click":19,"ctr":"1.29%","cpc":3.23,"conv":1,"cpa":61.45,"cvr":"5.26%"},{"editor":"瑞晨","name":"0709引导+v-瑞晨-6.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLTu2u5kUp8EE8n73txmAG%2FKJatozfLQDuq%2BJeS%2Bi5CFDbilSFesTqz4Mrh4fYyJcxWhHKlBjKSbRSOpwJCJDncV4Bom2tUI9YMBdCmSWJPWYPc4R1stEvYQKuu9Hsy4ekoMJN38sOAKTzVgtdUwjv4gScaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA3q7Djo%3D","type":"竖版视频","spend":59.66,"imp":4547,"cpm":13.12,"click":129,"ctr":"2.84%","cpc":0.46,"conv":2,"cpa":29.83,"cvr":"1.55%"},{"editor":"瑞晨","name":"0709引导+v-瑞晨-3.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJ%2BpYrUEUScwtPU%2FEwvwbaKz0xYb1MOMUPKynD7OIkFNhZJ20LAZQNfhqxs%2B0GuDBfE1gxMBJ9%2B4vDGDdOowoIxfbFhlBNVvOfmJzk%2FRKUf2haUaNJOA7SOoOKtW10EIXr5VTTxLXKI%2Fdv2UCbbFj0f9EgaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAx5LOMU%3D","type":"竖版视频","spend":57.09,"imp":3478,"cpm":16.41,"click":113,"ctr":"3.25%","cpc":0.51,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"瑞晨浩正","name":"0713-浩正瑞晨引导-3.mp4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnK900WrKUonBRGe6n%2Bgshfa1yrE1pf4QPDwscR2%2BX3Ajf%2Fg2PYlW%2BXdfNFc2iYuPSvqdUMNk8on%2BvTe099fc%2F2IOwpOKlc2wmb0%2F9df6IU7aBWiMfZCBQHEUA6Q8nqBziWuGBpQJI5OqEgrZa3%2FX0LRExsaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA2WGUuk%3D","type":"竖版视频","spend":55.31,"imp":2070,"cpm":26.72,"click":65,"ctr":"3.14%","cpc":0.85,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-8.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJDhgvDXXkxmQlGjhH9gB%2F4COJnUpvc15%2FAlgoiUc2vjky1RyOuXowsjGimojX5WVUQzRzscgenYvRtaL2evNb0x6779dypElkbfB%2BGHJhsyvp5SMDw2Gd92CeojKjpRQq1RWSdshRBxOqnCjkUnPCSTcUaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA2h41zo%3D","type":"横版视频","spend":53.9,"imp":1597,"cpm":33.75,"click":19,"ctr":"1.19%","cpc":2.84,"conv":3,"cpa":17.97,"cvr":"15.79%"},{"editor":"瑞晨浩正","name":"0713-浩正瑞晨引导-7.mp4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLj2wrDs2o2NQY9JafBctSMPK7qTo4ONhLTgOPmgvn0ZGtpJS%2BWhcC9qtfDQOD9xyEZhJBV%2FpS0XClNEflIHe3Bbx3HefKdY9EoRyUBsoVvTfS2OFpRsHenWa5wARta%2BUgId%2B8fG13AzY3VztRrvK7I8CUaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA3UURPI%3D","type":"竖版视频","spend":51.25,"imp":1862,"cpm":27.52,"click":37,"ctr":"1.99%","cpc":1.39,"conv":3,"cpa":17.08,"cvr":"8.11%"},{"editor":"瑞晨浩正","name":"0713-浩正瑞晨引导-8.mp4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJNl%2B0TsaAa2SdCeylwUcoJQhhtR%2Fj7L4PlPfrfp98Ji87WOSJDXYX3bV1fVxUXAn4uoW%2FcFiX9veIGgHq%2F8iJsOstuu6gobxfyXsDwAX0Ux2lPkRwpu7F7wAP7AZTXFV4T3MumBBfj4z8xSFkuohYL5xUaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA5jhcNw%3D","type":"竖版视频","spend":29.02,"imp":847,"cpm":34.26,"click":31,"ctr":"3.66%","cpc":0.94,"conv":3,"cpa":9.67,"cvr":"9.68%"},{"editor":"小敏","name":"713-引导-小敏-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnKgKcuoA8EYLPDq8MOy9CPcKuQhVADxWqe8RYIKaxrMyFJm7vw6cZ1H0tNsFeFINPUQ%2Ff16gymG%2BbPhYyiROu3YyQqckDf%2FURwUrKA33uRHSeMSi1Hu7h7uOURlKTZB6rqrWUDLa6wOZUY%2FW0B3GYhjhaQaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA10hqn8%3D","type":"竖版视频","spend":24.87,"imp":892,"cpm":27.88,"click":34,"ctr":"3.81%","cpc":0.73,"conv":2,"cpa":12.44,"cvr":"5.88%"},{"editor":"嘉丽","name":"0710-引导-嘉丽-4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJPJO4m4XoGvWcll3ULNMfi%2BjGuIwetQtF4lpUiYzT80mU0a4X%2FQsyRDIEfNaJKGVSk7IgpcmQd5z2ISls5yvY6VnOlcLkB%2BaFgsaPTKX4urUQ%2BAoNGGTRvybxQbHujuq6JVrfUyMWVTE%2FL7RinDYFlycEaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAzU2LRk%3D","type":"竖版视频","spend":22.85,"imp":705,"cpm":32.41,"click":19,"ctr":"2.70%","cpc":1.2,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"小敏","name":"0713-引导-小敏-2.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIBdyQunlOwDNV3aiD%2B%2BfwfjZPUQ%2BGrWoDN7XVguD6JCf3cTIdDbiq4Z6ptL6zFL4zDkhQkAeZNl3JOD3%2FxGGqWToawvEcNaYPe8kmJ%2B09JuO9FIwL2gCxtoedvogAilGTTHSN36gI5MdepgW3pgQT8nn0aSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA8042A4%3D","type":"竖版视频","spend":18.58,"imp":966,"cpm":19.23,"click":34,"ctr":"3.52%","cpc":0.55,"conv":1,"cpa":18.58,"cvr":"2.94%"},{"editor":"小敏","name":"0713-引导-小敏-4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnI20K6DopTxyCaoUHrPbSAKS2QKZ7luNqu5K5Q0THviqNZkU7yhISjZyXy5qsBV9Zdax0nLUhB5QRS6ZshGBQ%2FUBxm6dIr4NwfMqZ0G6aoR8JVqqtf1FCw960nB4KkYTSQcZMmUi5MuY0hPFoUMwPKUoWsaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAybDKAc%3D","type":"竖版视频","spend":17.61,"imp":609,"cpm":28.92,"click":20,"ctr":"3.28%","cpc":0.88,"conv":1,"cpa":17.61,"cvr":"5.00%"},{"editor":"瑞晨浩正","name":"0714-瑞浩引导修改-4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLfsmvyDDsOeGPSbNhYTPnGJdTqXX9mfJIfxhT3lGz09cDk2qYb3UYTlo9c%2BvgU8F26TCoZkW5Zlx71h716fJYoSxlhbru%2Briz%2Bezft%2FUmQ3CAtAs6rBGcmAKUgKXxH12zJX8jjTQcqlGU1c%2BtYaBhZ%2BJAaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAw3QFc0%3D","type":"竖版视频","spend":17.05,"imp":642,"cpm":26.56,"click":24,"ctr":"3.74%","cpc":0.71,"conv":2,"cpa":8.53,"cvr":"8.33%"},{"editor":"嘉丽","name":"0710-引导-嘉丽-5.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIRbITs8%2BHUeyA%2F4C6WTPWrReyGB%2F1%2Fb9S2%2B3Huoj0nM%2BpNypZ%2BnRPEUPkhcA3UDVttuUtyHhfLGeOWWZHv0sYFtMmZI57S7s%2Bw1EuFC5kh4SUe6%2BWO%2BFyURnAcW2fw7%2Bv1YR%2F5Bw0xi0GY2V%2BaJLE8yFIaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA3L9hj0%3D","type":"竖版视频","spend":15.0,"imp":346,"cpm":43.35,"click":8,"ctr":"2.31%","cpc":1.88,"conv":1,"cpa":15.0,"cvr":"12.50%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-2.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLCbCIK%2Bt2qOV82aKIW5v5kZdN5wFy6l27qV1oTv0iqXXXeELhe0D4hw5MuQZOlA%2FNV7YY1xAJp6%2BQQssfm3fndclqhulmWhdaWlINolJpvXSRa5qPeOwlsenEeox6Sw7fLPnPl8n9kAftPM%2BqTxIZl9x0aSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAwDVf8Q%3D","type":"竖版视频","spend":13.91,"imp":423,"cpm":32.88,"click":2,"ctr":"0.47%","cpc":6.96,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-10.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnKKiGSKPNOQR6IyzmCfcI865rjcLzoRXG1VC4dmipMNIuZJzp9efhB61478pVxPGURIs3T6K%2B9Qv2HTdP4XgEB7RD%2Bk44wSu1rA41%2BLsbEmgCVuQy%2FkZBIrSjk8D8KKNIXIU9E%2FO0rt2tvNOgvXhXXRa4gaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA8MBmcw%3D","type":"竖版视频","spend":9.11,"imp":191,"cpm":47.7,"click":4,"ctr":"2.09%","cpc":2.28,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-9.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIc7Oucp6q5O3LLXOj75jXn8qI%2F4t%2FLF3hzXt9C8UDnUX15cTjLyuK9k%2BFDOUhJPSP822tCdbOLFRD5uI0dRX%2FCFZsipowB%2BwG5l%2BR9xxGONgcXEY1D8Z%2BJFYWSWNPvpxo9wHOzfYSQmWQ435IG3lbeEGgaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAxBfe30%3D","type":"竖版视频","spend":7.05,"imp":252,"cpm":27.98,"click":4,"ctr":"1.59%","cpc":1.76,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0710-引导-嘉丽-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnKr9Ie23r%2FMyZPQ3IXbiTzjXeJRYbeL5xjPFIYDF%2BnKsUk%2FIXwAQXNd1ECuChWeDfnFeoNSEU9HV%2FhMMjI7lcdIWU7NSpM04vafle9f2ZIN1Zbpuua6uSlcPZCZxCCEWSDDxezWp85GnXlnFr3xCnHL%2ByYaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2B6foSI%3D","type":"横版视频","spend":6.7,"imp":236,"cpm":28.39,"click":9,"ctr":"3.81%","cpc":0.74,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLWzoTTB0URxoJl0ZPhGclcfbCgEZEmgucYZeLBrHMtYE2pRWTz3ryYaPxuOf2QWWZ1rl%2F7TigKVJpeLWd3F8U0FkZ9V7d0tcOoZV2yOMbcd1N65TTAD7QQqqebXTOXARlo9ktH1ioYaUI%2BfvH83eyScXgaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA5bHwrs%3D","type":"横版视频","spend":6.63,"imp":362,"cpm":18.31,"click":10,"ctr":"2.76%","cpc":0.66,"conv":1,"cpa":6.63,"cvr":"10.00%"},{"editor":"嘉丽","name":"0710-引导-嘉丽-8.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJM9iGJoRx1IoYmMjkrOSgbY1I4XxrfV5UGG0Y%2BFMrFNAEsfEJgnFlgI2ekJ7R3eoX8e6WIeccaTBSeeyo9V86c5xkL3UUnmf43PRGkhvOTY7jdPEjAqDSAp1iq%2FUU5LcY%2Fgzdq%2BeMRqfXWwtXi0hLpDRUaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAyoum8s%3D","type":"竖版视频","spend":6.55,"imp":112,"cpm":58.48,"click":10,"ctr":"8.93%","cpc":0.66,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-3.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJcB0W8ySJ%2BiSlpTcQJdkBj%2FkDSHDD8tIuDj7N%2B9N2cdkUHRC7KQhahihmu784PcePgzIHbCA7p7raIJC1qy%2Bq2hAhQ482uua7twkXorjZvKYjsl%2BRdg5c0adyNKmDDWUe0SY4i295Rg62kkzWeSeAOcKcaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA7sXo7M%3D","type":"竖版视频","spend":6.44,"imp":177,"cpm":36.38,"click":1,"ctr":"0.56%","cpc":6.44,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"小敏","name":"0710引导-小敏-3.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIQm4w4jyTwv%2FEtOzjrg2awFoRKVHRv6LlIpwcsQE1ehAS%2B7wRXtJUGcWPwBk1v8J48wXO%2FtqKEqhmi2Sy%2F%2BtUGq1G%2ByF9%2FRvr0KTv2Jvwy7mROI%2B0O%2B%2BJokHWmaOw1DGgwvwSBagFPUMCO9KRAMoQpF6caSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA4svfaU%3D","type":"竖版视频","spend":6.14,"imp":216,"cpm":28.43,"click":11,"ctr":"5.09%","cpc":0.56,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"瑞晨浩正","name":"0714-瑞浩引导修改-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLA1hcWU6tn7U00NNU1GvSW8CS1dAH7G5pC9XbPekg%2BE0YGCVQYhtbR9JdlRjaNj6AAD0k1YLK5UW%2FRNR8I4W12iN%2FXB3po7VLFJ12vnsbk%2BRt3gJvn1eeSI7%2BJNSGg4AMJhak14WxxpvczBnRw8BGBigYaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA2%2F6gxA%3D","type":"竖版视频","spend":5.08,"imp":368,"cpm":13.8,"click":12,"ctr":"3.26%","cpc":0.42,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"雅迪","name":"0713-引导-雅迪-1-改.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnLH5Mfr50kX79sW3DfmwCIJGyYEM%2BJey9PhIuR6awaZsH6XmQlk45CJvFH%2Bw85rVsQtQCNZzmmexy6fUnVYX55HdNvjpDBoRz7DqeGt1CaBKC1D0CpXlgv24cb0eVe4ORmHp7WKapvrUqfYhbQvesoEGf0aSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2FneZdk%3D","type":"竖版视频","spend":4.81,"imp":168,"cpm":28.63,"click":2,"ctr":"1.19%","cpc":2.41,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-1.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnJmV%2FUndCnUbVWT0a8so8R%2BwBJfCMu4HMKAesWmk8gKhU%2B1SdtiQ9Nry%2FV3cUgZ8NGJCjww5N2lAiNBDLttqp3KAU%2FZZULdCDKsYDY5kYu7H8r6nxI3nR2kRnTLPU%2B7JBLYvHQcJKuPXRind9Ohzuv3dZQaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA6UlgNM%3D","type":"竖版视频","spend":4.18,"imp":61,"cpm":68.52,"click":1,"ctr":"1.64%","cpc":4.18,"conv":1,"cpa":4.18,"cvr":"100.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-5.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIG2MlTwxqm06GBLH8AvNWtfxElU21kBa2uxWlwuNfoLDcO7PhiK3NuTsxhMNCDyv1CInt9Nb5k5LibD%2BB2AWU9QByDikK38pfYidgFRrcaNDjFLpm%2FVeli5AUFAzrb1Ucn8W2MbDvoDz4xd3KvULf9l8waSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAybVTNs%3D","type":"竖版视频","spend":4.02,"imp":138,"cpm":29.13,"click":2,"ctr":"1.45%","cpc":2.01,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"小敏","name":"0710引导-小敏-4.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnIA1ZhGkeSi0zUI5q8IShseq7orYADPiE%2F2J4LvV7AHchewyBz%2Fd81ZAMPilc4Tv8hFGqlJcVH9uyzoIupwNu9Mcnnapl78id2JLMO2qVYim8VA0IpafnG50RHvXfJxQOdtPANc%2FvlGCKdbDWbY4HSXBEwaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBAx1azl4%3D","type":"竖版视频","spend":3.59,"imp":135,"cpm":26.59,"click":8,"ctr":"5.93%","cpc":0.45,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0713-引导-嘉丽-7.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnI0mCfu2RrzKr8xXHLn4Mw%2FbhKgJfD9QkpxwzVOvIaUNAfBitkE3yysoj1cUYycuRW%2FR0fMCxbRrB7%2FwmULwX6jx3Bld5UWJsHrY4s%2BkdIzCHfph7W1VcnTKwIMu%2FuRrmrtcIxEhFHbvx2tP4V80M8IcuwaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2BYq7HM%3D","type":"竖版视频","spend":3.41,"imp":78,"cpm":43.72,"click":6,"ctr":"7.69%","cpc":0.57,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"嘉丽","name":"0710-引导-嘉丽-2.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnK2Zv%2BQQVao1P3XHryb0vHAUcRhzmN26KOtNYK%2FNYtp0bCdzYj7euzcFj%2FauLwm1NSGVdTGiuSDySgp4cPZJXscBm2VyuBzLlHNmkGmwpols6RYYp2imwdFleM7FwYMHP2TlnCUe8nk%2FtkIFSU8iqECVQcaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA7noJCw%3D","type":"横版视频","spend":3.09,"imp":87,"cpm":35.52,"click":3,"ctr":"3.45%","cpc":1.03,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"小敏","name":"0710引导-小敏-5.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnKWQBkBz5fTiv2Iwl%2Be2iTeyWGNqihkE9TrkDBw9e%2Bcb%2Fo87aEgAR7GAGMEgbd1H8YriGY6YrvuobpMkeE8GvPDRED0Uej4d%2BVUajSc4jSPE138xFuNvvVEXWXUAYuScibstXkj8aW2%2BMRTxDJbS1NR1zoaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA%2B0j%2FX8%3D","type":"竖版视频","spend":2.39,"imp":88,"cpm":27.16,"click":4,"ctr":"4.55%","cpc":0.6,"conv":0,"cpa":0.0,"cvr":"0.00%"},{"editor":"小敏","name":"0710引导-小敏-2.mp4","url":"https://ad.oceanengine.com/material_center/outer/video_player?token=CnL8pz5%2Fm%2FU84psYT8qrDeX3FFpNN%2B48B6Z7Ut3%2BH9xgUJeQJf4s5oInqEOM8g1Kow0E4QeUY1iFaeIfcoAUw6Kar3OE9uM8zpGB2RyP7J9ZupB7vjsesu2OwRTvW%2B0DnebauPN8pvXnbsZfmFZlQjMAhxcaSwo8AAAAAAAAAAAAAFCqow%2BWYWPt9Yug8gUzSmbClCx8k2XrLSvi7O4n%2FOKm4%2FbEWeaDeQjwYxyAFS38F%2FdHENf7lg4Yvfeq7g4gASIBA81QA1I%3D","type":"竖版视频","spend":1.56,"imp":60,"cpm":26.0,"click":3,"ctr":"5.00%","cpc":0.52,"conv":0,"cpa":0.0,"cvr":"0.00%"}];
-
-
-// aggregate by editor
 const editorMap={};
 RAW.forEach(r=>{
   if(!editorMap[r.editor]) editorMap[r.editor]={spend:0,imp:0,click:0,conv:0,count:0,color:''};
   const e=editorMap[r.editor];
-  e.spend+=r.spend; e.imp+=r.imp; e.click+=r.click; e.conv+=r.conv; e.count++;
+  e.spend+=r.spend;e.imp+=r.imp;e.click+=r.click;e.conv+=r.conv;e.count++;
 });
 const editors=Object.keys(editorMap).sort((a,b)=>editorMap[b].spend-editorMap[a].spend);
-editors.forEach((e,i)=>{ editorMap[e].color=COLORS[i%COLORS.length]; });
-
-const labels=editors;
-const spends=editors.map(e=>+editorMap[e].spend.toFixed(0));
-const ctrs=editors.map(e=>editorMap[e].imp?+(editorMap[e].click/editorMap[e].imp*100).toFixed(2):0);
-const cpas=editors.map(e=>editorMap[e].conv?+(editorMap[e].spend/editorMap[e].conv).toFixed(2):0);
+editors.forEach((e,i)=>{editorMap[e].color=COLORS[i%COLORS.length];});
 const bgColors=editors.map(e=>editorMap[e].color);
-
-const barOpts=(label,data,color,fmt)=>({
+const barOpts=(label,data,fmt)=>({
   type:'bar',
-  data:{labels,datasets:[{label,data,backgroundColor:bgColors,borderRadius:6,borderSkipped:false}]},
+  data:{labels:editors,datasets:[{label,data,backgroundColor:bgColors,borderRadius:6,borderSkipped:false}]},
   options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt?fmt(c.raw):c.raw}}},
-    scales:{x:{grid:{display:false},ticks:{color:'#5E6E8A',font:{size:11}}},
-      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5E6E8A',font:{size:11}}}}}
+    scales:{x:{grid:{display:false},ticks:{color:'#6B7A99',font:{size:11}}},
+      y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#6B7A99',font:{size:11}}}}}
 });
-
-new Chart(document.getElementById('spendChart'),barOpts('消耗',spends,null,v=>'¥'+v.toLocaleString()));
-new Chart(document.getElementById('ctrChart'),barOpts('CTR',ctrs,null,v=>v+'%'));
-new Chart(document.getElementById('cpaChart'),barOpts('CPA',cpas,null,v=>v?'¥'+v:'—'));
-
-// funnel cards
+new Chart(document.getElementById('spendChart'),barOpts('消耗',editors.map(e=>+editorMap[e].spend.toFixed(0)),v=>'¥'+v.toLocaleString()));
+new Chart(document.getElementById('ctrChart'),barOpts('CTR',editors.map(e=>editorMap[e].imp?+(editorMap[e].click/editorMap[e].imp*100).toFixed(2):0),v=>v+'%'));
+new Chart(document.getElementById('cpaChart'),barOpts('CPA',editors.map(e=>editorMap[e].conv?+(editorMap[e].spend/editorMap[e].conv).toFixed(2):0),v=>v?'¥'+v:'—'));
 const funnelRow=document.getElementById('funnelRow');
 editors.forEach((e,i)=>{
   const d=editorMap[e];
@@ -217,8 +171,7 @@ editors.forEach((e,i)=>{
   const cvr=d.click?(d.conv/d.click*100).toFixed(2):0;
   const ctrPct=d.imp?Math.min(100,d.click/d.imp*100):0;
   const cvrPct=d.click?Math.min(100,d.conv/d.click*100):0;
-  funnelRow.innerHTML+=`
-  <div class="funnel-card">
+  funnelRow.innerHTML+=`<div class="funnel-card">
     <div class="funnel-name" style="color:${d.color}">${e}</div>
     <div class="funnel-step">
       <div class="funnel-step-label"><span>展示</span><span>${d.imp.toLocaleString()}</span></div>
@@ -240,33 +193,28 @@ editors.forEach((e,i)=>{
     </div>
   </div>`;
 });
-
-// filter buttons
 const filterRow=document.getElementById('filterRow');
 editors.forEach(e=>{
   const btn=document.createElement('button');
-  btn.className='pf-btn'; btn.textContent=e;
+  btn.className='pf-btn';btn.textContent=e;
   btn.onclick=()=>filterTable(btn,e);
   filterRow.appendChild(btn);
 });
-
-// table
+let sortKey='spend',sortDir='desc',activeFilter='all';
+function sortVal(r,key){
+  if(key==='ctr_n') return r.imp?r.click/r.imp:0;
+  if(key==='cvr_n') return r.click?r.conv/r.click:0;
+  return r[key]||0;
+}
 function renderTable(filter){
   const tbody=document.getElementById('tableBody');
   let rows=filter==='all'?[...RAW]:RAW.filter(r=>r.editor===filter);
-  // apply sort
-  if(sortKey){
-    rows.sort((a,b)=>{
-      const va=sortVal(a,sortKey), vb=sortVal(b,sortKey);
-      return sortDir==='asc'?va-vb:vb-va;
-    });
-  }
+  if(sortKey) rows.sort((a,b)=>sortDir==='asc'?sortVal(a,sortKey)-sortVal(b,sortKey):sortVal(b,sortKey)-sortVal(a,sortKey));
   tbody.innerHTML=rows.map(r=>{
     const typeClass=r.type.includes('竖')?'type-v':'type-h';
-    const previewHtml=r.url?`<a class="preview-link" href="${r.url}" target="_blank">▶ 预览</a>`:'—';
-    const cpaDisplay=r.conv?`¥${r.cpa.toFixed(2)}`:'—';
-    return`<tr data-editor="${r.editor}">
-      <td><span class="pill" style="background:${editorMap[r.editor].color}22;color:${editorMap[r.editor].color}">${r.editor}</span></td>
+    const preview=r.url?`<a class="preview-link" href="${r.url}" target="_blank">▶ 预览</a>`:'—';
+    const cpaD=r.conv?`¥${r.cpa.toFixed(2)}`:'—';
+    return`<tr><td><span class="pill" style="background:${editorMap[r.editor].color}22;color:${editorMap[r.editor].color}">${r.editor}</span></td>
       <td><div class="mat-name" title="${r.name}">${r.name}</div></td>
       <td><span class="type-badge ${typeClass}">${r.type}</span></td>
       <td class="num">¥${r.spend.toLocaleString()}</td>
@@ -275,40 +223,22 @@ function renderTable(filter){
       <td class="num">${r.click.toLocaleString()}</td>
       <td class="num">${r.ctr}</td>
       <td class="num">${r.conv}</td>
-      <td class="num">${cpaDisplay}</td>
+      <td class="num">${cpaD}</td>
       <td class="num">${r.cvr}</td>
-      <td>${previewHtml}</td>
-    </tr>`;
+      <td>${preview}</td></tr>`;
   }).join('');
 }
-
-let sortKey='spend', sortDir='desc', activeFilter='all';
-
-function sortVal(r,key){
-  if(key==='ctr_n') return r.imp?r.click/r.imp:0;
-  if(key==='cvr_n') return r.click?r.conv/r.click:0;
-  return r[key]||0;
-}
-
+renderTable('all');
+document.querySelector('th[data-key="spend"]').classList.add('desc');
 function sortTable(key){
   if(sortKey===key) sortDir=sortDir==='desc'?'asc':'desc';
-  else{ sortKey=key; sortDir='desc'; }
-  document.querySelectorAll('th.sortable').forEach(th=>{
-    th.classList.remove('asc','desc');
-    if(th.dataset.key===sortKey) th.classList.add(sortDir);
-  });
+  else{sortKey=key;sortDir='desc';}
+  document.querySelectorAll('th.sortable').forEach(th=>{th.classList.remove('asc','desc');if(th.dataset.key===sortKey)th.classList.add(sortDir);});
   renderTable(activeFilter);
 }
-
-renderTable('all');
-// set initial sort indicator
-document.querySelector('th[data-key="spend"]').classList.add('desc');
-
 function filterTable(btn,val){
   document.querySelectorAll('.pf-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  activeFilter=val;
-  renderTable(val);
+  btn.classList.add('active');activeFilter=val;renderTable(val);
 }
 </script>
 </body>
