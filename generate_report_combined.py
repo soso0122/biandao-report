@@ -614,16 +614,13 @@ tbody tr:last-child td{{border-bottom:none}}
 
 <!-- TABS -->
 <div class="tab-nav">
-  <button class="tab-btn tab-hist active" onclick="switchTab('hist')">
-    历史汇总 <span class="tab-count">{len(all_dirs)} 人</span>
-  </button>
-  <button class="tab-btn tab-week" onclick="switchTab('week')">
+  <button class="tab-btn tab-week active" onclick="switchTab('week')">
     本周周报 <span class="tab-count">{len(week_dirs)} 人</span>
   </button>
 </div>
 
 <!-- ═══ TAB: HIST ═══ -->
-<div class="tab-pane active" id="tab-hist">
+<div class="tab-pane" id="tab-hist">
 <div class="pane-layout">
   <!-- Sidebar -->
   <div class="sidebar">
@@ -681,7 +678,7 @@ tbody tr:last-child td{{border-bottom:none}}
 </div>
 
 <!-- ═══ TAB: WEEK ═══ -->
-<div class="tab-pane" id="tab-week">
+<div class="tab-pane active" id="tab-week">
 <div class="pane-layout">
   <!-- Sidebar -->
   <div class="sidebar">
