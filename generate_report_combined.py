@@ -602,10 +602,6 @@ tbody tr:last-child td{{border-bottom:none}}
 
 <!-- KPI ROW -->
 <div class="kpi-row">
-  <div class="kpi-card kh"><div class="kpi-tag">历史</div><div class="kpi-val">¥{ht_c:,.0f}</div><div class="kpi-lbl">总消耗</div></div>
-  <div class="kpi-card kh"><div class="kpi-tag">历史</div><div class="kpi-val">¥{ht_g:,.0f}</div><div class="kpi-lbl">总GMV</div></div>
-  <div class="kpi-card kh"><div class="kpi-tag">历史</div><div class="kpi-val">{ht_o}</div><div class="kpi-lbl">总订单</div></div>
-  <div class="kpi-card kh"><div class="kpi-tag">历史</div><div class="kpi-val">{ht_m}</div><div class="kpi-lbl">有消耗素材</div></div>
   <div class="kpi-card kw"><div class="kpi-tag">本周</div><div class="kpi-val">¥{wk_c:,.0f}</div><div class="kpi-lbl">总消耗</div></div>
   <div class="kpi-card kw"><div class="kpi-tag">本周</div><div class="kpi-val">¥{wk_g:,.0f}</div><div class="kpi-lbl">总GMV</div></div>
   <div class="kpi-card kw"><div class="kpi-tag">本周</div><div class="kpi-val">{wk_o}</div><div class="kpi-lbl">总订单</div></div>
