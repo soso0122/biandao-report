@@ -985,7 +985,7 @@ if __name__ == '__main__':
 
     upload_rows = read_upload(os.path.join(DATA, '上传数据_增强版_0716.csv'))
     hist_rows   = read_delivery(os.path.join(DATA, '投后数据-编导-历史.csv'), week_only=False)
-    week_rows   = read_delivery(os.path.join(DATA, '【周报】投后素材看板数据0716.csv'), week_only=False)
+    week_rows   = read_delivery(os.path.join(DATA, '【周报】投后素材看板数据-0716-2.csv'), week_only=False)
 
     print(f'上传数据: {len(upload_rows)} 条')
     print(f'历史投放: {len(hist_rows)} 条（筛选后）')
