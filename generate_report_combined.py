@@ -152,8 +152,15 @@ def analyze(upload_rows, delivery_rows, week_start=None):
         d_stats[d]['均投放天数'] = sum(days_l) / len(days_l) if days_l else 0
 
     for d in d_stats:
+        # 全局 top3（按单量，不分产品）
         d_stats[d]['Top3'] = sorted(d_stats[d]['素材详情'], key=lambda x: x['总单量'], reverse=True)[:3]
         d_stats[d]['产品成单'] = dict(d_product[d])
+        # 按产品分别 top3
+        prod_top3 = {}
+        for prod_tag in ['9元李博', '199双科']:
+            items = [m for m in d_stats[d]['素材详情'] if tag_prod(m.get('产品','')) == prod_tag and m['总单量'] > 0]
+            prod_top3[prod_tag] = sorted(items, key=lambda x: x['总单量'], reverse=True)[:3]
+        d_stats[d]['产品Top3'] = prod_top3
 
     # ── 全局素材
     gmat = {}
@@ -243,6 +250,15 @@ def generate_html(
                              (f' · 首消 {m["首消"]}' if m.get('首消') else '')),
                     'url': m.get('链接', '')
                 })
+            prod_top3_data = {}
+            for ptag, items in s.get('产品Top3', {}).items():
+                prod_top3_data[ptag] = [
+                    {'name': m['素材名称'],
+                     'meta': (f'{m["总单量"]}单 · GMV ¥{m["总GMV"]:,.0f}' +
+                              (f' · 首消 {m["首消"]}' if m.get('首消') else '')),
+                     'url': m.get('链接', '')}
+                    for m in items
+                ]
             result[d] = {
                 'consume': _fmt(tc), 'gmv': _fmt(tg), 'orders': str(to_cnt),
                 'mat': f'{s.get("有消耗",0)}/{s.get("有成交",0)}',
@@ -250,7 +266,7 @@ def generate_html(
                 'upload': f'上传 {us.get("唯一素材数",0)}件' if us else '',
                 'newmat': f'新素材 {us.get("新素材数",0)}' if us else '',
                 'rejected': f'拒审二传 {us.get("拒审后二次上传数",0)}' if us else '',
-                'products': products, 'top3': top3_data,
+                'products': products, 'top3': top3_data, 'prodTop3': prod_top3_data,
                 'detailKey': f'{d}___{tag}',
             }
         return result
@@ -821,19 +837,25 @@ function renderDirPanel(tabId, dirName) {{
     }});
     html += '</div>';
   }}
-  // Top 3
-  if (data.top3 && data.top3.length) {{
-    html += '<div class="dp-section-title">成交 TOP 3</div>';
-    html += '<div class="dp-top3">';
-    const rankColors = ['#1E40AF','#0D9488','#D97706'];
-    data.top3.forEach((m, i) => {{
-      const lk = m.url ? '<a href="' + m.url + '" target="_blank" class="mat-link" style="margin-left:8px">▶ 预览</a>' : '';
-      html += '<div class="dp-top-item">';
-      html += '<div class="dp-top-rank" style="background:' + rankColors[i] + '">' + (i+1) + '</div>';
-      html += '<div class="dp-top-body"><div class="dp-top-name" title="' + m.name + '">' + m.name + '</div>';
-      html += '<div class="dp-top-meta">' + m.meta + lk + '</div></div></div>';
+  // Top 3 by product
+  const rankColors = ['#1E40AF','#0D9488','#D97706'];
+  const prodLabels = {{'9元李博': '9元李博', '199双科': '199双科'}};
+  if (data.prodTop3) {{
+    const prodOrder = ['9元李博', '199双科'];
+    prodOrder.forEach(ptag => {{
+      const items = data.prodTop3[ptag];
+      if (!items || !items.length) return;
+      html += '<div class="dp-section-title">成交 TOP 3 · ' + prodLabels[ptag] + '</div>';
+      html += '<div class="dp-top3">';
+      items.forEach((m, i) => {{
+        const lk = m.url ? '<a href="' + m.url + '" target="_blank" class="mat-link" style="margin-left:8px">▶ 预览</a>' : '';
+        html += '<div class="dp-top-item">';
+        html += '<div class="dp-top-rank" style="background:' + rankColors[i] + '">' + (i+1) + '</div>';
+        html += '<div class="dp-top-body"><div class="dp-top-name" title="' + m.name + '">' + m.name + '</div>';
+        html += '<div class="dp-top-meta">' + m.meta + lk + '</div></div></div>';
+      }});
+      html += '</div>';
     }});
-    html += '</div>';
   }}
   // Detail button
   html += '<button class="dp-detail-btn" onclick="showModal(&quot;' + dirName + '&quot;,&quot;' + tabId + '&quot;)">消耗 Top 20 →</button>';
