@@ -902,6 +902,7 @@ window.addEventListener('load', function() {{
   makeBar('hGmvChart',     hDirs, hDirs.map(d => hStats[d].g), '#D97706', '历史GMV');
   makeBar('hOrderChart',   hDirs, hDirs.map(d => hStats[d].o), '#0D9488', '历史订单');
   makeBar('hMatChart',     hDirs, hDirs.map(d => hStats[d].m), '#0D9488', '有消耗素材');
+  initWeekCharts();
 }});
 
 function selectBucket(idx) {{
