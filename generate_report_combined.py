@@ -8,7 +8,7 @@ import csv, json
 from collections import defaultdict
 from datetime import datetime
 
-WEEK_START = '2026/7/10'   # 近7天起始日期
+WEEK_START = '2026/7/17'   # 近7天起始日期
 HIST_START = '2026/5/1'   # 历史数据起始（首次消耗时间 >= 此日期）
 
 def tag_prod(prod_name):
@@ -595,7 +595,6 @@ tbody tr:last-child td{{border-bottom:none}}
     <div class="topbar-sub">DIRECTOR · MATERIAL · PERFORMANCE</div>
   </div>
   <div class="topbar-badges">
-    <span class="tb-badge">历史消耗 {hist_date_range[0] or '2026/5/1'} – {hist_date_range[1] or '至今'}</span>
     <span class="tb-badge sky">本周周报 {WEEK_START} 起</span>
   </div>
 </div>
@@ -976,9 +975,9 @@ if __name__ == '__main__':
     REPORTS = os.path.join(BASE, 'reports')
     os.makedirs(REPORTS, exist_ok=True)
 
-    upload_rows = read_upload(os.path.join(DATA, '上传数据_增强版_0716.csv'))
+    upload_rows = read_upload(os.path.join(DATA, '上传数据_增强版_0724.csv'))
     hist_rows   = read_delivery(os.path.join(DATA, '投后数据-编导-历史.csv'), week_only=False)
-    week_rows   = read_delivery(os.path.join(DATA, '【周报】投后素材看板数据-0716-2.csv'), week_only=False)
+    week_rows   = read_delivery(os.path.join(DATA, '【周报】投后素材看板数据-编导-0724.csv'), week_only=False)
 
     print(f'上传数据: {len(upload_rows)} 条')
     print(f'历史投放: {len(hist_rows)} 条（筛选后）')
