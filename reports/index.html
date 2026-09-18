@@ -287,6 +287,18 @@
     .card:nth-child(1) { animation: fadeUp 0.5s 0.12s ease both; }
     .card:nth-child(2) { animation: fadeUp 0.5s 0.22s ease both; }
     .card:nth-child(3) { animation: fadeUp 0.5s 0.32s ease both; }
+    .card:nth-child(4) { animation: fadeUp 0.5s 0.42s ease both; }
+    .card:nth-child(5) { animation: fadeUp 0.5s 0.52s ease both; }
+
+    .card[data-color="blue"] .accent-bar { background: linear-gradient(90deg, #3b9eff, #7dd3fc); }
+    .card[data-color="blue"]:hover::before { background: linear-gradient(135deg, rgba(59,158,255,0.06), transparent); }
+    .card[data-color="blue"] .card-icon { background: rgba(59,158,255,0.12); }
+    .card[data-color="blue"] .tag { background: rgba(59,158,255,0.12); color: #7dd3fc; }
+
+    .card[data-color="red"] .accent-bar { background: linear-gradient(90deg, #e84545, #ff8a8a); }
+    .card[data-color="red"]:hover::before { background: linear-gradient(135deg, rgba(232,69,69,0.06), transparent); }
+    .card[data-color="red"] .card-icon { background: rgba(232,69,69,0.12); }
+    .card[data-color="red"] .tag { background: rgba(232,69,69,0.12); color: #ff8a8a; }
 
     @media (max-width: 600px) {
       .wrapper { padding: 48px 20px 80px; }
@@ -305,24 +317,6 @@
     </header>
 
     <div class="cards">
-
-      <a class="card" data-color="green"
-         href="https://soso0122.github.io/biandao-report/reports/%E5%BC%95%E5%AF%BC%E7%B4%A0%E6%9D%90%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A_0716_v2.html"
-         target="_blank" rel="noopener">
-        <div class="accent-bar"></div>
-        <div class="card-icon">🎬</div>
-        <div class="card-body">
-          <div class="card-meta">
-            <span class="tag">引导素材</span>
-            <span class="card-date">07 / 16</span>
-          </div>
-          <div class="card-title">引导素材分析报告</div>
-          <div class="card-desc">引导素材投放数据，含 CPM、CTR、消耗等核心指标可视化。</div>
-        </div>
-        <div class="card-arrow">
-          <svg viewBox="0 0 14 14"><path d="M2 12L12 2M12 2H5M12 2v7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </a>
 
       <a class="card" data-color="purple"
          href="https://soso0122.github.io/biandao-report/"
@@ -358,11 +352,29 @@
         </div>
       </a>
 
+      <a class="card" data-color="blue"
+         href="https://soso0122.github.io/daily-guide-report/"
+         target="_blank" rel="noopener">
+        <div class="accent-bar"></div>
+        <div class="card-icon">📅</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="tag">引导加微</span>
+          </div>
+          <div class="card-title">引导加微素材分析</div>
+          <div class="card-desc">引导加微素材投放数据，含消耗、加微成本、转化漏斗与素材明细排行；日期支持多选。</div>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 14 14"><path d="M2 12L12 2M12 2H5M12 2v7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </a>
+
+
     </div>
 
     <footer class="page-footer">
       <p><span class="pulse-dot"></span>Eagle Data · Reports Hub</p>
-      <p>共 3 份报告 · 2026.07.16</p>
+      <p>共 3 份报告 · 2026.09.18</p>
     </footer>
   </div>
 </body>
