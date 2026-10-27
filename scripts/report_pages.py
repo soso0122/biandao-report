@@ -2710,12 +2710,56 @@ document.addEventListener('DOMContentLoaded', function(){
     for _lbl, _rows in all_rows_by_date.items():
         _keep = [{**r, 'video_url': ''} for r in _rows if (r.get('spend') or 0) > 0]
         _slim[_lbl] = _keep
+    # ---- 过审数据（编导卡过审率+过审/未过审名单）----
+    def build_audit_by_date(days_labels):
+        import csv as _csv
+        _data_dir = Path(__file__).parent.parent / 'data'
+        out = {}
+        for label in days_labels:
+            mmdd = label.replace('/', '')
+            fpath = _data_dir / f'{mmdd}投放过审.csv'
+            if not fpath.exists():
+                continue
+            person_stats = defaultdict(lambda: {'pass': [], 'fail': []})
+            person_merged = {}
+            with open(fpath, encoding='utf-8-sig') as fh:
+                for row in _csv.DictReader(fh):
+                    name = (row.get('视频名称') or '').strip()
+                    if not name:
+                        continue
+                    video_url = (row.get('视频链接', '') or '').strip()
+                    if len(video_url) < 10:
+                        continue
+                    passed = (row.get('审核建议') or '').strip() == '审核通过'
+                    from generate_report_daily_guide import EDITORS, CUTTERS, extract_person
+                    p = extract_person(name)
+                    if p == '其他':
+                        continue
+                    bn = gdg.base_material_name(name)
+                    rec = person_merged.get(bn)
+                    if rec is None:
+                        person_merged[bn] = {'person': p, 'name': name, 'passed': passed}
+                    else:
+                        if passed and not rec['passed']:
+                            rec['passed'] = True
+                            rec['name'] = name
+            for bn, rec in person_merged.items():
+                k = 'pass' if rec['passed'] else 'fail'
+                person_stats[rec['person']][k].append(rec['name'])
+            if person_stats:
+                out[label] = {'person_audit': {p: {'pass': d['pass'], 'fail': d['fail']}
+                                               for p, d in person_stats.items()},
+                              'source_file': fpath.name}
+        return out
+
+    audit_by_date = build_audit_by_date([l for l, _ in detail_days])
+    audit_data = audit_by_date.get(latest_label, {})
     detail_data = common + (
         f"const ALL_ROWS_BY_DATE = {json.dumps(_slim, ensure_ascii=False)};\n"
         f"const ALL_ROWS = {json.dumps(_slim.get(latest_label, []), ensure_ascii=False)};\n"
         f"const ID_URL_MAP = {json.dumps(_id_url, ensure_ascii=False)};\n"
-        f"const AUDIT_BY_DATE = {{}};\n"
-        f"const AUDIT_DATA = {{}};\n"
+        f"const AUDIT_BY_DATE = {json.dumps(audit_by_date, ensure_ascii=False)};\n"
+        f"const AUDIT_DATA = {json.dumps(audit_data, ensure_ascii=False)};\n"
     )
     detail_body = f'<div class="page">{person_html}{filter_html}{table_html}</div>{modal_html}'
     # renderTable 账户筛选：包含该账户即显示

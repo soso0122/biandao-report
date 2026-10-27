@@ -3893,7 +3893,7 @@ function mergeAuditData(dates) {{
     }}
   }});
   const pAudit = pStats;
-  if (!Object.keys(vStats).length && !Object.keys(tStats).length) return null;
+  if (!Object.keys(vStats).length && !Object.keys(tStats).length && !Object.keys(pStats).length) return null;
 
   const vOrder = ['0改','1改','2改','3改','代理素材'];
   const v_labels=[], v_pass=[], v_fail=[], v_rate=[];
