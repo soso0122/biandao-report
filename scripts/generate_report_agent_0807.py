@@ -18,14 +18,14 @@ from datetime import datetime
 
 # ── 配置 ────────────────────────────────────────────────
 DATE = sys.argv[1] if len(sys.argv) > 1 else '0807'
-WEEK_START = datetime(2026, 8, 1)   # 本周新起量判断起点
-WEEK_END   = datetime(2026, 8, 7)   # 本周新起量判断终点
+WEEK_START = datetime(2026, 10, 17)  # 本次周期新起量判断起点
+WEEK_END   = datetime(2026, 10, 23)  # 本次周期新起量判断终点
 
 DATA_FILE  = f'data/【周报】投后素材看板数据-代理-{DATE}.csv'
 OUT_FILE   = f'reports/代理商数据分析报告_{DATE}.html'
 
 # ── 双周对比：自动推算上一期文件 ─────────────────────────────
-_WEEK_MAP = {'0911': '0904', '0904': '0828', '0828': '0821', '0821': '0814', '0814': '0807'}
+_WEEK_MAP = {'1023': '1016', '1016': '1009', '1009': '0928', '0928': '0918', '0918': '0911', '0911': '0904', '0904': '0828', '0828': '0821', '0821': '0814', '0814': '0807'}
 PREV_DATE  = _WEEK_MAP.get(DATE, '')
 PREV_FILE  = f'data/【周报】投后素材看板数据-代理-{PREV_DATE}.csv' if PREV_DATE else ''
 
@@ -33,6 +33,8 @@ AGENT_NORM = {
     '成都发条荔枝文化传媒有限公司': '荔枝',
     '申坤互动（北京）信息技术有限公司': '申坤',
     '十人（北京）传媒广告有限公司': '十人',
+    '天津掌视广通信息技术有限公司': '掌视',
+    '北京有范儿科技有限公司': '有范',
 }
 
 AVATAR_MAP = {
@@ -43,15 +45,26 @@ AVATAR_MAP = {
     '有范': 'av-4',
     '启航': 'av-5',
     '玄武': 'av-4',
+    '东信': 'av-6',
+    '掌视': 'av-7',
 }
 
-AGENT_ORDER = ['荔枝', '自投放', '申坤', '十人', '有范', '启航', '玄武']
+AGENT_ORDER = ['荔枝', '自投放', '申坤', '十人', '有范', '启航', '玄武', '东信', '掌视']
 
 # ── 产品标签（供对比图 filter 用）──────────────────────────
 PROD_LABELS = {
     '9元高中物理李博': '9元李博',
     '199元高中双科提分课': '199双科',
 }
+
+def _order_col(row):
+    """成交单量列名兼容：1009 前为「成交单量」，1016 起变成带腾讯渠道说明的长列名"""
+    if '成交单量' in row:
+        return '成交单量'
+    for k in row.keys():
+        if k.startswith('成交单量'):
+            return k
+    return ''
 
 # ── 产品分类 ─────────────────────────────────────────────
 def tag_prod(product_name: str) -> str:
@@ -116,6 +129,11 @@ def analyze(rows):
             continue
 
         mat  = row.get('素材名称', '').strip()
+        # 名称为空时用平台素材ID兜底显示
+        if not mat:
+            mat_id = row.get('平台素材ID', '').strip()
+            if mat_id and mat_id != '-':
+                mat = f'素材ID-{mat_id}'
         link = row.get('素材预览', '').strip()
         raw_prod = row.get('投放产品', '').strip()
         prod_tag = tag_prod(raw_prod)
@@ -140,7 +158,7 @@ def analyze(rows):
         try:
             consume = float(row.get('消耗', 0) or 0)
             gmv     = float(row.get('成交GMV', 0) or 0)
-            orders  = int(float(row.get('成交单量', 0) or 0))
+            orders  = int(float(row.get(_order_col(row), 0) or 0))
             ctr_val = float(str(row.get('CTR', 0) or 0).replace('%','').replace(',','') or 0)
             cvr_val = float(str(row.get('CVR', 0) or 0).replace('%','').replace(',','') or 0)
         except (ValueError, TypeError):
@@ -668,7 +686,7 @@ tbody tr:last-child td{border-bottom:none}tbody tr:hover td{background:var(--sur
 .modal-close{position:absolute;top:20px;right:22px;width:28px;height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);font-size:14px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:all .15s}
 .modal-close:hover{background:var(--border);color:var(--ink)}.tbl-link{color:var(--blue-l);text-decoration:none;font-size:13px;opacity:.7}.tbl-link:hover{opacity:1}
 .footer{text-align:center;margin-top:48px;font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--dim)}
-.av-0{background:linear-gradient(135deg,#B45309,#FCD34D)}.av-1{background:linear-gradient(135deg,#BE185D,#F472B6)}.av-2{background:linear-gradient(135deg,#1D4ED8,#60A5FA)}.av-3{background:linear-gradient(135deg,#065F46,#34D399)}.av-4{background:linear-gradient(135deg,#7C3AED,#A78BFA)}.av-5{background:linear-gradient(135deg,#0E7490,#22D3EE)}"""
+.av-0{background:linear-gradient(135deg,#B45309,#FCD34D)}.av-1{background:linear-gradient(135deg,#BE185D,#F472B6)}.av-2{background:linear-gradient(135deg,#1D4ED8,#60A5FA)}.av-3{background:linear-gradient(135deg,#065F46,#34D399)}.av-4{background:linear-gradient(135deg,#7C3AED,#A78BFA)}.av-5{background:linear-gradient(135deg,#0E7490,#22D3EE)}.av-6{background:linear-gradient(135deg,#B91C1C,#FB923C)}.av-7{background:linear-gradient(135deg,#334155,#94A3B8)}"""
 
 JS_FUNCS = """
 let _lcChartInited = false;
@@ -1222,13 +1240,17 @@ def main():
         _ps = defaultdict(lambda: {'spend':0,'ctr_sum':0,'cvr_sum':0,'orders':0,'n':0,'imp':0,'click':0,'conv':0})
         for r in prev_rows:
             mat = r.get('素材名称','').strip()
+            if not mat:
+                mat_id = r.get('平台素材ID', '').strip()
+                if mat_id and mat_id != '-':
+                    mat = f'素材ID-{mat_id}'
             if not mat: continue
             def _pn(s):
                 try: return float(str(s).replace(',','').replace('%','') or 0)
                 except: return 0.0
             sp = _pn(r.get('消耗',0))
             _ps[mat]['spend']  += sp
-            _ps[mat]['orders'] += _pn(r.get('成交单量',0))
+            _ps[mat]['orders'] += _pn(r.get(_order_col(r),0))
             if sp > 0:
                 cpm = _pn(r.get('CPM（千次曝光成本）',0))
                 ctr = _pn(r.get('CTR',0))

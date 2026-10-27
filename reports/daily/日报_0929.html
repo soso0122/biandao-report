@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>每日素材数据 · 09月29日</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F8FAFC;--card:#fff;--border:#DBEAFE;
+  --primary:#1E40AF;--primary-light:#3B82F6;
+  --accent:#D97706;--accent-bg:#FFFBEB;
+  --text:#1E3A8A;--text-secondary:#64748B;--text-muted:#94A3B8;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --radius:10px;
+  font-family:system-ui,-apple-system,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.header{
+  background:linear-gradient(135deg,#1E3A8A 0%,#1E40AF 60%,#2563EB 100%);
+  padding:20px 28px;display:flex;align-items:center;justify-content:space-between;
+}
+.header h1{color:#fff;font-size:18px;font-weight:700}
+.header p{color:rgba(255,255,255,.65);font-size:12px;margin-top:2px}
+.header-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  color:#fff;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.page{max-width:1300px;margin:0 auto;padding:24px}
+.module{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:24px;box-shadow:var(--shadow);overflow:hidden}
+.section-header{padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;background:#F1F5F9}
+.section-header h2{font-size:15px;font-weight:700;color:var(--primary);
+  display:flex;align-items:center;gap:8px}
+.section-header h2::before{content:'';display:inline-block;width:3px;height:16px;
+  background:var(--primary-light);border-radius:2px}
+.module-body{padding:20px}
+.kpi-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;flex:1 1 110px;min-width:0;max-width:200px}
+.kpi-card.accent{background:var(--accent-bg);border-color:#FCD34D}
+.kpi-label{font-size:10px;color:var(--text-secondary);font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;white-space:nowrap}
+.kpi-value{font-size:17px;font-weight:700;color:var(--primary);font-family:monospace;
+  word-break:break-all;line-height:1.2}
+.kpi-card.accent .kpi-value{color:var(--accent)}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.table-label{font-size:12px;font-weight:600;color:var(--text-secondary);
+  margin:16px 0 8px;text-transform:uppercase;letter-spacing:.4px}
+.table-wrap{overflow-x:auto;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;
+  color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px;
+  background:#F1F5F9;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid #F1F5F9}
+tbody tr:hover{background:#F8FAFC}
+tbody td{padding:8px 10px;vertical-align:middle}
+.num{font-family:monospace;font-size:12px}
+.hi{color:var(--accent);font-weight:700}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;
+  border-radius:12px;font-size:11px;font-weight:600}
+.mat-name{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.cell-main{font-family:monospace;font-size:13px;font-weight:600;color:var(--primary)}
+.cell-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.cell-cost{font-family:monospace;font-size:12px;font-weight:600;color:var(--accent);margin-top:2px}
+.kpi-delta{font-size:11px;font-weight:600;margin-top:3px}
+.sub-row td{background:#F8FAFC;border-left:3px solid var(--border);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
+.no-data{padding:24px;text-align:center;color:var(--text-muted);font-size:13px}
+.btn-preview{
+  display:inline-block;padding:3px 10px;border-radius:6px;
+  border:1.5px solid var(--border);background:var(--bg);
+  color:var(--primary-light);font-size:11px;font-weight:500;
+  text-decoration:none;white-space:nowrap;transition:all .15s;
+}
+.btn-preview:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{color:var(--primary)}
+thead th.sort-asc::after{content:' ↑'}
+thead th.sort-desc::after{content:' ↓'}
+@media(max-width:700px){
+  .kpi-grid{gap:8px}.kpi-card{min-width:100px}
+  .two-col{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>每日素材数据</h1>
+    <p>数据日期：09月29日 · 三大项目汇总</p>
+  </div>
+  <div class="header-badge">09月29日</div>
+</div>
+<div class="page">
+  <div class="module">
+    <div class="section-header"><h2>引导加微</h2></div>
+    <div class="module-body">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+          <div class="kpi-label">总消耗</div>
+          <div class="kpi-value">¥531.37</div>
+          <div class='kpi-sub'>203 条素材</div>
+          <div class="kpi-delta" style="color:#DC2626">-¥841.19</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">总转化</div>
+          <div class="kpi-value">15</div>
+          <div class='kpi-sub'>次</div>
+          <div class="kpi-delta" style="color:#DC2626">-30</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">平均 CPA</div>
+          <div class="kpi-value">¥35.42</div>
+          
+          <div class="kpi-delta" style="color:#059669">+¥4.92</div>
+        </div>
+          <div class="kpi-card accent">
+          <div class="kpi-label">高潜成交</div>
+          <div class="kpi-value">1</div>
+          <div class='kpi-sub'>深度转化</div>
+          <div class="kpi-delta" style="color:#DC2626">-8</div>
+        </div>
+          <div class="kpi-card accent">
+          <div class="kpi-label">深转率</div>
+          <div class="kpi-value">6.67%</div>
+          <div class='kpi-sub'>高潜/转化</div>
+          <div class="kpi-delta" style="color:#DC2626">-13.33%</div>
+        </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>人物</th><th>消耗</th><th>转化</th><th>高潜</th><th>CPA</th><th>在投素材</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><span class="badge" style="background:#f8fafc;color:#64748b">国星</span></td>
+              <td class="num">¥201.41</td>
+              <td class="num">6</td>
+              <td class="num">0</td>
+              <td class="num">¥33.57</td>
+              <td class="num">13</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F8FAFC;color:#94A3B8">其他</span></td>
+              <td class="num">¥193.98</td>
+              <td class="num">4</td>
+              <td class="num">1</td>
+              <td class="num">¥48.50</td>
+              <td class="num">25</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#ECFDF5;color:#10B981">瑞晨</span></td>
+              <td class="num">¥59.75</td>
+              <td class="num">1</td>
+              <td class="num">0</td>
+              <td class="num">¥59.75</td>
+              <td class="num">42</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#FDF2F8;color:#EC4899">雅迪</span></td>
+              <td class="num">¥23.98</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">—</td>
+              <td class="num">37</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F5F3FF;color:#8B5CF6">嘉丽</span></td>
+              <td class="num">¥22.86</td>
+              <td class="num">4</td>
+              <td class="num">0</td>
+              <td class="num">¥5.72</td>
+              <td class="num">25</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#EFF6FF;color:#3B82F6">小敏</span></td>
+              <td class="num">¥11.04</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">—</td>
+              <td class="num">28</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#FFFBEB;color:#F59E0B">浩正</span></td>
+              <td class="num">¥7.39</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">—</td>
+              <td class="num">11</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#FEF2F2;color:#EF4444">魏怡</span></td>
+              <td class="num">¥6.71</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">—</td>
+              <td class="num">17</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F0FDFA;color:#14B8A6">婷玉</span></td>
+              <td class="num">¥4.25</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">—</td>
+              <td class="num">5</td>
+            </tr></tbody>
+          </table>
+        </div>
+        <div class="table-label">Top 素材（消耗排序）</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>人物</th><th>素材名称</th><th>消耗</th><th>转化</th><th>CPA</th><th>高潜 ★</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><span class="badge" style="background:#f8fafc;color:#64748b">国星</span></td>
+              <td class="mat-name" title="0824-图文-引流-国星-2">0824-图文-引流-国星-2</td>
+              <td class="num">¥174.96</td>
+              <td class="num">6</td>
+              <td class="num">¥29.16</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F8FAFC;color:#94A3B8">其他</span></td>
+              <td class="mat-name" title="高中生成绩第一的秘诀！">高中生成绩第一的秘诀！</td>
+              <td class="num">¥111.58</td>
+              <td class="num">3</td>
+              <td class="num">¥37.19</td>
+              <td class="num hi">1</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F8FAFC;color:#94A3B8">其他</span></td>
+              <td class="mat-name" title="微信视频_20260711163659.mp4">微信视频_20260711163659.mp4</td>
+              <td class="num">¥39.34</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#ECFDF5;color:#10B981">瑞晨</span></td>
+              <td class="mat-name" title="0714-瑞晨引导-11.mp4">0714-瑞晨引导-11.mp4</td>
+              <td class="num">¥34.49</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F8FAFC;color:#94A3B8">其他</span></td>
+              <td class="mat-name" title="微信视频_20260711163647.mp4">微信视频_20260711163647.mp4</td>
+              <td class="num">¥31.01</td>
+              <td class="num">1</td>
+              <td class="num">¥31.01</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#F5F3FF;color:#8B5CF6">嘉丽</span></td>
+              <td class="mat-name" title="0710-引导-嘉丽-4.mp4">0710-引导-嘉丽-4.mp4</td>
+              <td class="num">¥11.45</td>
+              <td class="num">3</td>
+              <td class="num">¥3.82</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#f8fafc;color:#64748b">国星</span></td>
+              <td class="mat-name" title="0824-图文-引流-国星-4">0824-图文-引流-国星-4</td>
+              <td class="num">¥6.81</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#ECFDF5;color:#10B981">瑞晨</span></td>
+              <td class="mat-name" title="0824-引流-图文-瑞晨-2">0824-引流-图文-瑞晨-2</td>
+              <td class="num">¥6.06</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#f8fafc;color:#64748b">国星</span></td>
+              <td class="mat-name" title="0824-图文-引流-国星-3">0824-图文-引流-国星-3</td>
+              <td class="num">¥5.38</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num hi">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#f8fafc;color:#64748b">国星</span></td>
+              <td class="mat-name" title="0824-图文-引流-国星-1">0824-图文-引流-国星-1</td>
+              <td class="num">¥4.81</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num hi">—</td>
+            </tr></tbody>
+          </table>
+        </div></div>
+  </div>
+  <div class="module">
+    <div class="section-header"><h2>千川 · 199高中双科</h2></div>
+    <div class="module-body">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+          <div class="kpi-label">总消耗</div>
+          <div class="kpi-value">¥42,479.20</div>
+          <div class='kpi-sub'>403 条素材</div>
+          <div class="kpi-delta" style="color:#059669">+¥4,669.98</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">总 GMV</div>
+          <div class="kpi-value">¥11,026.00</div>
+          
+          <div class="kpi-delta" style="color:#059669">+¥149.00</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">总订单</div>
+          <div class="kpi-value">72</div>
+          
+          <div class="kpi-delta" style="color:#059669">+1</div>
+        </div>
+          <div class="kpi-card accent">
+          <div class="kpi-label">整体 ROI</div>
+          <div class="kpi-value">0.26</div>
+          
+          <div class="kpi-delta" style="color:#DC2626">-0.03%</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">平均 CPA</div>
+          <div class="kpi-value">¥589.99</div>
+          
+          <div class="kpi-delta" style="color:#059669">+¥57.46</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">CTR</div>
+          <div class="kpi-value">0.74%</div>
+          
+          <div class="kpi-delta" style="color:#059669">+0.09%</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">CVR</div>
+          <div class="kpi-value">1.40%</div>
+          
+          <div class="kpi-delta" style="color:#DC2626">-0.35%</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">CPM</div>
+          <div class="kpi-value">¥64.06</div>
+          
+          <div class="kpi-delta" style="color:#059669">+¥0.76</div>
+        </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="table-label">按渠道</div>
+            <div class="table-wrap agent-summary-wrap"><table>
+              <thead><tr><th>渠道</th><th>消耗</th><th>订单</th><th>CPA</th><th>ROI</th><th>CTR</th><th>CVR</th></tr></thead>
+              <tbody>
+            <tr>
+              <td>-</td>
+              <td class="num">¥42,479.20</td>
+              <td class="num">72</td>
+              <td class="num">¥589.99</td>
+              <td class="num">0.26</td>
+              <td class="num">0.74%</td>
+              <td class="num">1.40%</td>
+            </tr></tbody>
+            </table></div>
+          </div>
+          <div>
+            <div class="table-label">按来源（自有 / 代理商）</div>
+            <div class="table-wrap agent-summary-wrap"><table>
+              <thead><tr><th>代理商</th><th>消耗</th><th>订单</th><th>CPA</th><th>CTR</th><th>CVR</th></tr></thead>
+              <tbody>
+            <tr>
+              <td>荔枝</td>
+              <td class="num">¥19,536.51</td>
+              <td class="num">33</td>
+              <td class="num">¥592.02</td>
+              <td class="num">0.89%</td>
+              <td class="num">1.40%</td>
+            </tr>
+            <tr>
+              <td>有范</td>
+              <td class="num">¥11,010.61</td>
+              <td class="num">23</td>
+              <td class="num">¥478.72</td>
+              <td class="num">0.50%</td>
+              <td class="num">1.64%</td>
+            </tr>
+            <tr>
+              <td>申坤</td>
+              <td class="num">¥8,864.95</td>
+              <td class="num">12</td>
+              <td class="num">¥738.75</td>
+              <td class="num">0.90%</td>
+              <td class="num">1.21%</td>
+            </tr>
+            <tr>
+              <td>东信</td>
+              <td class="num">¥1,584.55</td>
+              <td class="num">2</td>
+              <td class="num">¥792.28</td>
+              <td class="num">0.87%</td>
+              <td class="num">1.67%</td>
+            </tr>
+            <tr>
+              <td>掌视</td>
+              <td class="num">¥1,308.65</td>
+              <td class="num">1</td>
+              <td class="num">¥1308.65</td>
+              <td class="num">1.00%</td>
+              <td class="num">0.56%</td>
+            </tr>
+            <tr>
+              <td>自投放</td>
+              <td class="num">¥173.93</td>
+              <td class="num">1</td>
+              <td class="num">¥173.93</td>
+              <td class="num">0.36%</td>
+              <td class="num">0.00%</td>
+            </tr></tbody>
+            </table></div>
+          </div>
+        </div>
+        <div class="table-label">素材明细（有成交 / 可排序）</div>
+        <div class="table-wrap">
+          <table id="qc-mat-table">
+            <thead><tr>
+              <th>素材名称</th>
+              <th class="sortable" data-col="1">代理商</th>
+              <th class="sortable sort-desc" data-col="2">消耗</th>
+              <th class="sortable" data-col="3">成交量</th>
+              <th class="sortable" data-col="4">CTR</th>
+              <th class="sortable" data-col="5">CVR</th>
+              <th class="sortable" data-col="6">CPM</th>
+              <th class="sortable" data-col="7">CPA</th>
+              <th>预览</th>
+            </tr></thead>
+            <tbody id="qc-mat-body">
+            <tr class="mat-parent" data-name="">
+              <td class="mat-name" title=""></td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥11,613.86</td>
+              <td class="num">20</td>
+              <td class="num">1.16%</td>
+              <td class="num">1.14%</td>
+              <td class="num">¥77.01</td>
+              <td class="num">¥580.69</td>
+              <td>—</td>
+            </tr>
+            <tr class="mat-parent" data-name="260914-字词-陈盼盼-高中数物化199-混剪-客供二剪4">
+              <td class="mat-name" title="260914-字词-陈盼盼-高中数物化199-混剪-客供二剪4">260914-字词-陈盼盼-高中数物化199-混剪-客供二剪4</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥4,534.10</td>
+              <td class="num">10</td>
+              <td class="num">0.40%</td>
+              <td class="num">2.96%</td>
+              <td class="num">¥54.01</td>
+              <td class="num">¥453.41</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/55fa96f693ec3b59f39b656cf857b9f5.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="stodownload">
+              <td class="mat-name" title="stodownload">stodownload</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">申坤</td>
+              <td class="num">¥3,532.25</td>
+              <td class="num">6</td>
+              <td class="num">0.98%</td>
+              <td class="num">1.44%</td>
+              <td class="num">¥82.96</td>
+              <td class="num">¥588.71</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ac2e5c8f0f44d74cd3493c9383d77b76.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="stodownload (8)">
+              <td class="mat-name" title="stodownload (8)">stodownload (8)</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">申坤</td>
+              <td class="num">¥2,945.75</td>
+              <td class="num">4</td>
+              <td class="num">0.71%</td>
+              <td class="num">1.27%</td>
+              <td class="num">¥66.24</td>
+              <td class="num">¥736.44</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4cf29ef7779f992e527af94097b77fb3.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260917-字词-王智张耀杨薪慧-高中数物化199-混剪-衍生 (1)">
+              <td class="mat-name" title="260917-字词-王智张耀杨薪慧-高中数物化199-混剪-衍生 (1)">260917-字词-王智张耀杨薪慧-高中数物化199-混剪-衍生 (1)</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥2,070.60</td>
+              <td class="num">6</td>
+              <td class="num">0.40%</td>
+              <td class="num">1.65%</td>
+              <td class="num">¥23.03</td>
+              <td class="num">¥345.10</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5ef7331a7f5b7383de6d25877d4fe3be.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260807-猿辅导高中双科-混剪-视频号-通用-地标-张焱-袁北辰ec-二创-4">
+              <td class="mat-name" title="20260807-猿辅导高中双科-混剪-视频号-通用-地标-张焱-袁北辰ec-二创-4">20260807-猿辅导高中双科-混剪-视频号-通用-地标-张焱-袁北辰ec-二创-4</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥1,673.93</td>
+              <td class="num">3</td>
+              <td class="num">0.82%</td>
+              <td class="num">2.44%</td>
+              <td class="num">¥112.00</td>
+              <td class="num">¥557.98</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/94201a2ec57c72a7efc378b879805175.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260604-猿辅导高中双科-混剪-图-坚持-张焱---张晓洁yc拼客供素材-李文静ec-视频号二创-6">
+              <td class="mat-name" title="20260604-猿辅导高中双科-混剪-图-坚持-张焱---张晓洁yc拼客供素材-李文静ec-视频号二创-6">20260604-猿辅导高中双科-混剪-图-坚持-张焱---张晓洁yc拼客供素材-李文静ec-视频号二创-6</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥1,263.99</td>
+              <td class="num">2</td>
+              <td class="num">0.47%</td>
+              <td class="num">1.47%</td>
+              <td class="num">¥43.60</td>
+              <td class="num">¥632.00</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0968330bc0e6952d4297fa45f11abfd2.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260915-字词-武洁-陈昀-张萌-高中数物化199-混剪-重视-前贴2">
+              <td class="mat-name" title="260915-字词-武洁-陈昀-张萌-高中数物化199-混剪-重视-前贴2">260915-字词-武洁-陈昀-张萌-高中数物化199-混剪-重视-前贴2</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥1,118.92</td>
+              <td class="num">1</td>
+              <td class="num">0.38%</td>
+              <td class="num">1.96%</td>
+              <td class="num">¥82.54</td>
+              <td class="num">¥1118.92</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b5a53126b370560f4f196be2608d17cb.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="0916-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-高二下数理化都差-谷">
+              <td class="mat-name" title="0916-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-高二下数理化都差-谷">0916-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-高二下数理化都差-谷</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">掌视</td>
+              <td class="num">¥1,037.93</td>
+              <td class="num">1</td>
+              <td class="num">0.63%</td>
+              <td class="num">1.22%</td>
+              <td class="num">¥80.37</td>
+              <td class="num">¥1037.93</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0bb768e7b807c9225505d5ede35511d5.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260916-猿辅导高中双科-混剪-视频号-图-喜报-张焱-裂变-张晓洁yc-1.1-视频号版本">
+              <td class="mat-name" title="20260916-猿辅导高中双科-混剪-视频号-图-喜报-张焱-裂变-张晓洁yc-1.1-视频号版本">20260916-猿辅导高中双科-混剪-视频号-图-喜报-张焱-裂变-张晓洁yc-1.1-视频号版本</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥836.47</td>
+              <td class="num">2</td>
+              <td class="num">0.38%</td>
+              <td class="num">5.71%</td>
+              <td class="num">¥89.86</td>
+              <td class="num">¥418.24</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/592b898f5153774cd393eda887001d21.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260916-猿辅导高中双科-混剪-视频号-图-月亮-张焱-裂变-张晓洁yc-2-中秋-视频号版本">
+              <td class="mat-name" title="20260916-猿辅导高中双科-混剪-视频号-图-月亮-张焱-裂变-张晓洁yc-2-中秋-视频号版本">20260916-猿辅导高中双科-混剪-视频号-图-月亮-张焱-裂变-张晓洁yc-2-中秋-视频号版本</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥663.12</td>
+              <td class="num">1</td>
+              <td class="num">0.64%</td>
+              <td class="num">1.49%</td>
+              <td class="num">¥63.42</td>
+              <td class="num">¥663.12</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a1619ead3d1d25a40394337a069822d1.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260606-猿辅导高中双科-实拍-活动-买数送物-全年-跟你-618-张焱-cd鲨鱼- 张雪依ec-二创-9">
+              <td class="mat-name" title="20260606-猿辅导高中双科-实拍-活动-买数送物-全年-跟你-618-张焱-cd鲨鱼- 张雪依ec-二创-9">20260606-猿辅导高中双科-实拍-活动-买数送物-全年-跟你-618-张焱-cd鲨鱼- 张雪依ec-二创-9</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥630.12</td>
+              <td class="num">2</td>
+              <td class="num">0.40%</td>
+              <td class="num">4.76%</td>
+              <td class="num">¥60.07</td>
+              <td class="num">¥315.06</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7b7828396580ad401bb94a3f9c07c3df.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-1-AI实拍">
+              <td class="mat-name" title="0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-1-AI实拍">0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-1-AI实拍</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">申坤</td>
+              <td class="num">¥436.47</td>
+              <td class="num">1</td>
+              <td class="num">1.03%</td>
+              <td class="num">1.79%</td>
+              <td class="num">¥80.13</td>
+              <td class="num">¥436.47</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/033ed2e921a47f543867937936db8dab.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260915-字词-王智张耀杨薪慧-高中数物化199-混剪-">
+              <td class="mat-name" title="260915-字词-王智张耀杨薪慧-高中数物化199-混剪-">260915-字词-王智张耀杨薪慧-高中数物化199-混剪-</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥378.34</td>
+              <td class="num">2</td>
+              <td class="num">1.25%</td>
+              <td class="num">3.33%</td>
+              <td class="num">¥78.72</td>
+              <td class="num">¥189.17</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d82a9825036dd2fe3aa2ba50afe14d2e.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="0430-199物-自产-自产主-李博-元唐-小敏-A7-B1B4-有-9-亿晨混剪3">
+              <td class="mat-name" title="0430-199物-自产-自产主-李博-元唐-小敏-A7-B1B4-有-9-亿晨混剪3">0430-199物-自产-自产主-李博-元唐-小敏-A7-B1B4-有-9-亿晨混剪3</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">申坤</td>
+              <td class="num">¥315.63</td>
+              <td class="num">1</td>
+              <td class="num">0.69%</td>
+              <td class="num">12.50%</td>
+              <td class="num">¥273.51</td>
+              <td class="num">¥315.63</td>
+              <td><a href="https://tutor-online1.fbcontent.cn/growth/internal-material/1777558829198.0b90a1763be361d40d8ae53b96fcfb0a.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260918-字词-王智-张耀-杨薪慧-高中数物199-混剪-李博-没上前贴 (4)（老刘）">
+              <td class="mat-name" title="260918-字词-王智-张耀-杨薪慧-高中数物199-混剪-李博-没上前贴 (4)（老刘）">260918-字词-王智-张耀-杨薪慧-高中数物199-混剪-李博-没上前贴 (4)（老刘）</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥171.56</td>
+              <td class="num">1</td>
+              <td class="num">0.89%</td>
+              <td class="num">2.08%</td>
+              <td class="num">¥31.94</td>
+              <td class="num">¥171.56</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/96ec72fc6835a029fe21ca1e76369157.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260923-字词-王智张耀杨薪慧-高中数物化199-混剪- (2)">
+              <td class="mat-name" title="260923-字词-王智张耀杨薪慧-高中数物化199-混剪- (2)">260923-字词-王智张耀杨薪慧-高中数物化199-混剪- (2)</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥168.18</td>
+              <td class="num">1</td>
+              <td class="num">0.72%</td>
+              <td class="num">2.50%</td>
+              <td class="num">¥30.36</td>
+              <td class="num">¥168.18</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/28a7e1cd854dbcb087ffbe216fa0a466.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260804-图文-田佳昆李博举报前续费">
+              <td class="mat-name" title="260804-图文-田佳昆李博举报前续费">260804-图文-田佳昆李博举报前续费</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥154.21</td>
+              <td class="num">1</td>
+              <td class="num">0.36%</td>
+              <td class="num">5.56%</td>
+              <td class="num">¥30.81</td>
+              <td class="num">¥154.21</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/72f31a7ea4064733ddb4b536316c9674.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="0928-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效050">
+              <td class="mat-name" title="0928-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效050">0928-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效050</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">东信</td>
+              <td class="num">¥106.36</td>
+              <td class="num">1</td>
+              <td class="num">1.35%</td>
+              <td class="num">5.56%</td>
+              <td class="num">¥79.49</td>
+              <td class="num">¥106.36</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/808981c4ba0227c70170215b84cea24b.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260914-高中三科-混剪-图-张凌-2">
+              <td class="mat-name" title="20260914-高中三科-混剪-图-张凌-2">20260914-高中三科-混剪-图-张凌-2</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥91.17</td>
+              <td class="num">1</td>
+              <td class="num">0.52%</td>
+              <td class="num">12.50%</td>
+              <td class="num">¥59.39</td>
+              <td class="num">¥91.17</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/03ee02008850ec342aca0d6c2a352958.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="260920-199三科-代理-DX-李博-视觉锤-嘉丽-有-14-名师-000无bjy内实客016(1)">
+              <td class="mat-name" title="260920-199三科-代理-DX-李博-视觉锤-嘉丽-有-14-名师-000无bjy内实客016(1)">260920-199三科-代理-DX-李博-视觉锤-嘉丽-有-14-名师-000无bjy内实客016(1)</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">东信</td>
+              <td class="num">¥27.32</td>
+              <td class="num">1</td>
+              <td class="num">1.85%</td>
+              <td class="num">20.00%</td>
+              <td class="num">¥101.19</td>
+              <td class="num">¥27.32</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3131228fa7c57101d02cd074be17ff90.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260923-猿辅导高中双科-混剪-活动-买数送物-认知理念-退了-张焱-cd张璐-袁北辰ec-二创-2-视频号版本">
+              <td class="mat-name" title="20260923-猿辅导高中双科-混剪-活动-买数送物-认知理念-退了-张焱-cd张璐-袁北辰ec-二创-2-视频号版本">20260923-猿辅导高中双科-混剪-活动-买数送物-认知理念-退了-张焱-cd张璐-袁北辰ec-二创-2-视频号版本</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥5.27</td>
+              <td class="num">1</td>
+              <td class="num">1.82%</td>
+              <td class="num">50.00%</td>
+              <td class="num">¥47.91</td>
+              <td class="num">¥5.27</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/99324eb6bdecf7e40729ea245d57422a.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260915-猿辅导高中双科-实拍-坚持-孟庆睿张焱-ip李博-拼客供素材-袁北辰ec-视频号二创-9--动态模型">
+              <td class="mat-name" title="20260915-猿辅导高中双科-实拍-坚持-孟庆睿张焱-ip李博-拼客供素材-袁北辰ec-视频号二创-9--动态模型">20260915-猿辅导高中双科-实拍-坚持-孟庆睿张焱-ip李博-拼客供素材-袁北辰ec-视频号二创-9--动态模型</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">荔枝</td>
+              <td class="num">¥0.00</td>
+              <td class="num">1</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">¥0.00</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5a25d859769d66d58dfa01986798cc9c.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="20260625-猿辅导高中双科-实拍-活动-夏他-张焱唐欣悦-bj李赛-裂变-张晓洁yc-1">
+              <td class="mat-name" title="20260625-猿辅导高中双科-实拍-活动-夏他-张焱唐欣悦-bj李赛-裂变-张晓洁yc-1">20260625-猿辅导高中双科-实拍-活动-夏他-张焱唐欣悦-bj李赛-裂变-张晓洁yc-1</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">自投放</td>
+              <td class="num">¥0.00</td>
+              <td class="num">1</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">¥0.00</td>
+              <td><a href="https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/446a793b3b1660e9c7a35dceea7768b1.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr class="mat-parent" data-name="0317-199物-自产-自产二-李博-曲中雨-浩正-A2-B2-无-20">
+              <td class="mat-name" title="0317-199物-自产-自产二-李博-曲中雨-浩正-A2-B2-无-20">0317-199物-自产-自产二-李博-曲中雨-浩正-A2-B2-无-20</td>
+              <td class="num" style="font-size:11px;color:var(--text-muted)">有范</td>
+              <td class="num">¥0.00</td>
+              <td class="num">1</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">¥0.00</td>
+              <td><a href="https://tutor-online1.fbcontent.cn/growth/internal-material/1775810390856.63336d0afafe2f3680b8f47bb3768e74.mp4" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr></tbody>
+          </table>
+        </div>
+        <script>
+        const QC_DETAIL = [{"name": "20260803-猿辅导高中双科-实拍-千川-暑假预习-通用-买数送物-挑战-唐欣悦-cd鲨鱼--高俊南yc-1-前贴", "agent": "荔枝", "channel": "-", "spend": 3.76, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 78.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6a6dfb5483593de906fd9a27c4f0268d.mp4"}, {"name": "20260917-猿辅导高中双科-实拍-千川-年级焦虑-ip李博-高一-买物送数化-晚了-张焱-ip李博-袁北辰yc-裂变-1.1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 5.3, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 85.48, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/23b341877411e3aa5a3e40a8bec7974c.mp4"}, {"name": "0909-199三科-自产-自产二-李博-视觉锤-雅迪---有-19", "agent": "申坤", "channel": "-", "spend": 3.74, "orders": 0.0, "ctr": 1.79, "cvr": 0.0, "cpm": 66.79, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239483526.a18954efe62e82c26622dd633429c327.mp4"}, {"name": "20260924-猿辅导高中双科-实拍-千川-干货演示-通用-买数送物化-认知理念-求最值-唐欣悦-cd康艺凡-高俊南-张晓洁yc-3-视频号版本", "agent": "荔枝", "channel": "-", "spend": 24.92, "orders": 0.0, "ctr": 0.22, "cvr": 0.0, "cpm": 55.75, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c43267d97a43bd4d5d8d3548ab4b36b3.mp4"}, {"name": "260920-字词-武洁-陈昀-张萌-高中数物化三科-混剪-不是-前贴3", "agent": "有范", "channel": "-", "spend": 379.57, "orders": 0.0, "ctr": 1.21, "cvr": 0.0, "cpm": 59.54, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9f1a891dd3be2d8946e06a04d1a8e2b5.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-焦虑-价格拆解-张焱-bj李赛-裂变-叶俊泽yc-2-动态模型-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 70.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/97c73f4dc247a4d0d9f3f8aca4fd74b4.mp4"}, {"name": "0826-199三科-自产-自产主-李博-曲中雨-浩正---有-6", "agent": "申坤", "channel": "-", "spend": 125.49, "orders": 0.0, "ctr": 0.49, "cvr": 0.0, "cpm": 152.85, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788258657621.2209a9e8acfdc33cbfce84a722855792.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-混剪-来得及 (3)", "agent": "有范", "channel": "-", "spend": 0.39, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/451d36bdbc5fc6d34fe6bb34a9d93fbf.mp4"}, {"name": "260924-实拍-杨欣茹蔡瑶不要买", "agent": "有范", "channel": "-", "spend": 0.38, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 4.22, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b31a0eb17965048bf6b0cfd1ddd30488.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-6-眼镜", "agent": "申坤", "channel": "-", "spend": 5.14, "orders": 0.0, "ctr": 3.39, "cvr": 0.0, "cpm": 87.12, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6826fb397b86f563780395287f152bb2.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-曲中雨-小敏-A6-B1-有-20", "agent": "申坤", "channel": "-", "spend": 0.09, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 3.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786354696868.c08d821ad735bff61ef56cae0e9f2e37.mp4"}, {"name": "20260911-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-不看-唐欣悦-bj马新榆-二创-张晓洁ec-5-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.2, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 33.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/55e1b308eb4fbec7df336193774015c8.mp4"}, {"name": "20260910-猿辅导高中双科-实拍-千川-方式方法-高二-买数送物化-来得及-唐欣悦-wh笑笑--宋倩芸yc-1-改（前贴）-动态模型-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.51, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 56.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/aa8ad8bf6952a08079ba77897cf8d2c8.mp4"}, {"name": "260917-字词-王智张耀杨薪慧-高中数物化199-混剪-衍生 (1)", "agent": "有范", "channel": "-", "spend": 2070.6, "orders": 6.0, "ctr": 0.4, "cvr": 1.65, "cpm": 23.03, "cpa": 345.1, "roi": 0.43, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5ef7331a7f5b7383de6d25877d4fe3be.mp4"}, {"name": "20260911-猿辅导高中双科-实拍-千川-效果前置-高一-买数送物化-随便学-李莹莹-dr曹然-补量二创-张晓洁ec-1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 5.79, "orders": 0.0, "ctr": 2.63, "cvr": 0.0, "cpm": 152.37, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4e78cc3f23777157413a577e9e545ad8.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-忍住了-唐欣悦-cd李牧遥-高俊南-曾柔雪yc-1前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.34, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 170.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/03f002f065fa91dc3d2838339516ffbf.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-20-名师-000无wyl内实客026Ai", "agent": "东信", "channel": "-", "spend": 10.3, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 115.73, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/bab14ed8910a1c1fdb0914ddc538e914.mp4"}, {"name": "0826-199三科-自产-自产主-李博-视觉锤-小敏---无-9", "agent": "申坤", "channel": "-", "spend": 1.91, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 272.86, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789108774547.779b1532ce4560cb6d9eb96d93d5d205.mp4"}, {"name": "20260915-猿辅导高中双科-实拍-坚持-孟庆睿张焱-ip李博-拼客供素材-袁北辰ec-视频号二创-9--动态模型", "agent": "荔枝", "channel": "-", "spend": 0.0, "orders": 1.0, "ctr": 0.0, "cvr": 0.0, "cpm": 0.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5a25d859769d66d58dfa01986798cc9c.mp4"}, {"name": "0916-199三科-自产-自产二-李博-视觉锤-雅迪-A8-x-有-15-同学对比线下太贵", "agent": "申坤", "channel": "-", "spend": 2.79, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 99.64, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239114140.5912a86d9db8e83b1ab1325ee7eb0914.mp4"}, {"name": "0421-199双科-自产-自产二-王晶-元唐-亚平-A3-B1-无-17", "agent": "申坤", "channel": "-", "spend": 0.1, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 9.09, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777546805037.d2b363ff4115047457be2c3ae617bbea.mp4"}, {"name": "0923-199三科-代理-DX-客供-曲中雨-无-A6-x-有-无-信息差-000无hss内二客038Ai", "agent": "东信", "channel": "-", "spend": 282.27, "orders": 0.0, "ctr": 0.58, "cvr": 0.0, "cpm": 125.79, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/dc9f35629f5b289a46de47936f97e9fe.mp4"}, {"name": "0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-4-AI实拍", "agent": "申坤", "channel": "-", "spend": 0.18, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.31, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7c724258dfa8ce20d3dc7bf65d0b6b30.mp4"}, {"name": "260929-199三科-代理-DX-达人-曲中雨-无-A6-x-有-无-信息差-000无hss内二客059Ai", "agent": "东信", "channel": "-", "spend": 6.01, "orders": 0.0, "ctr": 2.48, "cvr": 0.0, "cpm": 29.75, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1a73f097d3a16c38cc9c826cf69bffa5.mp4"}, {"name": "0923-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效048", "agent": "东信", "channel": "-", "spend": 0.65, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 34.21, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3cc9402749e7deb1d748336c454472a4.mp4"}, {"name": "260920-字词-武洁-陈昀-张萌-高中数物化三科-实拍-不是", "agent": "有范", "channel": "-", "spend": 1.68, "orders": 0.0, "ctr": 1.67, "cvr": 0.0, "cpm": 28.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0ab1b15af39551eecb6b08d0215b06ce.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-混剪-来得及 (2)", "agent": "有范", "channel": "-", "spend": 3.13, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 74.52, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5cd7e1551f3de00ec8856009f7e71031.mp4"}, {"name": "0923-199三科-外采-DX-小鱼-wsq-cc-A1-x-有-1-大字报-cc1无wsq鱼外采047-退了版", "agent": "东信", "channel": "-", "spend": 39.18, "orders": 0.0, "ctr": 2.41, "cvr": 0.0, "cpm": 236.02, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/85d841a00911fdb1812cecec0a6d4581.mp4"}, {"name": "0820-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-2", "agent": "申坤", "channel": "-", "spend": 78.11, "orders": 0.0, "ctr": 0.61, "cvr": 0.0, "cpm": 43.52, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5b5dab0d0a1d87fa1cf10b7bf9d249af.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-模型方法-高二-买数送物化-贩卖焦虑-有救-“动态模型”-孟庆睿-bj冷一丁-袁北辰ec-达人羊小羊(ai男)-二创-4改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.38, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 380.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e1dd236830f3dcb3d74d3eabbe9a32ac.mp4"}, {"name": "260924-二剪-杨欣茹喜报-图文", "agent": "有范", "channel": "-", "spend": 10.7, "orders": 0.0, "ctr": 0.48, "cvr": 0.0, "cpm": 50.95, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1f2be57ca698d46cb94274638fc4ab7c.mp4"}, {"name": "0928-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效050", "agent": "东信", "channel": "-", "spend": 106.36, "orders": 1.0, "ctr": 1.35, "cvr": 5.56, "cpm": 79.49, "cpa": 106.36, "roi": 1.4, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/808981c4ba0227c70170215b84cea24b.mp4"}, {"name": "20260828-猿辅导高中数物双科-实拍-活动-退了-张焱-cd张璐-二创-叶俊泽ec-二创-7-动图模型", "agent": "自投放", "channel": "-", "spend": 3.23, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 129.2, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1185c1535694f9195f238f6805338e2c.mp4"}, {"name": "20260917-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-开始-常文茜-cd小卉--岳久鸿yc-1（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 6.81, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 166.1, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/48f263fe7f926dead2142b242dd082f7.mp4"}, {"name": "260922-字词-王智-张耀-李嘉南-高中数物化三科-混剪-不报3", "agent": "有范", "channel": "-", "spend": 27.67, "orders": 0.0, "ctr": 1.04, "cvr": 0.0, "cpm": 26.1, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a3297abb3172598838049a47788d2f5c.mp4"}, {"name": "0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-2-AI实拍", "agent": "申坤", "channel": "-", "spend": 0.35, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 29.17, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/43e00f0981d4ffd0623e2f7c4a33494b.mp4"}, {"name": "0921-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-3-羊小羊", "agent": "申坤", "channel": "-", "spend": 0.15, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 50.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/562ed71136bf7432608134e3b012dafc.mp4"}, {"name": "stodownload (1)", "agent": "申坤", "channel": "-", "spend": 2.77, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 1385.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/252d83ba0059c678306c4f4c501017b1.mp4"}, {"name": "0916-199三科-自产-自产主-李博-曲中雨-子衿-A1-x-无-4-他们学一个月多少", "agent": "申坤", "channel": "-", "spend": 0.39, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 97.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985107764.fe6fd5da2d17dbf73894559b3af7f0de.mp4"}, {"name": "0917-199三科-自产-曲中雨-子衿-2", "agent": "申坤", "channel": "-", "spend": 0.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 22.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789641209501.da03c9dbaec71628f18a858cff787538.mp4"}, {"name": "0923-199三科-自产-DX-小花-洪霜霜-包然-A1-x-有-无-性价比-br1蒋hss内二内041Ai", "agent": "东信", "channel": "-", "spend": 0.3, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 75.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/79e5f77fa38251c125868658b7291017.mp4"}, {"name": "0810-199双科-迭代1-曲中雨-子衿-无-01", "agent": "申坤", "channel": "-", "spend": 0.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 35.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786339246964.19bcc1e1f1676c3570f05d0dc947d418.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-活动-通用-五科-认知理念-真出-张焱-bj张婕希--张晓洁yc-1（前贴1）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 40.84, "orders": 0.0, "ctr": 0.44, "cvr": 0.0, "cpm": 90.35, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/666a9da9318f0d32ebc9d8c34e5b1d69.mp4"}, {"name": "20260606-猿辅导高中双科-实拍-活动-买数送物-全年-跟你-618-张焱-cd鲨鱼- 张雪依ec-二创-9", "agent": "荔枝", "channel": "-", "spend": 630.12, "orders": 2.0, "ctr": 0.4, "cvr": 4.76, "cpm": 60.07, "cpa": 315.06, "roi": 0.47, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7b7828396580ad401bb94a3f9c07c3df.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---有-5", "agent": "申坤", "channel": "-", "spend": 1.58, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 45.14, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111369132.7162dc375061a24f8f9e03cf226a8c57.mp4"}, {"name": "0916-199三科-自产-自产二-李博-视觉锤-雅迪-A6-x-有-20-学校情景线下对比", "agent": "申坤", "channel": "-", "spend": 0.35, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 25.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239228409.17b63da6a8759a085a78c913d5cddbed.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---有-1", "agent": "申坤", "channel": "-", "spend": 0.13, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 65.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111364880.6d8d73c4e5618373d069b8da62cfe79c.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-IP背书-没人打败-李莹莹-ip李博-叶俊泽yc-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 15.37, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 128.08, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1d0b38aaadf82f267c3e332d95d7e7e7.mp4"}, {"name": "0805-199三科-1组-自产-自产二-冷一丁-视觉锤-婷玉-A6-B1B4-无-14", "agent": "申坤", "channel": "-", "spend": 0.14, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 70.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786516227371.eb005897b77465b116876e30c7958a70.mp4"}, {"name": "0909-199三科-自产-自产二-李博-视觉锤-雅迪-A5-B1-有-20", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 50.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789628171793.3b80c09c10b83e47e567c3cb7f6cc466.mp4"}, {"name": "20260916-猿辅导高中双科-混剪-视频号-图-月亮-张焱-裂变-张晓洁yc-2-中秋-视频号版本", "agent": "荔枝", "channel": "-", "spend": 663.12, "orders": 1.0, "ctr": 0.64, "cvr": 1.49, "cpm": 63.42, "cpa": 663.12, "roi": 0.67, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a1619ead3d1d25a40394337a069822d1.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-雅迪-A6-x-有-17-名师-000无hxy内客供006", "agent": "东信", "channel": "-", "spend": 13.46, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 120.18, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2013f9b4d063bd46b5cca1fcf6762e55.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-靠谱吗-常文茜-bj嵩云-补量二创-张晓洁ec-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.74, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 26.43, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0bf881778a5467796280d6aaf65700c3.mp4"}, {"name": "0909-199三科-自产-自产主-李博-视觉锤-雅迪---无-12", "agent": "申坤", "channel": "-", "spend": 0.81, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 115.71, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239487945.5603c5eea9233904afda995aa784e23e.mp4"}, {"name": "0819-199三科-自产-自产主-李博-曲中雨-子衿-A6-B1-无-13", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1787638827428.b0704304d7e2a7cfd430a50670d338a7.mp4"}, {"name": "0430-199物-自产-自产主-李博-曲中雨-浩正-A2-B2-有-20-亿晨混剪19", "agent": "申坤", "channel": "-", "spend": 1.42, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 157.78, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777558828607.28a690d88041de0c62e5528824dd466a.mp4"}, {"name": "260915-字词-武洁陈红梅-高中数物化199-图文素材", "agent": "有范", "channel": "-", "spend": 3.73, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 18.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f2cd5078efc6e9767a4f35cf963058b1.mp4"}, {"name": "260924-二剪-严旭荣喜报（图文）", "agent": "有范", "channel": "-", "spend": 564.39, "orders": 0.0, "ctr": 0.43, "cvr": 0.0, "cpm": 56.01, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/110c911cab2f6880a67d9505270d586d.mp4"}, {"name": "0729-199双科-自产-自产主-于婧-视觉锤-嘉丽-A7-B6-有-11", "agent": "申坤", "channel": "-", "spend": 2.85, "orders": 0.0, "ctr": 3.33, "cvr": 0.0, "cpm": 47.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786013574946.e5d61e97eeaf34b0cbf3570e11fddbce.mp4"}, {"name": "0423-199双科-自产-自产二-李博-元唐-亚平-A2-B4-无-18", "agent": "申坤", "channel": "-", "spend": 0.21, "orders": 0.0, "ctr": 3.7, "cvr": 0.0, "cpm": 7.78, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777546923793.7cc35386e2e09a7e7c573b45f84943f0.mp4"}, {"name": "20260921-猿辅导高中双科-混剪-视频号-图-粉红-张焱-裂变-张晓洁yc-3-视频号版本", "agent": "荔枝", "channel": "-", "spend": 65.52, "orders": 0.0, "ctr": 0.25, "cvr": 0.0, "cpm": 82.94, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3828357e6656b015c7ae8bef4319698f.mp4"}, {"name": "260924-混剪-杨欣茹蔡瑶不要买混喜报", "agent": "有范", "channel": "-", "spend": 6.42, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 41.15, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5e8d00c6068e705456bead73235bb681.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-6-199数学物理化学-实拍-谷-AI前贴-期末-全年", "agent": "掌视", "channel": "-", "spend": 0.32, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 13.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9122b7033564e8a9794793eaf9adc4b9.mp4"}, {"name": "260920-199三科-自产-自产主-李博-视觉锤-小敏-000无wmy内实客017", "agent": "东信", "channel": "-", "spend": 0.06, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 3.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/bbe79c4287baf08c83dc2412d02b7ad7.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-8-名师-000无gj1内客供005", "agent": "东信", "channel": "-", "spend": 4.36, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 58.13, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7dd87d87ce543219556ca2f631c7097a.mp4"}, {"name": "stodownload", "agent": "申坤", "channel": "-", "spend": 3532.25, "orders": 6.0, "ctr": 0.98, "cvr": 1.44, "cpm": 82.96, "cpa": 588.71, "roi": 0.25, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ac2e5c8f0f44d74cd3493c9383d77b76.mp4"}, {"name": "20260910-猿辅导高中双科-实拍-视频号-活动-通用-五科-同步-孟庆睿-bj刘思航--张晓洁yc-7（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.27, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 11.74, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ba93433990e8591b8e9f4d1192f7eb4a.mp4"}, {"name": "260920-字词-武洁-陈昀-张萌-高中数物化三科-混剪-不是-前贴2", "agent": "有范", "channel": "-", "spend": 0.28, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 21.54, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ded38fbd1f750d42715ca02a916bbacf.mp4"}, {"name": "0819-199三科-自产-自产二-李博-曲中雨-子衿-A7-B2-有-15", "agent": "申坤", "channel": "-", "spend": 2.0, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 86.96, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1787638730895.223ff62be8fde2049e3d3be1bdabd2fe.mp4"}, {"name": "20260916-猿辅导高中双科-混剪-视频号-图-长城-张焱-裂变-张晓洁yc-3-视频号版本", "agent": "荔枝", "channel": "-", "spend": 139.02, "orders": 0.0, "ctr": 0.68, "cvr": 0.0, "cpm": 158.16, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e0b14db789f2a5996f66f1a2fcbaceaf.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-国庆复习巩固-彤-混剪-大字报-国庆+全阶段", "agent": "掌视", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/20ef69c701f6d750df25c7911e482560.mp4"}, {"name": "0916-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-8-我早就说-混剪-吴", "agent": "掌视", "channel": "-", "spend": 26.9, "orders": 0.0, "ctr": 1.05, "cvr": 0.0, "cpm": 94.39, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6ed20ea07ba09844b123b882f9c001fc.mp4"}, {"name": "260922-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-8-名师-000无wsq内二客031", "agent": "东信", "channel": "-", "spend": 2.58, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 41.61, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/31d9526ae099f7a1687fb83a880bde1e.mp4"}, {"name": "20260924-猿辅导高中双科-实拍-视频号-塑品-动态模型-通用-买数送物化-认知理念-赶紧-张焱-bj刘思航--张晓洁yc-3.1（前贴改）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.24, "orders": 0.0, "ctr": 4.55, "cvr": 0.0, "cpm": 10.91, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/95991fd9346b5fd8b21ad2f412ac5c75.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-开学可以不报-混剪-谷-文字前贴-中秋-全年", "agent": "掌视", "channel": "-", "spend": 76.96, "orders": 0.0, "ctr": 0.84, "cvr": 0.0, "cpm": 128.7, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a246b4618878c41cfe13fa7003f83797.mp4"}, {"name": "20260910-猿辅导高中双科-实拍-千川-塑品-ip李博-通用-买物送数化-占座-张焱-ip李博-袁北辰ec-达人-视频号二创-4-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.55, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 61.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/fb0864d9d3a105adbb568db1bfd6f1d9.mp4"}, {"name": "260915-图文-田佳昆李博没招衍续费1三科改", "agent": "有范", "channel": "-", "spend": 95.18, "orders": 0.0, "ctr": 0.32, "cvr": 0.0, "cpm": 30.3, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b0901176aefdcf066b952dddc0215583.mp4"}, {"name": "20260824-猿辅导高中双科-实拍-视频号-活动-通用-五科-同步-孟庆睿-bj刘思航--张晓洁yc-7（前贴）", "agent": "申坤", "channel": "-", "spend": 0.13, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 4.48, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/37dce37ce92982e9e9dcc5a6d1404982.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-模型大招-ip李博-通用-买物送数化-IP背书-模型法-唐欣悦-ip李博-袁北辰ec-达人韵鑫(女)-二创-3改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 12.63, "orders": 0.0, "ctr": 1.54, "cvr": 0.0, "cpm": 194.31, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/81599e9a9489e835522d0b0272e87afd.mp4"}, {"name": "20260923-高中三科-混剪-图-张凌-3", "agent": "荔枝", "channel": "-", "spend": 46.06, "orders": 0.0, "ctr": 0.18, "cvr": 0.0, "cpm": 82.1, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c54cbdbbeba6ef944565cdcc3c7384ae.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-活动-高二-买数送物化-价格拆解-才开始-“下沉”-孟庆睿-bj贾成真--张晓洁yc-3（前贴1）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 605.72, "orders": 0.0, "ctr": 0.31, "cvr": 0.0, "cpm": 127.04, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/265f9213d4a541444bc21bc895007bd1.mp4"}, {"name": "20260918-猿辅导高中双科-混剪-视频号-图-车动-张焱-裂变-张晓洁yc-3-视频号版本", "agent": "自投放", "channel": "-", "spend": 117.42, "orders": 0.0, "ctr": 0.41, "cvr": 0.0, "cpm": 160.19, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/76e176641ab9bc7da14af631c2f90d12.mp4"}, {"name": "0909-199三科-自产-自产主-李博-视觉锤-雅迪---有-19", "agent": "申坤", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 40.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239549866.0a455e30fb3bbfc65b652ef8152d5f0e.mp4"}, {"name": "20260813-猿辅导高中双科-实拍-视频号-内容-高三-买数送物-三除非-孟庆睿-bj刘丽--曾柔雪yc-改", "agent": "荔枝", "channel": "-", "spend": 0.52, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 52.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1c7f07f48fa1f057f8bf1009dcebbe6b.mp4"}, {"name": "260929-199三科-代理-DX-达人-曲中雨-无-A6-x-有-无-信息差-000无hss内二客057Ai", "agent": "东信", "channel": "-", "spend": 1.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 123.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8a70282c5b1ab9af5c2980dacdcc8f64.mp4"}, {"name": "260922-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-8-AI前贴-000无wsq内二客034Ai", "agent": "东信", "channel": "-", "spend": 3.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 58.27, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3e815edea014da3b60347511856fbfc2.mp4"}, {"name": "260921-字词-王智-张耀-李嘉南-高中数物化三科-混剪-醒醒3（羊小羊）", "agent": "有范", "channel": "-", "spend": 41.83, "orders": 0.0, "ctr": 1.15, "cvr": 0.0, "cpm": 40.07, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/fb0c04ceaeb8e421c6ccdb69632c995a.mp4"}, {"name": "0922-199三科-自产-自产主-李博-曲中雨-浩正-A2-x-无--10-十一全收", "agent": "申坤", "channel": "-", "spend": 0.21, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 23.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236354096.7be897031bef8d85815a5bab0efc278d.mp4"}, {"name": "0527-199双科-自产-自产二-李博-曲中雨-子衿-A7-B1-有-2", "agent": "申坤", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 30.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1780907523010.d305f38cfe887f36ee36f235107a9853.mp4"}, {"name": "0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-3-AI实拍", "agent": "申坤", "channel": "-", "spend": 7.15, "orders": 0.0, "ctr": 0.81, "cvr": 0.0, "cpm": 28.83, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5ce702d1df11b2272de975f41cb2f110.mp4"}, {"name": "20260914-猿辅导高中双科-实拍-视频号-内容-ip李博-通用-买物送数化-IP背书-等到-“动态模型”-孟庆睿-叶俊泽yc-3.1-前贴", "agent": "荔枝", "channel": "-", "spend": 8.17, "orders": 0.0, "ctr": 5.56, "cvr": 0.0, "cpm": 453.89, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5d3890c745ba65d4445c646dfc4f5f20.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---无-2", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111364912.06d181a171d6adb30468519ad926f544.mp4"}, {"name": "0916-199三科-自产-自产二-李博-曲中雨-子衿-A8-x-有-6-题不认识你", "agent": "申坤", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985089754.a97737aeb49e9006b7d8621b5d2ef476.mp4"}, {"name": "0923-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效049", "agent": "东信", "channel": "-", "spend": 8.86, "orders": 0.0, "ctr": 0.58, "cvr": 0.0, "cpm": 51.21, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/622af23857804cb13518e203359683b3.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-性价比-通用-买数送物化-真有钱啊-唐欣悦-bj冷一丁-叶俊泽ec-14-视频号版本", "agent": "荔枝", "channel": "-", "spend": 3.65, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 117.74, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1f714e39c8983357d880208d9499f5db.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-6", "agent": "申坤", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 5.71, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/fdae678efcf8f6053fd447cd7e244c46.mp4"}, {"name": "260923-字词-王智张耀杨薪慧-高中数物化199-混剪- (5)", "agent": "有范", "channel": "-", "spend": 0.97, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 8.98, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/60f76cf556e6d331fc1fa8d5c3eeb83d.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-3-高中物理可以不报班吗-混剪-何", "agent": "掌视", "channel": "-", "spend": 7.78, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 353.64, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/66fafdd23ea918998676898f6a9f08ef.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-1-各位我问一下-实拍-彤-AI前贴-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 47.09, "orders": 0.0, "ctr": 0.92, "cvr": 0.0, "cpm": 144.01, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1423302b4af58afdea935fbf9188a2a2.mp4"}, {"name": "20260923-高中三科-混剪-图-张凌-4", "agent": "荔枝", "channel": "-", "spend": 29.0, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 131.82, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/803007fdcbd086bc474cebe45c1ecef2.mp4"}, {"name": "260915-字词-陈盼盼李孟凡-高中数物化199-图文素材4", "agent": "有范", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9bdcc60ecc38ab18d1e903fec342a2de.mp4"}, {"name": "0916-199三科-自产-自产主-李博-视觉锤-雅迪-A6-x-有-20-学校情景线下对比", "agent": "申坤", "channel": "-", "spend": 1.47, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 81.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239336579.c71aece4c74de2a2b994206b129339ff.mp4"}, {"name": "0421-199双科-自产-自产二-王晶-元唐-亚平-A7-B1B2-有-19", "agent": "申坤", "channel": "-", "spend": 0.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 35.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777546846808.7abf0a50be0fc4b1f2bc5927194e0032.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-2-眼镜", "agent": "申坤", "channel": "-", "spend": 0.12, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 30.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9226fdc741c84d892aa996ae5eef6ca7.mp4"}, {"name": "0923-199三科-申坤-白琳-李天-卞俊洁-A2-B4-有-3-AI", "agent": "申坤", "channel": "-", "spend": 4.91, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 52.8, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/be19d8345716b2ad499ef94c8986626d.mp4"}, {"name": "20260928-猿辅导高中双科-实拍-千川-内容-解题模型-通用-买数送物化-贩卖焦虑-学模型-李莹莹-bj贾成真--张晓洁yc-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 40.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/19096ff2a1265d784849df52388b5369.mp4"}, {"name": "260920-199三科-代理-DX-李博-曲中雨-浩正-A1-x-有-8-名师-000无jxy内实客023(1)", "agent": "东信", "channel": "-", "spend": 188.97, "orders": 0.0, "ctr": 0.34, "cvr": 0.0, "cpm": 213.04, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b2edad889084e7c992a4b3d85d47ad5d.mp4"}, {"name": "0826-199三科-自产-自产主-李博-曲中雨-子衿---无-1", "agent": "申坤", "channel": "-", "spend": 10.26, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 603.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788780015913.357bd8a4c27421c90d7b2f075dff5f8e.mp4"}, {"name": "0729-199双科-自产-自产二-于婧-曲中雨-子衿-A5-B1-有-21", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1785739656798.6b8266fde1ce883e920626f3af863072.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-混剪-来得及 (1)", "agent": "有范", "channel": "-", "spend": 8.0, "orders": 0.0, "ctr": 0.54, "cvr": 0.0, "cpm": 10.81, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3d4f5a37441dc5ac2bb95cbf0ebb0bad.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-塑品-ip李博-通用-买物送数化-盗版-孟庆睿-ip李博-袁北辰ec-二创-3-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.09, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 31.14, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d85d800b8d1820b2f61e77124a9f3ddb.mp4"}, {"name": "260928-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-16-名师-000无wsq内二客053-达人", "agent": "东信", "channel": "-", "spend": 20.79, "orders": 0.0, "ctr": 1.71, "cvr": 0.0, "cpm": 118.8, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/83634e3c2ffe9603900b7de762769fc4.mp4"}, {"name": "启航1", "agent": "申坤", "channel": "-", "spend": 0.4, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 133.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/581aa4677ff74ebf21446a158dcfd44a.mp4"}, {"name": "260922-字词-武洁-陈昀-陈红梅-高中数物199-混剪-程度3", "agent": "有范", "channel": "-", "spend": 88.64, "orders": 0.0, "ctr": 1.29, "cvr": 0.0, "cpm": 51.9, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2bce9fc00950db18c0bf4072c638b757.mp4"}, {"name": "20260807-猿辅导高中双科-混剪-视频号-通用-地标-张焱-袁北辰ec-二创-4", "agent": "荔枝", "channel": "-", "spend": 1673.93, "orders": 3.0, "ctr": 0.82, "cvr": 2.44, "cpm": 112.0, "cpa": 557.98, "roi": 0.27, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/94201a2ec57c72a7efc378b879805175.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-他的物理真的好差-混剪-何-达人", "agent": "掌视", "channel": "-", "spend": 1.44, "orders": 0.0, "ctr": 3.9, "cvr": 0.0, "cpm": 18.7, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1e594b612c3911b3a866472835e75d08.mp4"}, {"name": "260829-字词-武洁-陈昀-张萌-高中数物化199-混剪-重视-前贴3", "agent": "有范", "channel": "-", "spend": 5.31, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 57.1, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/20b0f1a88bdabcc3f791983be01efb38.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-见过-张焱-ip李博-袁北辰yc-裂变-1-视频号版本", "agent": "自投放", "channel": "-", "spend": 0.17, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 42.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c9c35a301370293a0127f7aef9dfa9e0.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-1-眼镜", "agent": "申坤", "channel": "-", "spend": 0.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 12.22, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0569b65a0765bff95c449ec552406615.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-活动-中秋国庆-通用-买化送数物-节点活动-服了-唐欣悦-bj于靖-叶俊泽yc-4-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 4.18, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 46.97, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/eb5a35fe156a88fdb592745ebc6e6d9d.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-视觉锤-嘉丽-A6-B5-无-10", "agent": "申坤", "channel": "-", "spend": 0.19, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 31.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786518687860.022835507a3f9a05cdc5093b091e1dc3.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-涨价-唐欣悦-cd李牧遥-岳久鸿yc-1（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.57, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 51.82, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c309b6a83aa7666c02fd0fa354c4c986.mp4"}, {"name": "20260911-猿辅导高中双科-实拍-千川-塑品-ip李博-通用-买物送数化-占座-张焱-ip李博-二创-张晓洁ec-6-视频号版本", "agent": "荔枝", "channel": "-", "spend": 57.35, "orders": 0.0, "ctr": 0.65, "cvr": 0.0, "cpm": 185.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0fbf6574b58732421ae6f14453c67ea7.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-视觉锤-嘉丽-A7-B6-无-11", "agent": "申坤", "channel": "-", "spend": 1.59, "orders": 0.0, "ctr": 9.09, "cvr": 0.0, "cpm": 144.55, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786518688180.fda988318b4c5a2cf10f64448e0d65c1.mp4"}, {"name": "260910-字词-陈盼盼-高中数物化199-混剪-客供二剪", "agent": "有范", "channel": "-", "spend": 85.8, "orders": 0.0, "ctr": 1.29, "cvr": 0.0, "cpm": 46.25, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a4549a819033bf27c1d168741c2f7344.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-4-AI实拍", "agent": "申坤", "channel": "-", "spend": 5.35, "orders": 0.0, "ctr": 2.7, "cvr": 0.0, "cpm": 72.3, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c09702d92cf27c7d3f496fa6fc6a1838.mp4"}, {"name": "0922-199三科-自产-自产主-李博-曲中雨-浩正-A2-x-无-7-加啥都便宜", "agent": "申坤", "channel": "-", "spend": 0.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 17.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236360737.e9bb215bff93f802e94bff034ba7d5eb.mp4"}, {"name": "20260924-猿辅导高中双科-实拍-千川-分数诊断-高二-买物送数化-贩卖焦虑-都不行-唐欣悦-bj宋钦冲--张晓洁yc-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 12.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 57.19, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/db38706e7a6660ccb4ac88d50f9c9dd9.mp4"}, {"name": "0827-199双科-申坤-李博-李天-卞俊洁-A2-B4-有-3", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 16.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/48beab000e8c08c647e264f776b58e9a.mp4"}, {"name": "0923-199三科-自产-DX-小花-洪霜霜-包然-A1-x-有-无-性价比-br1蒋hss内二内040", "agent": "东信", "channel": "-", "spend": 6.16, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 72.47, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e3acabe31b9f070170e7706e38ee8854.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-3-这上了高中啊-混剪-彤-达人-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 11.15, "orders": 0.0, "ctr": 2.73, "cvr": 0.0, "cpm": 43.55, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/906b5edff3a8db019b694bef863149a6.mp4"}, {"name": "0916-199三科-自产-自产二-李博-视觉锤-雅迪-A8-x-无-15-同学对比线下太贵", "agent": "申坤", "channel": "-", "spend": 1.1, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 137.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239114122.191b97a3595470faa1a9e5da90a537b8.mp4"}, {"name": "20260901-猿辅导高中双科-实拍-活动-买数送物-全年-跟你-618-张焱-cd鲨鱼- 叶俊泽yc-裂变-5", "agent": "荔枝", "channel": "-", "spend": 223.2, "orders": 0.0, "ctr": 0.48, "cvr": 0.0, "cpm": 154.04, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ce7caf43d08503b5c66d3fc637069c7e.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-塑品-ip李博-通用-买物送数化-IP背书-认准了-唐欣悦-ip李博-袁北辰ec-学霸采访-二创-6改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.12, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 24.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/14ff4a633334a74d52658852f5ebe2ac.mp4"}, {"name": "260918-混剪-薛永欣赵岩听错混传疯", "agent": "有范", "channel": "-", "spend": 6.31, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 53.93, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ae804364975f1a4c11e81ef2be05623c.mp4"}, {"name": "260915-字词-武洁陈红梅-高中数物化199-图文素材2", "agent": "有范", "channel": "-", "spend": 135.5, "orders": 0.0, "ctr": 0.97, "cvr": 0.0, "cpm": 19.13, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3d3c9141aed83ecea6f9ba089e978917.mp4"}, {"name": "260923-199三科-代理-DX-李博-视觉锤-雅迪-A6-x-有-17-名师-cc1蒋hxy内二客043", "agent": "东信", "channel": "-", "spend": 16.6, "orders": 0.0, "ctr": 0.98, "cvr": 0.0, "cpm": 80.98, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f77dfa0cdfaeb2637cb400406d964154.mp4"}, {"name": "20260908-猿辅导高中双科-实拍-视频号-破题思维-教育专家-通用-买物送数化-不认可-孟庆睿-bj宋钦冲--叶俊泽yc-5.1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 24.36, "orders": 0.0, "ctr": 0.5, "cvr": 0.0, "cpm": 120.59, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/97fca81bae689591ad9a49496e55569a.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A4-x-有-6-这上了高中啊-混剪-彤-AI前贴-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 0.34, "orders": 0.0, "ctr": 3.13, "cvr": 0.0, "cpm": 5.31, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d67c24a26a200d61c051d72ddf475e8e.mp4"}, {"name": "0916-199三科-自产-自产主-李博-视觉锤-雅迪-A6-x-无-20-学校情景线下对比", "agent": "申坤", "channel": "-", "spend": 0.55, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 16.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239332366.b89539e0f6d4867326141f77a6ce5812.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-曲中雨-小敏-A7-B1-有-17", "agent": "申坤", "channel": "-", "spend": 0.19, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 38.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786354697969.2c236a705e8b5c3655d6474b0bb734a1.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-IP背书-没人打败-李莹莹-ip李博-徐立磊A-叶俊泽yc-2.1改-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.08, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 80.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c581e4ad40f797a26a728dde7c80d41b.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-混剪-不准 (2)", "agent": "有范", "channel": "-", "spend": 60.02, "orders": 0.0, "ctr": 0.61, "cvr": 0.0, "cpm": 40.77, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/837991bdce34f18a1e163cae3673274a.mp4"}, {"name": "260929-199三科-代理-DX-达人-曲中雨-无-A6-x-有-无-信息差-000无hss内二客055Ai", "agent": "东信", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 6.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b19c9622f7ed6c20569e5c289ad42d69.mp4"}, {"name": "260920-字词-高翌杰-陈昀-刘熹颖-高中数物化199-实拍-不知道", "agent": "有范", "channel": "-", "spend": 4.16, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 104.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c20487a6288b8b88bff5d3173cba9ab7.mp4"}, {"name": "260920-字词-高翌杰-陈昀-刘熹颖-高中数物化199-混剪-不知道3（老刘）", "agent": "有范", "channel": "-", "spend": 1.36, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 97.14, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ff7dda98752a55244b82d3d08ce352f6.mp4"}, {"name": "20260914-高中三科-混剪-图-张凌-2", "agent": "荔枝", "channel": "-", "spend": 91.17, "orders": 1.0, "ctr": 0.52, "cvr": 12.5, "cpm": 59.39, "cpa": 91.17, "roi": 1.63, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/03ee02008850ec342aca0d6c2a352958.mp4"}, {"name": "0430-199物-自产-自产主-李博-元唐-小敏-A7-B1B4-有-9-亿晨混剪3", "agent": "申坤", "channel": "-", "spend": 315.63, "orders": 1.0, "ctr": 0.69, "cvr": 12.5, "cpm": 273.51, "cpa": 315.63, "roi": 0.47, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777558829198.0b90a1763be361d40d8ae53b96fcfb0a.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-千川-破题思维-通用-买物送数化-冤大头-常文茜-bj庄紫薇--曾柔雪yc-3前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 6.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 94.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/52b1b46d23cdbafe8ac0e953700a75d9.mp4"}, {"name": "0819-199三科-自产-自产主-白琳-曲中雨-嘉丽-A6-B1-无-6", "agent": "申坤", "channel": "-", "spend": 0.06, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788168991478.27a2cfc371edf247bf56703541c707fd.mp4"}, {"name": "stodownload (5)", "agent": "申坤", "channel": "-", "spend": 1.4, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 29.79, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/035ef6f40340b2c7ec0cf38bdb11904b.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-活动-199学三年-买数送物-割韭菜-唐欣悦-bj庄紫薇-叶俊泽ec-二创-16-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.06, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 58.89, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/27076fe3804e81adacfd95d5c25481d6.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-混剪-不准 (3)", "agent": "有范", "channel": "-", "spend": 0.33, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 27.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8d1de5da99fa1f9e87ad321bf4226389.mp4"}, {"name": "260922-字词-武洁-陈昀-陈红梅-高中数物199-混剪-程度2", "agent": "有范", "channel": "-", "spend": 587.7, "orders": 0.0, "ctr": 0.35, "cvr": 0.0, "cpm": 41.17, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0242925cf5ccc53cb87b6a571a4422e8.mp4"}, {"name": "20260908-猿辅导高中双科-实拍-视频号-活动-通用-买数送物化-百年难遇-孟庆睿-bj潘艺烁--高俊南yc-2-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.5, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 250.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4f1d8415369d04692d77c8dd779934f1.mp4"}, {"name": "20260916-猿辅导高中双科-实拍-视频号-活动-通用-五科-张焱-bj刘能能-袁北辰ec-二创-3.1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 9.31, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 1330.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d703e132b0e826da13f41095e9caebfa.mp4"}, {"name": "0922-199三科-自产-自产主-李博-曲中雨-浩正-A2-x-有--10-十一全收", "agent": "申坤", "channel": "-", "spend": 47.05, "orders": 0.0, "ctr": 3.06, "cvr": 0.0, "cpm": 20.3, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236380217.6db991c9a82f5366720d912ce6acdbe2.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-活动-中秋国庆-通用-买化送数物-贩卖焦虑-学模型-孟庆睿-cd张璐-岳久鸿-张晓洁yc-5（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 6.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 111.3, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b0e8f87d871c5be9a4731014cb7ebc6c.mp4"}, {"name": "260929-199三科-代理-DX-达人-曲中雨-无-A6-x-有-无-信息差-000无hss内二客056Ai", "agent": "东信", "channel": "-", "spend": 1.4, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 107.69, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c6b8278b412971ba5f4c013b8df81aef.mp4"}, {"name": "0826-199三科-自产-自产二-李博-视觉锤-小敏---无-9", "agent": "申坤", "channel": "-", "spend": 0.34, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 170.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789108774621.57a6f3a0f1c3a9a6952c34210c259bfb.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-视频号-内容-通用-买数送物-怎么补-孟庆睿-bj付莉娜-叶俊泽ec-二创-10-视频号版本", "agent": "荔枝", "channel": "-", "spend": 4.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 183.64, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/633dd41f00b172d36a1643928e698d9d.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-3-物理月考不到30-彤-实拍-性价比-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 0.27, "orders": 0.0, "ctr": 4.17, "cvr": 0.0, "cpm": 11.25, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6e1f83560bd0411dae0e5e1ccec68664.mp4"}, {"name": "0805-199三科-1组-自产-自产二-冷一丁-视觉锤-婷玉-A6-B4B6-有-13", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 3.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786516230047.ac683cac752dca07ae2f707884427874.mp4"}, {"name": "20260727-猿辅导高中双科（高二升高三）-混剪-图-张凌-8(1)", "agent": "荔枝", "channel": "-", "spend": 2.82, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 156.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e19b17bd4b5c4ce37fd497625286bbb4.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-活动-通用-买化送数物-认知理念-好提分-孟庆睿-bj李腾飞--张晓洁yc-7（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.91, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 53.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/aeb6b5e93e23ccc390fd32cb545411ba.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-有-14-名师-000无bjy内实客016(1)", "agent": "东信", "channel": "-", "spend": 27.32, "orders": 1.0, "ctr": 1.85, "cvr": 20.0, "cpm": 101.19, "cpa": 27.32, "roi": 5.45, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3131228fa7c57101d02cd074be17ff90.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-千川-分数诊断-高二-买数送物化-贩卖焦虑-太难了-唐欣悦-bj贾成真--张晓洁yc-1（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 22.02, "orders": 0.0, "ctr": 0.34, "cvr": 0.0, "cpm": 75.93, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1e98174ada84847e6006bcae2b611c44.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-千川-效果前置-高二-五科-随便学-李莹莹-bj丁梓仟-叶俊泽yc-4.1-前贴改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.25, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 25.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/38372b87e2a627446b8d0a12fc0765f9.mp4"}, {"name": "0805-199双科-自产-自产二-冷一丁-视觉锤-小敏-A7-B1B3-有-19", "agent": "申坤", "channel": "-", "spend": 0.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 110.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786355492248.b3962a074f9260f1f40eea9637450558.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-IP背书-多少钱-唐欣悦-ip李博--张晓洁yc-6（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.41, "orders": 0.0, "ctr": 2.44, "cvr": 0.0, "cpm": 34.39, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d49662451ad7bfe79f8cf1052d71034a.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-3-你没有听错-混剪-彤-达人前贴-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 5.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/000b59515b40bc733f8a87be0a8c6333.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-凡是现在上高一高二的-混剪-谷-图文前贴-国庆-高一高二", "agent": "掌视", "channel": "-", "spend": 1.36, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 54.4, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/22cec823f7a3bf317e2094df73c9f3d4.mp4"}, {"name": "20260910-猿辅导高中双科-实拍-活动-ip李博-高二+高三-买物送数化-凡是-常文茜-ip李博-袁北辰ec-视频号二创-1", "agent": "荔枝", "channel": "-", "spend": 1.18, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 78.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ad7a84822198b578971d21b79d1424fd.mp4"}, {"name": "书驰5", "agent": "申坤", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/63be53a39a0a63bea28c9eaae89879f5.mp4"}, {"name": "0928-199三科-代理-DX-无-wsq-无-A1-x-无-1-大字报-000无wsq内特效054", "agent": "东信", "channel": "-", "spend": 141.19, "orders": 0.0, "ctr": 1.25, "cvr": 0.0, "cpm": 88.08, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d4fbdc86baaac25db47cac79ffb8d350.mp4"}, {"name": "20260928-猿辅导高中双科-实拍-千川-塑品-动态模型-通用-买数送物化-认知理念-模仿-唐欣悦-cd小卉-高俊南-叶俊泽yc-3.1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.1, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 50.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2dd7d937bfeaf147cda14c8a631d3fbd.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-你就是李博-混剪-宇6-物理实验-全年", "agent": "掌视", "channel": "-", "spend": 1.07, "orders": 0.0, "ctr": 1.56, "cvr": 0.0, "cpm": 16.72, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ddc4514afeb8a4ac1807c6c026705f0d.mp4"}, {"name": "0729-199双科-自产-自产二-于婧-云梵-小敏---有-20", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 20.0, "cvr": 0.0, "cpm": 4.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788422342633.4fb48c2f167bb74cf79900dbff6e5cbf.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---无-4", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111368352.a0ceb1b0ca8fe9128826bfeca315f2f5.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-6敢不敢这个学期-彤-混剪-AI前贴-月考+高三", "agent": "掌视", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 6.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6084ac1d2f6df106429acad0e632d9cb.mp4"}, {"name": "20260916-猿辅导高中双科-混剪-图-坚持-张焱-拼客供素材-袁北辰yc-视频号裂变-6.1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 229.47, "orders": 0.0, "ctr": 0.95, "cvr": 0.0, "cpm": 144.87, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0ae163b5af69d0fe159476ea0ba74233.mp4"}, {"name": "视频-720_1280-4-1790216706", "agent": "东信", "channel": "-", "spend": 0.36, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 120.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c90fe38847d5b9f619d53aa4ea83920d.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---无-5", "agent": "申坤", "channel": "-", "spend": 2.19, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 168.46, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111364955.f154aaeb0cdd043302860e9d5b4a32e2.mp4"}, {"name": "260804-图文-田佳昆李博举报前续费", "agent": "有范", "channel": "-", "spend": 154.21, "orders": 1.0, "ctr": 0.36, "cvr": 5.56, "cpm": 30.81, "cpa": 154.21, "roi": 0.97, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/72f31a7ea4064733ddb4b536316c9674.mp4"}, {"name": "0916-199三科-自产-自产主-李博-曲中雨-子衿-A8-x-无-2-第一次月考", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 25.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985180774.66d1c00e7de44838d50ca51c62085459.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-实拍-来得及", "agent": "有范", "channel": "-", "spend": 0.2, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 4.44, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ee0afebc6154bf2853ca1a287621ca13.mp4"}, {"name": "0921-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-4-羊小羊", "agent": "申坤", "channel": "-", "spend": 1.98, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 32.46, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b146781520fcebaabba7448056252ef8.mp4"}, {"name": "0916-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-高二下数理化都差-谷", "agent": "掌视", "channel": "-", "spend": 1037.93, "orders": 1.0, "ctr": 0.63, "cvr": 1.22, "cpm": 80.37, "cpa": 1037.93, "roi": 0.14, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0bb768e7b807c9225505d5ede35511d5.mp4"}, {"name": "0827-199双科-申坤-李博-李天-卞俊洁-A2-B4-无-2", "agent": "申坤", "channel": "-", "spend": 9.41, "orders": 0.0, "ctr": 0.92, "cvr": 0.0, "cpm": 43.17, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/68e19f6b97869113f778da06310f2c1a.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-活动国庆-通用-买数送物化-节点活动-国庆前-孟庆睿-bj李栎--岳久鸿yc-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.82, "orders": 0.0, "ctr": 4.0, "cvr": 0.0, "cpm": 32.8, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/921b8e23f0ec373d1e6147e5817f2a19.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-子衿-A1-x-有-15-名师-000无grx内实客019Ai", "agent": "东信", "channel": "-", "spend": 38.37, "orders": 0.0, "ctr": 2.05, "cvr": 0.0, "cpm": 262.81, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1b5343fd9c67049462128e3e79199533.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-3-这上了高中啊-混剪-何-文字前贴-高二", "agent": "掌视", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.86, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f8f74f90cda03fca26031b8c0aeac66e.mp4"}, {"name": "0916-199三科-自产-自产主-李博-曲中雨-子衿-A6-x-有-1-都在学动态模型", "agent": "申坤", "channel": "-", "spend": 0.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 7.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985157135.8b73cbf372a4f07310445fd1b4f2b1b4.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-4-开学可以不报高阶物理班-彤-实拍-大字报-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/05d552649a1f97d32a7e53d52acb51a2.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-千川-塑品-通用-五科-吃饭-张焱-bj付莉娜-袁北辰yc-1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 5.28, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 114.78, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5bcc55eba23b17285399c4d93a1074bd.mp4"}, {"name": "260929-199三科-代理-DX-达人-曲中雨-无-A6-x-有-无-信息差-000无hss内二客060Ai", "agent": "东信", "channel": "-", "spend": 0.12, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d122e7c67afea1b9eccdfcf622569d63.mp4"}, {"name": "0920-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-你们家孩子物理做题-混剪-彤", "agent": "掌视", "channel": "-", "spend": 11.19, "orders": 0.0, "ctr": 0.96, "cvr": 0.0, "cpm": 21.56, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c212253c9202f06ca368cf13ad4896d2.mp4"}, {"name": "260903-字词-陈盼盼-高中数物化199-混剪-客供二剪", "agent": "有范", "channel": "-", "spend": 19.17, "orders": 0.0, "ctr": 1.46, "cvr": 0.0, "cpm": 46.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b9ade4d069ea065c23a7ff84c2e33cfd.mp4"}, {"name": "20260625-猿辅导高中双科-实拍-活动-夏他-张焱唐欣悦-bj李赛-裂变-张晓洁yc-1", "agent": "自投放", "channel": "-", "spend": 0.0, "orders": 1.0, "ctr": 0.0, "cvr": 0.0, "cpm": 0.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/446a793b3b1660e9c7a35dceea7768b1.mp4"}, {"name": "视频-720_1280-4-1790216718", "agent": "东信", "channel": "-", "spend": 0.5, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 71.43, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/735156370e96d92b9ab366a00df01191.mp4"}, {"name": "0527-199双科-自产-自产主-李博-曲中雨-子衿-A5-B1-无-8", "agent": "申坤", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 15.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1780907592148.6d611dd5e9637e442f8740e9bc15a560.mp4"}, {"name": "20260604-猿辅导高中双科-混剪-图-坚持-张焱---张晓洁yc拼客供素材-李文静ec-视频号二创-6", "agent": "荔枝", "channel": "-", "spend": 1263.99, "orders": 2.0, "ctr": 0.47, "cvr": 1.47, "cpm": 43.6, "cpa": 632.0, "roi": 0.24, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0968330bc0e6952d4297fa45f11abfd2.mp4"}, {"name": "0819-199三科-自产-自产主-李博-曲中雨-子衿-A7-B2-有-15", "agent": "申坤", "channel": "-", "spend": 0.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 55.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1787639097951.ae7831388eaf324ad26f9587230f2e7c.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---有-4", "agent": "申坤", "channel": "-", "spend": 0.4, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 14.81, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111369232.d9b05bae404308ea996de8e3dca214a9.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A8-x-有-8-我遭到了疯狂举报-彤-混剪-文案配图-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 3.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7e0b7edd2d18bda6e3a3f274789e6505.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-千川-化学提分-贩卖焦虑-高二-买化送数物-唐欣悦-cd琳瑶-袁北辰ec-二创-4-视频号版本", "agent": "荔枝", "channel": "-", "spend": 8.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 140.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8463c30261d35c950ec5157905f4f835.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A2-x-有-16-凡是现在上高一高二的-混剪-李6-大人-国庆-高一高二", "agent": "掌视", "channel": "-", "spend": 0.49, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 17.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/989269b8eca09080051f21e48b278d42.mp4"}, {"name": "260915-字词-武洁-陈昀-张萌-高中数物化199-混剪-重视-前贴2", "agent": "有范", "channel": "-", "spend": 1118.92, "orders": 1.0, "ctr": 0.38, "cvr": 1.96, "cpm": 82.54, "cpa": 1118.92, "roi": 0.13, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b5a53126b370560f4f196be2608d17cb.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-IP背书-开学着急-李莹莹-ip李博--张晓洁yc-9（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 31.78, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 169.04, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ca2841cc7bca640add8fdacd67d9616d.mp4"}, {"name": "0813-199三科-自产-自产二-能能-曲中雨-子衿-A7-B2-无-15", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788780273976.0806d29f7eb8e62d8cfba70d201701ca.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-6-头一回见这么聪明的-实拍-谷-图文前贴-期末-全年段", "agent": "掌视", "channel": "-", "spend": 0.22, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 4.4, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4604c3627e48b904d2a98d04834919d3.mp4"}, {"name": "0917-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-1-凡是高中数理化差的-混剪-李3-改", "agent": "掌视", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3d753e7ce46d482c0007b11902203a6b.mp4"}, {"name": "0916-199三科-自产-自产二-李博-视觉锤-雅迪-A6-x-有-19-国庆节点提分", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239228594.b8df312c10c8506d03a38901b8dbe82d.mp4"}, {"name": "妙思自动生成-232-202609031711", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 6.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/364b9f0ad01c3f38822095c63e776b45.mp4"}, {"name": "260924-字词-王智-李孟凡-陈盼盼-高中数物化三科-实拍-不准", "agent": "有范", "channel": "-", "spend": 19.87, "orders": 0.0, "ctr": 2.26, "cvr": 0.0, "cpm": 64.1, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/275d36ef0449db44ced85af91dede800.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-爱他就给他买-混剪-谷-图文前贴-期末-全年段", "agent": "掌视", "channel": "-", "spend": 1.74, "orders": 0.0, "ctr": 3.57, "cvr": 0.0, "cpm": 62.14, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/dce5ab5ce84a3c6109cdc5c8b6666726.mp4"}, {"name": "20260512-猿辅导高中双科-实拍-ip李博-逼孩子-唐欣悦-ip李博--张雪依yc-2改", "agent": "荔枝", "channel": "-", "spend": 53.95, "orders": 0.0, "ctr": 0.71, "cvr": 0.0, "cpm": 76.74, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2250da8d81a9cfcacca0a03c40a08330.mp4"}, {"name": "260922-字词-王智-张耀-李嘉南-高中数物化三科-实拍-不报", "agent": "有范", "channel": "-", "spend": 1.91, "orders": 0.0, "ctr": 0.45, "cvr": 0.0, "cpm": 8.68, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1256ede997e930704d7539a3e6d28880.mp4"}, {"name": "0921-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-5", "agent": "申坤", "channel": "-", "spend": 28.74, "orders": 0.0, "ctr": 0.8, "cvr": 0.0, "cpm": 76.84, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e0df45071dc996542ef9865e4da4783c.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-新高二学物理-混剪-何-文字前贴-月考分班考-高二", "agent": "掌视", "channel": "-", "spend": 0.69, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 27.6, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/42603d54afd77bf186d571c281408ad7.mp4"}, {"name": "0909-199三科-自产-自产二-李博-视觉锤-雅迪---有-13", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239479056.a3d909ad5e609a066bc112e183b80187.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-模型大招-ip李博-通用-买物送数化-IP背书-模型法-唐欣悦-ip李博--张晓洁yc-8-视频号版本", "agent": "荔枝", "channel": "-", "spend": 4.77, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 51.85, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e465f1978fab4497b47cea8852d20164.mp4"}, {"name": "", "agent": "荔枝", "channel": "-", "spend": 11613.86, "orders": 20.0, "ctr": 1.16, "cvr": 1.14, "cpm": 77.01, "cpa": 580.69, "roi": 0.26, "preview": ""}, {"name": "0916-199三科-自产-自产二-李博-视觉锤-雅迪-A6-x-无-20-学校情景线下对比", "agent": "申坤", "channel": "-", "spend": 0.62, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 26.96, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239226426.caba0d263f6ff18bc6b27c2c38114e61.mp4"}, {"name": "0916-199三科-自产-自产主-李博-曲中雨-子衿-A2-x-有-3-中秋国庆前报名", "agent": "申坤", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985846277.35ff71760cfcc4e3e3137a26827f9c02.mov"}, {"name": "0923-199三科-自产-DX-小花-洪霜霜-包然-A1-x-有-无-性价比-br1蒋hss内二内037Ai", "agent": "东信", "channel": "-", "spend": 1.11, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.56, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8d74fa5dd5d9958d140ee760a8f9199f.mp4"}, {"name": "20260918-猿辅导高中双科-混剪-视频号-图-车-张焱-裂变-张晓洁yc-1-视频号版本", "agent": "自投放", "channel": "-", "spend": 31.32, "orders": 0.0, "ctr": 0.9, "cvr": 0.0, "cpm": 141.72, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/289634a7e9c81d4d9f78158637b1dbc1.mp4"}, {"name": "060920-199三科-自产-自产主-李博-曲中雨-子衿-有-5-000无xwh内实客022(1)", "agent": "东信", "channel": "-", "spend": 9.52, "orders": 0.0, "ctr": 0.96, "cvr": 0.0, "cpm": 91.54, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9fde60f15ba35bc03df5c6efc032435c.mp4"}, {"name": "0819-199三科-自产-自产主-李博-视觉锤-雅迪-A6-B1-有-17", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788336506143.dfb06a9b6e68912db0a8ed154a8b3827.mp4"}, {"name": "0901-199三科-申坤-李博-李天-卞俊洁AI-A2-B4-有-01", "agent": "申坤", "channel": "-", "spend": 0.59, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 26.82, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/60c1817c49d4c4bed3221696dbb0308d.mp4"}, {"name": "0922-199三科-申坤-李博-李天-张佳乐-A2-B4-无-3", "agent": "申坤", "channel": "-", "spend": 14.56, "orders": 0.0, "ctr": 1.29, "cvr": 0.0, "cpm": 46.82, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e0f05a29eb7bfe4fcee47042e09b5fd9.mp4"}, {"name": "20260923-猿辅导高中双科-混剪-活动-买数送物-节点活动-中秋国庆-跟你-张焱-cd鲨鱼-袁北辰ec-二创-1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 21.26, "orders": 0.0, "ctr": 1.9, "cvr": 0.0, "cpm": 202.48, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1814569b9d5c4810426ccfb83ce1507b.mp4"}, {"name": "0920-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-06", "agent": "申坤", "channel": "-", "spend": 0.48, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 36.92, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/58733ddb0f368b6926145febdecd4010.mp4"}, {"name": "260922-199三科-代理-DX-李博-曲中雨-浩正-B2-x-有-10-Ai前贴-000无wsq内二客033Ai", "agent": "东信", "channel": "-", "spend": 18.95, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 69.41, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f9ffa76ec812e2cec4dd713dd00b20b8.mp4"}, {"name": "20260918-猿辅导高中双科-混剪-视频号-图-树-张焱-裂变-张晓洁yc-2-视频号版本", "agent": "自投放", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 6.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d53ed642e7f9d0d127e40f69353815d6.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-视频号-活动-中秋国庆-通用-买物送数化-节点活动-三连物-张焱-bj冷一丁--张晓洁yc-4（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.15, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 57.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/caebda56ffc5daa01f31fd5c7ac891de.mp4"}, {"name": "0922-199三科-自产-自产二-李博-曲中雨-浩正-A2-x-有-7-加啥都便宜", "agent": "申坤", "channel": "-", "spend": 0.06, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 12.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236328153.a72917da55eeddc83a4072c06b3c1799.mp4"}, {"name": "20260928-猿辅导高中双科-实拍-视频号-活动-通用-五科-价格拆解-长做-张焱-bj李腾飞--张晓洁yc-1.1（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.37, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 76.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9880d8adcdfb0883406bb95008197a40.mp4"}, {"name": "260920-199三科-代理-DX-李博-曲中雨-子衿-A1-x-有-7-名师-000无wzw内实客024", "agent": "东信", "channel": "-", "spend": 3.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 48.73, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9ed6599712d553db82ca88e6c1ba6858.mp4"}, {"name": "20260916-猿辅导高中双科-混剪-视频号-图-喜报-张焱-裂变-张晓洁yc-1.1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 836.47, "orders": 2.0, "ctr": 0.38, "cvr": 5.71, "cpm": 89.86, "cpa": 418.24, "roi": 0.36, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/592b898f5153774cd393eda887001d21.mp4"}, {"name": "stodownload (10)", "agent": "申坤", "channel": "-", "spend": 77.93, "orders": 0.0, "ctr": 0.19, "cvr": 0.0, "cpm": 49.17, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/fea44726dc838c9cd3c58933a53c30cc.mp4"}, {"name": "20260917-猿辅导高中双科-混剪-悬疑解说-张焱-叶俊泽ec-1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 37.01, "orders": 0.0, "ctr": 0.46, "cvr": 0.0, "cpm": 169.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5e583522eb01eb5ede6d19b8833aa764.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-国庆假期规划-国庆-通用-买数送物化-节点活动-咬牙-唐欣悦-bj凯莉-徐立磊A-叶俊泽yc-6-前贴", "agent": "荔枝", "channel": "-", "spend": 1.83, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 49.46, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/69db3b27451fd86a6edf6ce19f0039aa.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-今天我李博说了算-混剪-李3-性价比-全年", "agent": "掌视", "channel": "-", "spend": 0.89, "orders": 0.0, "ctr": 4.35, "cvr": 0.0, "cpm": 38.7, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1ac0f8d79bbcb78b5bad2ee5cb12a3dd.mp4"}, {"name": "0917-199三科-自产-曲中雨-子衿-1", "agent": "申坤", "channel": "-", "spend": 0.1, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 33.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789641209428.dc8ccfc2dd96c548fd9ff62d2382242e.mp4"}, {"name": "260915-字词-王智张耀杨薪慧-高中数物化199-混剪-", "agent": "有范", "channel": "-", "spend": 378.34, "orders": 2.0, "ctr": 1.25, "cvr": 3.33, "cpm": 78.72, "cpa": 189.17, "roi": 0.79, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d82a9825036dd2fe3aa2ba50afe14d2e.mp4"}, {"name": "20260818-猿辅导高中双科-实拍-千川-效果展示-高二-买数送物-不推-张焱-bj宋钦冲-袁北辰ec-二创-2-视频号--动态模型", "agent": "自投放", "channel": "-", "spend": 1.3, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 76.47, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/ab94655ea526354daf0b5429b19342f6.mp4"}, {"name": "0923-199三科-自产-DX-小花-黄小雨-陈灿-A1-x-有-无-性价比-cc1蒋hxy内实拍042Ai", "agent": "东信", "channel": "-", "spend": 30.96, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 147.43, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8bc19de8182192283ebf3ee757edcfaf.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A2-x-有-1-凡是现在上高一高二的-混剪-宇3-大字报-全年-国庆", "agent": "掌视", "channel": "-", "spend": 0.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 3.18, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/44c5d4376374828a4775407204d2a422.mp4"}, {"name": "260922-字词-王智-张耀-李嘉南-高中数物化三科-混剪-不报2（老刘）", "agent": "有范", "channel": "-", "spend": 0.12, "orders": 0.0, "ctr": 2.94, "cvr": 0.0, "cpm": 3.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/24aadc424611518ce3cde46cbd755426.mp4"}, {"name": "0602-199双科-自产-自产主-王晶-巽阳-婷玉-A1-B4B6-有-9", "agent": "申坤", "channel": "-", "spend": 0.23, "orders": 0.0, "ctr": 4.35, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1780916523530.2c90bc50c2996b2c7cf022ce548b59ed.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-模型方法-高二-买数送物化-什么时候-唐欣悦-bj丁梓仟-叶俊泽yc-4-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 76.16, "orders": 0.0, "ctr": 0.49, "cvr": 0.0, "cpm": 188.05, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/af186d784ead5e5562aa280c7eae22cd.mp4"}, {"name": "20260807-猿辅导高中双科-实拍-视频号-活动-夏他-张焱唐欣悦-bj李赛-裂变-袁北辰ec-横屏-15改2", "agent": "荔枝", "channel": "-", "spend": 26.13, "orders": 0.0, "ctr": 0.7, "cvr": 0.0, "cpm": 91.68, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0ba6e92a3c09a9a407ba88295823898b.mp4"}, {"name": "260929-199三科-代理-DX-达人-曲中雨-无-A6-x-有-无-信息差-000无hss内二客058Ai", "agent": "东信", "channel": "-", "spend": 11.63, "orders": 0.0, "ctr": 1.51, "cvr": 0.0, "cpm": 35.14, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2aabe0ee7f5b8cd8c7445c10dd9cc288.mp4"}, {"name": "0922-199三科-自产-自产主-李博-曲中雨-浩正-A2-x-无-9-给我7天", "agent": "申坤", "channel": "-", "spend": 5.73, "orders": 0.0, "ctr": 2.28, "cvr": 0.0, "cpm": 26.16, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236371554.70964ee04da4fd01050fda38ac225ada.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-开学可以不报-混剪-谷-文字前贴-期末-全年段", "agent": "掌视", "channel": "-", "spend": 0.12, "orders": 0.0, "ctr": 3.13, "cvr": 0.0, "cpm": 3.75, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/494611f68c6a74f3d0408ea788d41076.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-你就是李博-实拍-李2-家长焦虑-全年", "agent": "掌视", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/cbc3546001171c49b52d4305749056ba.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-4-眼镜", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 2.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/008fc8050a16b2fcb8cbae712df5779e.mp4"}, {"name": "0430-199物-自产-自产二-李博-曲中雨-浩正-A2-B2-无-20-亿晨混剪16", "agent": "申坤", "channel": "-", "spend": 61.67, "orders": 0.0, "ctr": 1.27, "cvr": 0.0, "cpm": 390.32, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777558829700.5f8b93df493b819940e609fc14fd918b.mp4"}, {"name": "20260924-猿辅导高中双科-实拍-千川-分数诊断-高二-买物送数化-贩卖焦虑-都不行-唐欣悦-bj宋钦冲--张晓洁yc-2（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 4.2, "orders": 0.0, "ctr": 1.72, "cvr": 0.0, "cpm": 72.41, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f5df20af56bd8579d9c6c5f4231c0fa9.mp4"}, {"name": "20260928-猿辅导高中双科-实拍-千川-塑品-动态模型-通用-买数送物化-认知理念-模仿-唐欣悦-cd小卉-高俊南-徐立磊A-叶俊泽yc-3.1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/31c263334d1351d53080d98eb0939e2f.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-3-199数学物理化学-混剪-谷-文字前贴-月考-全年", "agent": "掌视", "channel": "-", "spend": 0.6, "orders": 0.0, "ctr": 5.36, "cvr": 0.0, "cpm": 10.71, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/568c6637eceab268a435570746b9738f.mp4"}, {"name": "0916-199三科-自产-自产主-李博-曲中雨-子衿-A6-x-无-5-动态模型", "agent": "申坤", "channel": "-", "spend": 1.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 145.71, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985154343.41a279c7ffbb4ea1e1b941347821f8ab.mp4"}, {"name": "0819-199三科-自产-自产主-李博-曲中雨-子衿-A6-B1-无-9", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1787638793662.b934774d9375245b5a17162f79499fa1.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-视频号-内容-ip李博-学情痛点类-通用-买物送数化-IP背书-中等生-孟庆睿-叶俊泽yc-2.1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.08, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 26.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1cd233d75168226f3a6980adeb2bdca2.mp4"}, {"name": "20260923-高中三科-混剪-图-张凌-2", "agent": "荔枝", "channel": "-", "spend": 0.57, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 21.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7de6fcb05a7299d2218b829823a41083.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-B2-x-有-8-家里有高中生-混剪-李5-达人-高二", "agent": "掌视", "channel": "-", "spend": 3.17, "orders": 0.0, "ctr": 5.62, "cvr": 0.0, "cpm": 17.81, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e65d8a92ecd892c8dc45ed3598db7f6a.mp4"}, {"name": "stodownload (9)", "agent": "申坤", "channel": "-", "spend": 4.17, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 22.18, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d77866ef955ef1b1632e0e0a4181eb42.mp4"}, {"name": "260922-字词-王智-张耀-李嘉南-高中数物化三科-混剪-不报1", "agent": "有范", "channel": "-", "spend": 10.83, "orders": 0.0, "ctr": 1.02, "cvr": 0.0, "cpm": 55.26, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f5bed830c0fecbee8faf77fe30c74ccf.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-性价比-ip李博-动态模型-通用-买物送数化-IP背书-要多少-“动态模型”-孟庆睿-叶俊泽yc-1.1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.29, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 11.15, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/cad1988845a7525233eae3a585dd5d8f.mp4"}, {"name": "260923-字词-王智张耀杨薪慧-高中数物化199-混剪- (2)", "agent": "有范", "channel": "-", "spend": 168.18, "orders": 1.0, "ctr": 0.72, "cvr": 2.5, "cpm": 30.36, "cpa": 168.18, "roi": 0.89, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/28a7e1cd854dbcb087ffbe216fa0a466.mp4"}, {"name": "stodownload (8)", "agent": "申坤", "channel": "-", "spend": 2945.75, "orders": 4.0, "ctr": 0.71, "cvr": 1.27, "cpm": 66.24, "cpa": 736.44, "roi": 0.2, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4cf29ef7779f992e527af94097b77fb3.mp4"}, {"name": "书驰4", "agent": "申坤", "channel": "-", "spend": 2.85, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 53.77, "cpa": 0.0, "roi": 0.0, "preview": "https://img-pub.oss-cn-beijing-internal.aliyuncs.com/1a028f46503d088.mp4"}, {"name": "260928-199三科-代理-DX-李博-视觉锤-雅迪-A1-x-有-18-名师-000无wsq内二客051-达人", "agent": "东信", "channel": "-", "spend": 401.5, "orders": 0.0, "ctr": 0.83, "cvr": 0.0, "cpm": 133.04, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/cb1f74a6347e982d68fb5977a412f52f.mp4"}, {"name": "视频-720_1280-4-1790238892", "agent": "东信", "channel": "-", "spend": 30.55, "orders": 0.0, "ctr": 0.56, "cvr": 0.0, "cpm": 170.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/887fb042bce3130fdf67e7350e1b2ca8.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-IP背书-已经买-唐欣悦-ip李博--张晓洁yc-5-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.57, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 68.26, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/03367e17045fb0f6c06c62f6534ae18b.mp4"}, {"name": "20260901-猿辅导高中双科-实拍-视频号-活动-ip李博-高二-买物送数化-刷题量-孟庆睿-ip李博--张晓洁yc-3（前贴）", "agent": "荔枝", "channel": "-", "spend": 0.48, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 25.26, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2ce9cb0631823685bbcf67447e111f33.mp4"}, {"name": "0813-199三科-自产-自产二-能能-曲中雨-子衿-A1-B4-无-11", "agent": "申坤", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 1.07, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788780272672.b1507dc63642febec0ce5f9d26d56002.mp4"}, {"name": "0909-199三科-自产-自产二-李博-曲中雨-子衿---有-2", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 8.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789111366796.1b5adf459a64b390ea2641f75925ebd8.mp4"}, {"name": "260920-199三科-代理-DX-李博-曲中雨-子衿-B2-有-14-名师-000无hss内实客011", "agent": "东信", "channel": "-", "spend": 7.26, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 95.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c1cb7a09eb193ace2131efc09eb1c25a.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-雅迪-A6-x-无-17-名师-000无hxy内客供004", "agent": "东信", "channel": "-", "spend": 0.39, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 35.45, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/db5feb80124519ab5844d47418461ced.mp4"}, {"name": "260924-混剪-杨欣茹蔡瑶不要买混提醒", "agent": "有范", "channel": "-", "spend": 0.6, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 15.38, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a82eb7149c01a041a5678c2a58f19714.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-2-AI实拍", "agent": "申坤", "channel": "-", "spend": 0.64, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 71.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/43b45f0e60857fd1984e03f8a1283c0f.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-活动-国庆-通用-五科-节点活动-还好A-常文茜-刘a-袁北辰-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 2.72, "orders": 0.0, "ctr": 2.08, "cvr": 0.0, "cpm": 56.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/13e45df6eb85df7b7e017f668d516a40.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-活动-通用-买数送物化-价格拆解-忍A-张焱-丁a-袁北辰yc-1.2", "agent": "荔枝", "channel": "-", "spend": 0.13, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 16.25, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4fa0673791b4f09aee8aa60b185c79c3.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-婷玉-有-10-做题-000无czh内实客025", "agent": "东信", "channel": "-", "spend": 8.87, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 76.47, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/55d29ab8577b1d0e3b1db42c65e6c311.mp4"}, {"name": "0430-199物-自产-自产二-李博-曲中雨-浩正-A6-B2-有-22-亿晨混剪18", "agent": "申坤", "channel": "-", "spend": 1.17, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 234.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1777558831215.64d8d7d16939b3d40a41219136d04bc3.mp4"}, {"name": "260923-199三科-代理-DX-李博-视觉锤-雅迪-A6-x-有-17-名师-000无hxy内二客045Ai", "agent": "东信", "channel": "-", "spend": 15.73, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 71.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/531d20b3fcb3a2094563ae1d7f88731c.mp4"}, {"name": "20260916-猿辅导高中双科-实拍-视频号-ip李博-线下班对比-199学三年-张焱唐欣悦-李博-袁北辰ec-二创-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.53, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 176.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1dd108c2a1da585ab9a151a8b487b7fc.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-新高一物理背不会-实拍-何-AI前贴-月考-高一", "agent": "掌视", "channel": "-", "spend": 0.14, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 17.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/58d3bf1458c162a3b30dc78bbf084812.mp4"}, {"name": "260921-字词-王智-张耀-李嘉南-高中数物化三科-实拍-醒醒", "agent": "有范", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/42311fceb4ec238be32b862310a6e5c6.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-塑品-ip李博-通用-买物送数化-IP背书-认准了-唐欣悦-ip李博--张晓洁yc-7-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.21, "orders": 0.0, "ctr": 3.7, "cvr": 0.0, "cpm": 7.78, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8b0c938ae3337f64e7362191143f2c12.mp4"}, {"name": "0916-199三科-自产-自产主-李博-视觉锤-雅迪-A2-x-有-17-直播带学", "agent": "申坤", "channel": "-", "spend": 1.08, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 13.01, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239330690.6142c35b2c715d72cb3c41b8125bc121.mp4"}, {"name": "0920-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-物理有我李博-混剪-李5", "agent": "掌视", "channel": "-", "spend": 4.84, "orders": 0.0, "ctr": 2.53, "cvr": 0.0, "cpm": 15.32, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/256c9d955e01482bda49adca284042f8.mp4"}, {"name": "0917-199三科-自产-曲中雨-子衿-3", "agent": "申坤", "channel": "-", "spend": 0.37, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 33.64, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789641208456.887503b096f4ac0037bbabe4ae383a7e.mp4"}, {"name": "0827-199双科-申坤-李博-李天-卞俊洁-A2-B4-有-4", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 16.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/171cf41efd8cde6fffc3eb71a93c8b63.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-13-你没有听错-实拍-宇1-性价比-全年", "agent": "掌视", "channel": "-", "spend": 0.23, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 7.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/dc6b3278b2637a32ae1667c074d8818b.mp4"}, {"name": "20260910-猿辅导高中双科-实拍-视频号-模型大招-ip李博-通用-买物送数化-IP背书-模型法-唐欣悦-ip李博--张晓洁yc-8（前贴2）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.17, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 56.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8c9ca0f746895d0a3535494ae64207d0.mp4"}, {"name": "20260723-猿辅导高中双科-实拍-视频号-贩卖焦虑-高三-买数送物-拦下皮带-孟庆睿-bj十五-李文静yc-1-前贴", "agent": "荔枝", "channel": "-", "spend": 10.15, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 298.53, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/267722ca509d25af22819e7567fc47a1.mp4"}, {"name": "260922-字词-武洁-陈昀-陈红梅-高中数物199-实拍-程度", "agent": "有范", "channel": "-", "spend": 42.33, "orders": 0.0, "ctr": 1.02, "cvr": 0.0, "cpm": 20.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/70316e953c4e9af4573fdb18d465210e.mp4"}, {"name": "0805-199双科-自产-自产二-冷一丁-视觉锤-小敏-A6-B1-有-20", "agent": "申坤", "channel": "-", "spend": 0.22, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 18.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786355491971.a91cfc957427cae905d1edc5de2fd9b6.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-内容-ip李博-认知纠偏类-通用-买数送物化-IP背书-白痴-张焱-ip李博-袁北辰ec-达人羊小羊(ai男)-二创-5改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 5.48, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 202.96, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f1a27c8644388f5d23998cbe01f18697.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-曲中雨-小敏-A2-B4-无-18", "agent": "申坤", "channel": "-", "spend": 0.43, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 107.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786354696304.6ffff51e50f5e6f78a332e5d85b9cb5f.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-化学提分-通用-买化送数物-认知理念-一两年-唐欣悦-bj郭铭泽-张凌A-张晓洁yc-6（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 82.74, "orders": 0.0, "ctr": 0.63, "cvr": 0.0, "cpm": 260.19, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f7b4200e87581fe24946c556990af390.mp4"}, {"name": "0916-199三科-自产-自产主-李博-曲中雨-子衿-A8-x-有-6-题不认识你", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 20.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985203745.b1d65724a28cab59f0da6e1c096103ab.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-3", "agent": "申坤", "channel": "-", "spend": 0.87, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 72.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5f941b0586c644098a90fcc678e38ed0.mp4"}, {"name": "260920-199三科-代理-DX-李博-曲中雨-浩正-B2-x-有-10-Ai前贴-000无yfy内实客028", "agent": "东信", "channel": "-", "spend": 0.2, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 40.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/d9fd04d4c3b716a58efad0a6c16ffcea.mp4"}, {"name": "0920-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-1-这上了高中啊-混剪-李3", "agent": "掌视", "channel": "-", "spend": 24.65, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 94.44, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b37f5239973a51cc475c3860cfd282ab.mp4"}, {"name": "260924-李博实拍-薛永欣蔡瑶找我", "agent": "有范", "channel": "-", "spend": 34.55, "orders": 0.0, "ctr": 1.63, "cvr": 0.0, "cpm": 70.22, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2c4208f5a9c5f11cc1c8a9226298709f.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-性价比-ip李博-高二-买物送数化-IP背书-对不起-唐欣悦-ip李博--张晓洁yc-1（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 6.03, "orders": 0.0, "ctr": 0.21, "cvr": 0.0, "cpm": 12.8, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/20fe8c08f9ab7a738b7dc4ce7b79ab39.mp4"}, {"name": "0813-199三科-自产-自产二-能能-曲中雨-子衿-A7-B2-有-15", "agent": "申坤", "channel": "-", "spend": 0.09, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 8.18, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788780274016.4c9c703bc2feab716d06411efcaa1a61.mp4"}, {"name": "0922-199三科-自产-自产主-李博-曲中雨-浩正-A2-x-无-8-高三没救", "agent": "申坤", "channel": "-", "spend": 1.85, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 35.58, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236363051.2537e342d99cba4007c0924bd4d2c276.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-敢不敢这个新学期-实拍-谷-达人前贴-期末-全年段", "agent": "掌视", "channel": "-", "spend": 3.99, "orders": 0.0, "ctr": 0.98, "cvr": 0.0, "cpm": 39.12, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8e915a905843d0dc366682df42418541.mp4"}, {"name": "20260824-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-算什么-张焱-徐立磊A-bj冷一丁--张晓洁yc-3（前贴改）", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 5.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5ce42c7ea970f257fd6acd276bfdf44e.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A8-x-有-1-我遭到疯狂举报-实拍-彤-动画前贴-月考+全阶段", "agent": "掌视", "channel": "-", "spend": 0.23, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 15.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/82b6347318e78488532861ff31b09bf5.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-活动-国庆-通用-五科-节点活动-疯了-常文茜-bj凯丽--岳久鸿yc-1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 2.25, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 25.86, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/484d9a333774f56dcfc1e4c228d1eb42.mp4"}, {"name": "20260922-猿辅导高中双科-混剪-视频号-图-树叶-价格拆解-张焱-裂变-张晓洁yc-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 36.6, "orders": 0.0, "ctr": 0.56, "cvr": 0.0, "cpm": 101.95, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1705ad672ce9fa80b1b601fbfe541fa7.mp4"}, {"name": "0826-199三科-自产-自产二-李博-曲中雨-浩正---无-6", "agent": "申坤", "channel": "-", "spend": 1.62, "orders": 0.0, "ctr": 4.76, "cvr": 0.0, "cpm": 77.14, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788780104459.463a4a691638c4a4bad098905cd32f80.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-1-AI实拍", "agent": "申坤", "channel": "-", "spend": 1.36, "orders": 0.0, "ctr": 3.13, "cvr": 0.0, "cpm": 42.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/33c5d8a6452f1cbbfae85ea861d8807e.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-ip李博-买物送数-睡觉-张焱-IP李博-IP背书-叶俊泽yc-裂变-1-动态模型-视频号版本", "agent": "荔枝", "channel": "-", "spend": 6.36, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 25.54, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/68c82c35748652e6066aef08c14e9ae0.mp4"}, {"name": "0916-199三科-自产-自产主-李博-视觉锤-雅迪-A2-x-有-18-直播带学", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 1.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239325720.563c50a9b0f8c30e72cf4dd28a8484e4.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-活动-通用-买数送物化-价格拆解-幸亏-孟庆睿-bj刘思航-袁北辰ec-专家-二创-1.1改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 3.33, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 92.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/db55b1b07f6aa5283e55ca9d16fffb27.mp4"}, {"name": "0918-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-他物理真的好差呀-实拍-彤", "agent": "掌视", "channel": "-", "spend": 15.46, "orders": 0.0, "ctr": 4.31, "cvr": 0.0, "cpm": 39.24, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/fc4acd4eb2590b473da1ac509cd6bc83.mp4"}, {"name": "启航2", "agent": "申坤", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 7.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1ba27f532e3a13ed55b941ddf39875d5.mp4"}, {"name": "20260921-猿辅导高中双科-混剪-活动-买数送物-认知理念-跟你-张焱-cd鲨鱼-袁北辰ec-达人韵鑫(女)-二创-1.2", "agent": "荔枝", "channel": "-", "spend": 1.06, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 27.18, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4f258fee0187de37ecd4e7bd60e6d6e9.mp4"}, {"name": "20260828-猿辅导高中双科-实拍-千川-化学提分-高二-买化送数物--唐欣悦-cd琳瑶--宋倩芸yc-1", "agent": "荔枝", "channel": "-", "spend": 12.35, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 169.18, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2ecf9e2ad193a0bfee317b2e53c3149b.mp4"}, {"name": "0921-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-6", "agent": "申坤", "channel": "-", "spend": 5.23, "orders": 0.0, "ctr": 0.63, "cvr": 0.0, "cpm": 33.1, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/18a0bec8b9b0ec72368f54f427347ab2.mp4"}, {"name": "0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-1", "agent": "申坤", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 5.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4a9d1ce75b1833a8ae74ffab9161dee0.mp4"}, {"name": "260914-字词-陈盼盼-高中数物化199-混剪-客供二剪4", "agent": "有范", "channel": "-", "spend": 4534.1, "orders": 10.0, "ctr": 0.4, "cvr": 2.96, "cpm": 54.01, "cpa": 453.41, "roi": 0.33, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/55fa96f693ec3b59f39b656cf857b9f5.mp4"}, {"name": "0920-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-03", "agent": "申坤", "channel": "-", "spend": 1.09, "orders": 0.0, "ctr": 1.64, "cvr": 0.0, "cpm": 17.87, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4678027cf61056b58013987f9cbdb8e5.mp4"}, {"name": "0916-199三科-自产-自产主-李博-视觉锤-雅迪-A6-x-无-19-国庆节点提分", "agent": "申坤", "channel": "-", "spend": 2.22, "orders": 0.0, "ctr": 3.97, "cvr": 0.0, "cpm": 17.62, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790239335554.f553463f76d7f3fd180b4455768557dd.mp4"}, {"name": "260922-字词-武洁-陈昀-陈红梅-高中数物199-混剪-程度1", "agent": "有范", "channel": "-", "spend": 48.46, "orders": 0.0, "ctr": 1.97, "cvr": 0.0, "cpm": 36.68, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c6bacdb23a4620c714579b0ed5311922.mp4"}, {"name": "0922-199三科-自产-自产主-李博-曲中雨-浩正-A2-x-7-加啥都便宜", "agent": "申坤", "channel": "-", "spend": 1.46, "orders": 0.0, "ctr": 3.33, "cvr": 0.0, "cpm": 48.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1790236340277.a985f38a479fa0d62a5db5c38ca4428c.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-活动-国庆-通用-五科-节点活动-还好A-常文茜-刘a-袁北辰-2-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 223.81, "orders": 0.0, "ctr": 0.23, "cvr": 0.0, "cpm": 85.39, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/eea4998f07fc6405052d809367b0b10b.mp4"}, {"name": "20260923-猿辅导高中双科-实拍-视频号-性价比-ip李博-通用-买物送数化-IP背书-已经买-唐欣悦-ip李博--张晓洁yc-5（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 4.46, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 73.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/651f5998db21c1b8437c1f8e56f1e4dd.mp4"}, {"name": "0923-199三科-申坤-白琳-李天-卞俊洁-A2-B4-无-3-AI实拍", "agent": "申坤", "channel": "-", "spend": 0.24, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 48.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b17e2be644fe7eac27f5bbe65267ef0c.mp4"}, {"name": "20260914-高中三科-混剪-图-张凌-5", "agent": "荔枝", "channel": "-", "spend": 12.43, "orders": 0.0, "ctr": 0.25, "cvr": 0.0, "cpm": 30.54, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/52406f6ab4c62efa6b6ad8d6b0e820df.mp4"}, {"name": "图文5—子衿", "agent": "申坤", "channel": "-", "spend": 1.99, "orders": 0.0, "ctr": 4.62, "cvr": 0.0, "cpm": 15.31, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1785729935909.b8b4d68ab0beb94ffaf4605df146da28.mp4"}, {"name": "260920-199三科-代理-DX-李博-曲中雨-浩正-B2-有-9-名师-000无hk1内实客014", "agent": "东信", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c53b87f5569ffc8824607b175cfa01ab.mp4"}, {"name": "20260814-猿辅导高中双科-实拍-视频号-内容-高三-买数送物-压力大-孟庆睿-bj罗旭婷--曾柔雪yc-2改", "agent": "荔枝", "channel": "-", "spend": 1.04, "orders": 0.0, "ctr": 4.35, "cvr": 0.0, "cpm": 45.22, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/dd4bc06a921d8d5ae1d7fda7a8722af5.mp4"}, {"name": "260920-199三科-代理-DX-李博-曲中雨-子衿-A1-x-有-2-名师-000无zz1内实客010", "agent": "东信", "channel": "-", "spend": 54.5, "orders": 0.0, "ctr": 0.6, "cvr": 0.0, "cpm": 162.69, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4acd2cc4409ec3a3cd71895fc1622ba2.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-视频号-活动-通用-五科-节点活动-快都-张焱-bj于静--曾柔雪yc-3前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.83, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/eeb20900e7ec155761dca471436ae61e.mp4"}, {"name": "20260821-猿辅导高中双科-实拍-活动-夏他-张焱唐欣悦-bj李赛-裂变-张晓洁yc-1-精改", "agent": "荔枝", "channel": "-", "spend": 32.76, "orders": 0.0, "ctr": 1.11, "cvr": 0.0, "cpm": 121.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e941ce48a0e9b5003c08dba35683797c.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-4", "agent": "申坤", "channel": "-", "spend": 0.04, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 4.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/29ca15d52318fbc0760307766d69e982.mp4"}, {"name": "0909-199三科-自产-自产二-李博-视觉锤-雅迪-A5-B1-无-20", "agent": "申坤", "channel": "-", "spend": 1.69, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 29.65, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789628171807.f2a543394fd031c562b65f4405921b1b.mp4"}, {"name": "0317-199物-自产-自产二-李博-曲中雨-浩正-A2-B2-无-20", "agent": "有范", "channel": "-", "spend": 0.0, "orders": 1.0, "ctr": 0.0, "cvr": 0.0, "cpm": 0.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1775810390856.63336d0afafe2f3680b8f47bb3768e74.mp4"}, {"name": "0923-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-5-AI实拍", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 16.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6f72463a0a0425ac127c13a8ea1659ee.mp4"}, {"name": "260915-字词-苗宇婷张耀-高中数物化199-图文素材-2", "agent": "有范", "channel": "-", "spend": 0.01, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e382b071555497f38c6b76d09a6b5bb0.mp4"}, {"name": "202609018-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-还贵-李莹莹-dr小五老师--叶俊泽-4-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 2.51, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 193.08, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e807b1e9f632362381dc993d78fe6e9d.mp4"}, {"name": "20260922-猿辅导高中双科-实拍-视频号-内容-ip李博-通用-买物送数化-价格拆解-超过没规划-李莹莹-ip李博--曾柔雪yc-5前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 2.55, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 134.21, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/b61b3cdc16965388e1bf5e99e8b65a85.mp4"}, {"name": "0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-1-AI实拍", "agent": "申坤", "channel": "-", "spend": 436.47, "orders": 1.0, "ctr": 1.03, "cvr": 1.79, "cpm": 80.13, "cpa": 436.47, "roi": 0.34, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/033ed2e921a47f543867937936db8dab.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-4-你们家孩子-混剪-宇5-性价比-全年-中秋", "agent": "掌视", "channel": "-", "spend": 2.77, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 145.79, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/7bb39e6f534fd6ff705a33c6c17baaf8.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-模型-文理分班-高一-五科-潜规则-孟庆睿-bj潘艺烁--叶俊泽yc-1-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 342.24, "orders": 0.0, "ctr": 0.42, "cvr": 0.0, "cpm": 51.17, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/f54fe79d03afbe7b71f47e3e8b93b005.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-雅迪-A2-x-有-11-名师-000无zn1内实客020Ai(1)", "agent": "东信", "channel": "-", "spend": 2.38, "orders": 0.0, "ctr": 3.23, "cvr": 0.0, "cpm": 76.77, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/445c9401c7d378d1689a4adf73789257.mp4"}, {"name": "20260918-猿辅导高中双科-实拍-视频号-化学提分-高二-买化送数物-认知理念-三段-唐欣悦-bj于靖-张凌A-张晓洁yc-4.1（前贴）-视频号版本", "agent": "荔枝", "channel": "-", "spend": 1.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 128.75, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1659d7c0bd1169ee8a109da9393bf536.mp4"}, {"name": "260918-字词-王智-张耀-杨薪慧-高中数物199-混剪-李博-没上前贴 (4)（老刘）", "agent": "有范", "channel": "-", "spend": 171.56, "orders": 1.0, "ctr": 0.89, "cvr": 2.08, "cpm": 31.94, "cpa": 171.56, "roi": 0.87, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/96ec72fc6835a029fe21ca1e76369157.mp4"}, {"name": "202609010-猿辅导高中双科-实拍-千川-活动-通用-买数送物化-你妈管-李莹莹-bj庄紫薇--叶俊泽yc-5.1-前贴改-视频号版本", "agent": "自投放", "channel": "-", "spend": 19.63, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 54.68, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/45b2bda0b0632609c411de45a10415a5.mp4"}, {"name": "0921-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-2-羊小羊", "agent": "申坤", "channel": "-", "spend": 3.53, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 39.22, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/fdba745bebb2420404049dcb03701211.mp4"}, {"name": "0920-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-1-还好我妈给我报-实拍-何", "agent": "掌视", "channel": "-", "spend": 8.74, "orders": 0.0, "ctr": 2.08, "cvr": 0.0, "cpm": 60.69, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4dd840883f880710a04aca682af16403.mp4"}, {"name": "0819-199三科-自产-自产二-李博-曲中雨-子衿-A7-B2-有-14", "agent": "申坤", "channel": "-", "spend": 5.47, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 248.64, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1787638715317.fad835020e64b1d4a7ce6bcd724963cb.mp4"}, {"name": "视频-720_1280-4-1790216724", "agent": "东信", "channel": "-", "spend": 0.5, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 125.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/090cb11cf0c97ea787f9983dcc498517.mp4"}, {"name": "0826-199三科-自产-自产主-李博-曲中雨-浩正---无-6", "agent": "申坤", "channel": "-", "spend": 0.08, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 13.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1788258657280.f2d0c71052126b80e130ac8f5568a4c9.mp4"}, {"name": "0922-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-1", "agent": "申坤", "channel": "-", "spend": 1.77, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 21.33, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/56551ed10c16c657ea7d4bc413d517a1.mp4"}, {"name": "0819-199三科-自产-自产主-李博-曲中雨-子衿-A6-B1-有-13", "agent": "申坤", "channel": "-", "spend": 855.92, "orders": 0.0, "ctr": 1.28, "cvr": 0.0, "cpm": 260.63, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1787639097928.54b2c1fed8f3a5e683dbf80423949a0f.mp4"}, {"name": "20260824-猿辅导高中双科-实拍-视频号-软广-通用-买数送物化-反着学-软广--孟庆睿-bj李腾飞-叶俊泽yc-1.2-前贴", "agent": "申坤", "channel": "-", "spend": 0.05, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 12.5, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/cf79ac38e26aa059335dc800fdc0ebde.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-视觉锤-嘉丽-A1-B1-有-9", "agent": "申坤", "channel": "-", "spend": 0.06, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 5.45, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786518689249.07dba03763f5786083bbdac989d908fd.mp4"}, {"name": "260923-字词-王智张耀杨薪慧-高中数物化199-混剪- (1)", "agent": "有范", "channel": "-", "spend": 12.28, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 82.42, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1a3d55acd534b1f10bf9cbb330e998d2.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-雅迪-A1-x-有-18-名师-000无zws内实客009(1)", "agent": "东信", "channel": "-", "spend": 8.69, "orders": 0.0, "ctr": 3.51, "cvr": 0.0, "cpm": 152.46, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e2dfd6d6593b081ecbe0c7152859b6e0.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-方式方法-高二-买数送物化-赌你不知-李莹莹-bj田润丰-补量二创-张晓洁ec-6-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.59, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 118.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/3f8d3cf57e0a807c15790fbe7f50ce34.mp4"}, {"name": "20260921-猿辅导高中双科-实拍-千川-模型方法-通用-买物送数化-扔掉-常文茜-dr小五老师-徐立磊A-叶俊泽yc-6.1改-视频号版本", "agent": "荔枝", "channel": "-", "spend": 5.98, "orders": 0.0, "ctr": 0.71, "cvr": 0.0, "cpm": 42.71, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a88859324fe2dc70c601eef9dce5d3ee.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-16-名师-000无yp1内实客027", "agent": "东信", "channel": "-", "spend": 26.94, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 130.78, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a94b3818725689f9f92388465a7a9a82.mp4"}, {"name": "启航3", "agent": "申坤", "channel": "-", "spend": 0.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 35.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/00e234239879c68e90b3dc8aa80d1c40.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-8-名师-000无wsq内实客002", "agent": "东信", "channel": "-", "spend": 3.09, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 81.32, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/edc10b478861baf4fe57e2767f757e4b.mp4"}, {"name": "0921-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-4-家里面有高中生-混剪-彤-大字报-期中+高二", "agent": "掌视", "channel": "-", "spend": 4.32, "orders": 0.0, "ctr": 4.94, "cvr": 0.0, "cpm": 16.43, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e05a8d3f86d5f7f63478591179b9a135.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A8-x-有-1-昨天晚上我接孩子-混剪-宇5-模型-全年", "agent": "掌视", "channel": "-", "spend": 1.81, "orders": 0.0, "ctr": 4.29, "cvr": 0.0, "cpm": 25.86, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/a7f184ae5a8c6a44bc4353fb1f7d3b35.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-8-名师-000无wsq内实客001", "agent": "东信", "channel": "-", "spend": 3.67, "orders": 0.0, "ctr": 1.39, "cvr": 0.0, "cpm": 50.97, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/c0908f264fe87d12a045c33cdffd8101.mp4"}, {"name": "260924-二剪-杨欣茹提醒-图文", "agent": "有范", "channel": "-", "spend": 9.95, "orders": 0.0, "ctr": 0.77, "cvr": 0.0, "cpm": 38.12, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/bf5e0c62104880a136e4066436e8737c.mp4"}, {"name": "20260923-猿辅导高中双科-混剪-活动-买数送物-认知理念-退了-张焱-cd张璐-袁北辰ec-二创-2-视频号版本", "agent": "荔枝", "channel": "-", "spend": 5.27, "orders": 1.0, "ctr": 1.82, "cvr": 50.0, "cpm": 47.91, "cpa": 5.27, "roi": 28.27, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/99324eb6bdecf7e40729ea245d57422a.mp4"}, {"name": "0918-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-凡是上高一高二的-混剪-何", "agent": "掌视", "channel": "-", "spend": 1.78, "orders": 0.0, "ctr": 0.93, "cvr": 0.0, "cpm": 16.64, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/5816ed39bbf0922fad7bda9c0ccd2332.mp4"}, {"name": "0730-199双科-申坤-李博-李天-张佳乐-A1-B4-无-1", "agent": "申坤", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 30.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/2f753d282de5e4294dcb3d7ae3cf54ff.mp4"}, {"name": "0923-199三科-代理-掌视-李博-掌视-掌视-A8-x-有-1-谁说高一月考没考好-实拍-宇2-大字报-高一", "agent": "掌视", "channel": "-", "spend": 6.69, "orders": 0.0, "ctr": 1.56, "cvr": 0.0, "cpm": 34.84, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/8c911ee962f41b549a069e552aec6918.mp4"}, {"name": "260920-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-15-名师-000无lxt内实客003(1)", "agent": "东信", "channel": "-", "spend": 7.6, "orders": 0.0, "ctr": 0.43, "cvr": 0.0, "cpm": 33.04, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6e291021c2c9cfa650ef466169e975c2.mp4"}, {"name": "0729-199双科-自产-自产二-数字人李博-曲中雨-子衿---无-27", "agent": "申坤", "channel": "-", "spend": 0.02, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 5.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1785739629015.13cb6fede5987676158346996513b237.mp4"}, {"name": "20260921-猿辅导高中双科-混剪-活动-买数送物-认知理念-退了-张焱-cd张璐-袁北辰ec-达人韵鑫(女)-二创-2.2", "agent": "荔枝", "channel": "-", "spend": 53.98, "orders": 0.0, "ctr": 0.19, "cvr": 0.0, "cpm": 51.66, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/1c5ab5c2fbd6ee2ec95908d0f73715c1.mp4"}, {"name": "20260910-猿辅导高中双科-实拍-视频号-活动-ip李博-通用-买物送数化-火锅-常文茜-ip李博-袁北辰ec-动态模型-视频号二创-6", "agent": "荔枝", "channel": "-", "spend": 0.56, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 32.94, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/0bd6828085fa840779baf5fd2449c929.mp4"}, {"name": "0921-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-2", "agent": "申坤", "channel": "-", "spend": 5.23, "orders": 0.0, "ctr": 0.92, "cvr": 0.0, "cpm": 47.98, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/24722104ee74e5db452eaf3f13224662.mp4"}, {"name": "20260828-猿辅导高中双科-混剪-图-坚持-张焱-拼客供素材-叶俊泽ec-二创-8-动图模型", "agent": "自投放", "channel": "-", "spend": 0.83, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 103.75, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e6bf9df120f9c9d654d29e560271da05.mp4"}, {"name": "20260924-猿辅导高中双科-实拍-视频号-塑品-动态模型-通用-买数送物化-认知理念-赶紧-张焱-bj刘思航--张晓洁yc-3.1-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.41, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 21.58, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/29a76e523d275c49636cc0b92674cf2c.mp4"}, {"name": "0916-199三科-代理-掌视-李博-掌视-掌视-A1-x-有-2-高中国庆复习巩固-实拍-谷", "agent": "掌视", "channel": "-", "spend": 0.93, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 27.35, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/803b69158a8c69939236e0235710ef73.mp4"}, {"name": "0916-199三科-自产-自产二-李博-曲中雨-子衿-A6-x-无-1-都在学动态模型", "agent": "申坤", "channel": "-", "spend": 0.14, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.77, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985058851.efad6eba865e317f6a5b9e87ea7ffdc9.mp4"}, {"name": "0729-199双科-自产-自产主-于婧-曲中雨-浩正-A5-B2-无-4", "agent": "申坤", "channel": "-", "spend": 0.03, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 30.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1785739609849.bd0413cd9b6b1654b6286e264f6f8e4e.mp4"}, {"name": "0917-199三科-申坤-李博-李天-卞俊洁-A2-B4-有-2", "agent": "申坤", "channel": "-", "spend": 193.86, "orders": 0.0, "ctr": 0.51, "cvr": 0.0, "cpm": 90.67, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/26ed29215165a39a68c4a6e19b5e70ae.mp4"}, {"name": "0918-199三科-申坤-李博-李天-卞俊洁-A2-B4-无-3", "agent": "申坤", "channel": "-", "spend": 1.07, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 10.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/04331c6e9a5d9417580586671db91212.mp4"}, {"name": "0916-199三科-自产-自产二-李博-曲中雨-子衿-A1-x-有-4-他们学一个月多少钱", "agent": "申坤", "channel": "-", "spend": 0.36, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 120.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985056248.e4fa261def39442946186d09aea5878c.mp4"}, {"name": "0916-199三科-自产-自产二-李博-曲中雨-子衿-A8-x-无-6-题不认识你", "agent": "申坤", "channel": "-", "spend": 1.03, "orders": 0.0, "ctr": 11.11, "cvr": 0.0, "cpm": 57.22, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1789985080761.8848d28925a70f97de0d81d6188633a7.mp4"}, {"name": "260804-二剪-严旭荣高一混下大雨-客供", "agent": "有范", "channel": "-", "spend": 94.93, "orders": 0.0, "ctr": 1.17, "cvr": 0.0, "cpm": 79.24, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/880b5ac4d782624d79e4fd4d7ae159f0.mp4"}, {"name": "260928-199三科-代理-DX-李博-视觉锤-嘉丽-A1-x-有-16-名师-000无wsq内二客052-达人", "agent": "东信", "channel": "-", "spend": 16.24, "orders": 0.0, "ctr": 2.72, "cvr": 0.0, "cpm": 110.48, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/45328add07fc59d6b4e04f52c88d815e.mp4"}, {"name": "0922-199三科-代理-掌视-李博-掌视-掌视-A6-x-有-13-你没有听错-混剪-宇3-性价比-全年-国庆", "agent": "掌视", "channel": "-", "spend": 0.11, "orders": 0.0, "ctr": 5.56, "cvr": 0.0, "cpm": 6.11, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/6aed938ed7771bb808de71fd9d90ce75.mp4"}, {"name": "20260923-高中三科-混剪-图-张凌-5", "agent": "荔枝", "channel": "-", "spend": 1.85, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 56.06, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/e179bf63f100067def16d22e244fb966.mp4"}, {"name": "202609018-猿辅导高中双科-实拍-视频号-效果-通用-买数送物化-放弃卷-孟庆睿-bj宋钦冲-叶俊泽yc-2.1改-前贴-视频号版本", "agent": "荔枝", "channel": "-", "spend": 0.2, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 40.0, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/9e979234ac3ca068e7671a2010d5e09a.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-曲中雨-小敏-A7-B1-无-17", "agent": "申坤", "channel": "-", "spend": 14.68, "orders": 0.0, "ctr": 2.6, "cvr": 0.0, "cpm": 63.55, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786354697595.ca22e90e8a90a88219dcab01ff310610.mp4"}, {"name": "0805-199双科-自产-自产主-冷一丁-视觉锤-嘉丽-A7-B1-有-12", "agent": "申坤", "channel": "-", "spend": 0.27, "orders": 0.0, "ctr": 7.69, "cvr": 0.0, "cpm": 20.77, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online1.fbcontent.cn/growth/internal-material/1786518688796.3cc7c2091282481ecc4be0d817eeda01.mp4"}, {"name": "260923-199三科-代理-DX-李博-视觉锤-雅迪-A6-x-有-17-名师-000无hxy内二客046", "agent": "东信", "channel": "-", "spend": 0.86, "orders": 0.0, "ctr": 0.0, "cvr": 0.0, "cpm": 50.59, "cpa": 0.0, "roi": 0.0, "preview": "https://tutor-online.oss-cn-beijing.aliyuncs.com/growth/download-material/4f22b6285372ad633b4e3472e79d7c84.mp4"}];
+        const QC_AGENTS = ["东信", "掌视", "有范", "申坤", "自投放", "荔枝"];
+        (function(){
+          const container = document.getElementById('qc-agent-btns');
+          QC_AGENTS.forEach(function(agent) {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            btn.textContent = agent;
+            btn.onclick = function(){ filterQcAgent(agent, this); };
+            container.appendChild(btn);
+          });
+        })();
+        var QC_MERGED_HTML = document.getElementById('qc-mat-body').innerHTML;
+        function filterQcAgent(agent, btn) {
+          document.querySelectorAll('#qc-agent-btns .filter-btn').forEach(function(b){ b.classList.remove('active'); });
+          document.querySelectorAll('button[onclick*="filterQcAgent('all'"]').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+          const tbody = document.getElementById('qc-mat-body');
+          if (agent === 'all') {
+            tbody.innerHTML = QC_MERGED_HTML;
+            initSortableTable('qc-mat-table');
+            return;
+          }
+          const rows = QC_DETAIL.filter(function(r){ return r.agent === agent; }).sort(function(a,b){ return b.spend - a.spend; });
+          tbody.innerHTML = rows.map(function(r){
+            var cpa = r.cpa > 0 ? '¥'+r.cpa.toFixed(2) : '—';
+            var prev = r.preview ? '<a href="'+r.preview+'" target="_blank" class="btn-preview">▶ 预览</a>' : '—';
+            return '<tr>'
+              +'<td class="mat-name" title="'+r.name+'">'+r.name+'</td>'
+              +'<td class="num" style="font-size:11px;color:var(--text-muted)">'+r.agent+'</td>'
+              +'<td class="num">¥'+r.spend.toFixed(2)+'</td>'
+              +'<td class="num">'+(r.orders||'—')+'</td>'
+              +'<td class="num">'+r.ctr.toFixed(2)+'%</td>'
+              +'<td class="num">'+r.cvr.toFixed(2)+'%</td>'
+              +'<td class="num">¥'+r.cpm.toFixed(2)+'</td>'
+              +'<td class="num">'+cpa+'</td>'
+              +'<td>'+prev+'</td>'
+              +'</tr>';
+          }).join('');
+          initSortableTable('qc-mat-table');
+        }
+        </script></div>
+  </div>
+  <div class="module">
+    <div class="section-header"><h2>B站</h2></div>
+    <div class="module-body">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+          <div class="kpi-label">总花费</div>
+          <div class="kpi-value">¥9,489.53</div>
+          <div class='kpi-sub'>343 条素材</div>
+          <div class="kpi-delta" style="color:#DC2626">-¥489.64</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">CTR</div>
+          <div class="kpi-value">2.21%</div>
+          
+          
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">CPM</div>
+          <div class="kpi-value">¥23.82</div>
+          
+          <div class="kpi-delta" style="color:#059669">+¥2.13</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">表单提交</div>
+          <div class="kpi-value">40</div>
+          <div class='kpi-sub'>¥237.24</div>
+          <div class="kpi-delta" style="color:#059669">+2</div>
+        </div>
+          <div class="kpi-card">
+          <div class="kpi-label">有效线索</div>
+          <div class="kpi-value">46</div>
+          <div class='kpi-sub'>¥206.29</div>
+          <div class="kpi-delta" style="color:#059669">+46</div>
+        </div>
+          <div class="kpi-card accent">
+          <div class="kpi-label">微信加粉</div>
+          <div class="kpi-value">46</div>
+          <div class='kpi-sub'>¥206.29</div>
+          <div class="kpi-delta" style="color:#059669">+46</div>
+        </div>
+        </div>
+        <div class="table-label">按代理商</div>
+        <div class="table-wrap agent-summary-wrap"><table>
+          <thead><tr><th>代理商</th><th>花费</th><th>CTR</th><th>CPM</th><th>表单（量/成本）</th><th>有效线索（量/成本）</th><th>加粉（量/成本）</th></tr></thead>
+          <tbody><tr>
+              <td><strong>酱鱼</strong></td>
+              <td class="num">¥7,112.63</td>
+              <td class="num">2.45%</td>
+              <td class="num">¥25.06</td>
+              <td class="num">31 / ¥229</td>
+              <td class="num">38 / ¥187</td>
+              <td class="num">38 / ¥187</td>
+            </tr><tr>
+              <td><strong>六月</strong></td>
+              <td class="num">¥2,376.90</td>
+              <td class="num">1.60%</td>
+              <td class="num">¥20.75</td>
+              <td class="num">9 / ¥264</td>
+              <td class="num">8 / ¥297</td>
+              <td class="num">8 / ¥297</td>
+            </tr></tbody>
+        </table></div>
+        <div class="table-label">Top 素材（有线索 / 可排序）</div>
+        <div class="table-wrap">
+          <table id="bili-mat-table">
+            <thead><tr>
+              <th>标题</th>
+              <th class="sortable sort-desc" data-col="1">花费</th>
+              <th class="sortable" data-col="2">CTR</th>
+              <th class="sortable" data-col="3">CPM</th>
+              <th class="sortable" data-col="4">表单（量/成本）</th>
+              <th class="sortable" data-col="5">有效线索（量/成本）</th>
+              <th class="sortable" data-col="6">加粉（量/成本）</th>
+              <th>预览</th>
+            </tr></thead>
+            <tbody>
+            <tr>
+              <td class="mat-name" title="建议高中生都去学习一下邪修的物理">建议高中生都去学习一下邪修的物理</td>
+              <td class="num">¥1,590.45</td>
+              <td class="num">2.90%</td>
+              <td class="num">¥48.26</td>
+              <td class="num"><div class='cell-main'>7</div><div class='cell-cost'>¥227.21</div></td>
+              <td class="num"><div class='cell-main'>12</div><div class='cell-cost'>¥132.54</div></td>
+              <td class="num"><div class='cell-main'>12</div><div class='cell-cost'>¥132.54</div></td>
+              <td><a href="https://www.bilibili.com/video/av117199188531855" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="想给{智能地域}高中生的物理一点点自信">想给{智能地域}高中生的物理一点点自信</td>
+              <td class="num">¥888.70</td>
+              <td class="num">3.13%</td>
+              <td class="num">¥24.75</td>
+              <td class="num"><div class='cell-main'>5</div><div class='cell-cost'>¥177.74</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥296.23</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥296.23</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="学霸学物理be like：">学霸学物理be like：</td>
+              <td class="num">¥834.45</td>
+              <td class="num">2.23%</td>
+              <td class="num">¥10.62</td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥417.22</div></td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥417.22</div></td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥417.22</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="想给高中生的物理一点点自信">想给高中生的物理一点点自信</td>
+              <td class="num">¥556.90</td>
+              <td class="num">2.61%</td>
+              <td class="num">¥29.45</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥556.90</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥556.90</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥556.90</div></td>
+              <td><a href="https://www.bilibili.com/video/av117285725410852" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="高中物理差的同学，都有的共性">高中物理差的同学，都有的共性</td>
+              <td class="num">¥481.73</td>
+              <td class="num">5.97%</td>
+              <td class="num">¥66.22</td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥240.86</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥481.73</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥481.73</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="“600分的学习劲头！”">“600分的学习劲头！”</td>
+              <td class="num">¥477.99</td>
+              <td class="num">1.38%</td>
+              <td class="num">¥17.91</td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥159.33</div></td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥239.00</div></td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥239.00</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="“别拦我，我要看下去！！”">“别拦我，我要看下去！！”</td>
+              <td class="num">¥417.14</td>
+              <td class="num">1.60%</td>
+              <td class="num">¥20.97</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥417.14</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥417.14</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥417.14</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="的高中生进！！！">的高中生进！！！</td>
+              <td class="num">¥378.75</td>
+              <td class="num">1.22%</td>
+              <td class="num">¥13.52</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥378.75</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥126.25</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥126.25</div></td>
+              <td><a href="https://www.bilibili.com/video/av117285725410852" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="高中物理，小题直接秒，大题省时间">高中物理，小题直接秒，大题省时间</td>
+              <td class="num">¥315.71</td>
+              <td class="num">8.30%</td>
+              <td class="num">¥78.22</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥315.71</div></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td><a href="https://www.bilibili.com/video/av117285725410852" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="【血泪教训】那些考不上重本的人，高中三年都在做同一件事">【血泪教训】那些考不上重本的人，高中三年都在做同一件事</td>
+              <td class="num">¥291.67</td>
+              <td class="num">1.09%</td>
+              <td class="num">¥35.71</td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥145.83</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥97.22</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥97.22</div></td>
+              <td><a href="https://www.bilibili.com/video/av117199188531855" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="物理差的高中生，先别刷题了...">物理差的高中生，先别刷题了...</td>
+              <td class="num">¥257.25</td>
+              <td class="num">1.42%</td>
+              <td class="num">¥55.44</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥257.25</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥257.25</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥257.25</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="真心建议高中物理基础差的都看看这个方法">真心建议高中物理基础差的都看看这个方法</td>
+              <td class="num">¥239.10</td>
+              <td class="num">1.42%</td>
+              <td class="num">¥42.52</td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥119.55</div></td>
+              <td class="num"><div class='cell-main'>4</div><div class='cell-cost'>¥59.77</div></td>
+              <td class="num"><div class='cell-main'>4</div><div class='cell-cost'>¥59.77</div></td>
+              <td><a href="https://www.bilibili.com/video/av117313172935165" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="【高中物理】就看这个就够了！">【高中物理】就看这个就够了！</td>
+              <td class="num">¥105.16</td>
+              <td class="num">2.30%</td>
+              <td class="num">¥30.30</td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥52.58</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥35.05</div></td>
+              <td class="num"><div class='cell-main'>3</div><div class='cell-cost'>¥35.05</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="别让假努力毁了你的未来！高中生速看！！">别让假努力毁了你的未来！高中生速看！！</td>
+              <td class="num">¥83.14</td>
+              <td class="num">2.01%</td>
+              <td class="num">¥18.39</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥83.14</div></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="逢人就说考不上，夜里挑灯到天亮">逢人就说考不上，夜里挑灯到天亮</td>
+              <td class="num">¥78.62</td>
+              <td class="num">2.31%</td>
+              <td class="num">¥10.08</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥78.62</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥78.62</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥78.62</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="给高中生一点小小震撼">给高中生一点小小震撼</td>
+              <td class="num">¥72.49</td>
+              <td class="num">0.84%</td>
+              <td class="num">¥10.55</td>
+              <td class="num">—</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥72.49</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥72.49</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="就差一点，怎么能不遗憾">就差一点，怎么能不遗憾</td>
+              <td class="num">¥67.38</td>
+              <td class="num">1.30%</td>
+              <td class="num">¥37.96</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥67.38</div></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="高中物理学习“笨方法”真的有用！">高中物理学习“笨方法”真的有用！</td>
+              <td class="num">¥64.39</td>
+              <td class="num">3.11%</td>
+              <td class="num">¥38.56</td>
+              <td class="num">—</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥64.39</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥64.39</div></td>
+              <td><a href="https://www.bilibili.com/video/av117313172935165" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="一点学习的动力都没有，谁来骂醒我">一点学习的动力都没有，谁来骂醒我</td>
+              <td class="num">¥57.07</td>
+              <td class="num">2.25%</td>
+              <td class="num">¥64.20</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥57.07</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥57.07</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥57.07</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="高中物理变态提分，看完这些你就会了">高中物理变态提分，看完这些你就会了</td>
+              <td class="num">¥46.56</td>
+              <td class="num">2.38%</td>
+              <td class="num">¥15.63</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥46.56</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥46.56</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥46.56</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="高中物理，跟博哥能逆袭，你信不？">高中物理，跟博哥能逆袭，你信不？</td>
+              <td class="num">¥44.18</td>
+              <td class="num">2.66%</td>
+              <td class="num">¥78.33</td>
+              <td class="num"><div class='cell-main'>2</div><div class='cell-cost'>¥22.09</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥44.18</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥44.18</div></td>
+              <td><a href="https://www.bilibili.com/video/av117160450003393" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="感觉高中生有这个心态就无di了">感觉高中生有这个心态就无di了</td>
+              <td class="num">¥24.58</td>
+              <td class="num">1.03%</td>
+              <td class="num">¥25.37</td>
+              <td class="num">—</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥24.58</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥24.58</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="【慎点】这套方法能让高中物理瞬间逆袭！">【慎点】这套方法能让高中物理瞬间逆袭！</td>
+              <td class="num">¥13.95</td>
+              <td class="num">2.84%</td>
+              <td class="num">¥36.05</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥13.95</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥13.95</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥13.95</div></td>
+              <td><a href="https://www.bilibili.com/video/av117194323202135" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="学弟学妹们，如何呢又能怎">学弟学妹们，如何呢又能怎</td>
+              <td class="num">¥11.89</td>
+              <td class="num">1.85%</td>
+              <td class="num">¥44.04</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥11.89</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥11.89</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥11.89</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr>
+            <tr>
+              <td class="mat-name" title="高中学习其实很水的，不信你看">高中学习其实很水的，不信你看</td>
+              <td class="num">¥11.82</td>
+              <td class="num">1.61%</td>
+              <td class="num">¥21.18</td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥11.82</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥11.82</div></td>
+              <td class="num"><div class='cell-main'>1</div><div class='cell-cost'>¥11.82</div></td>
+              <td><a href="https://www.bilibili.com/video/av117195413785408" target="_blank" class="btn-preview">▶ 预览</a></td>
+            </tr></tbody>
+          </table>
+        </div></div>
+  </div>
+</div>
+</body>
+<script>
+function initSortableTable(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const headers = table.querySelectorAll('th.sortable');
+  headers.forEach(th => {
+    th.addEventListener('click', function() {
+      const col = parseInt(this.dataset.col);
+      const asc = this.classList.contains('sort-desc');
+      headers.forEach(h => h.classList.remove('sort-asc','sort-desc'));
+      this.classList.add(asc ? 'sort-asc' : 'sort-desc');
+      const tbody = table.querySelector('tbody');
+      const allRows = Array.from(tbody.querySelectorAll('tr'));
+      // 只对父行排序，子行跟随父行
+      const parents = allRows.filter(r => r.classList.contains('mat-parent') || (!r.classList.contains('sub-row') && !r.classList.contains('mat-parent')));
+      parents.sort((a, b) => {
+        const va = a.cells[col] ? a.cells[col].textContent.replace(/[¥,%]/g,'').trim() : '';
+        const vb = b.cells[col] ? b.cells[col].textContent.replace(/[¥,%]/g,'').trim() : '';
+        const na = parseFloat(va), nb = parseFloat(vb);
+        const cmp = isNaN(na) || isNaN(nb) ? va.localeCompare(vb,'zh') : na - nb;
+        return asc ? cmp : -cmp;
+      });
+      // 重新插入：父行 + 紧跟的子行
+      parents.forEach(parent => {
+        tbody.appendChild(parent);
+        const name = parent.dataset.name;
+        if (name) {
+          allRows.filter(r => r.dataset.parent === name).forEach(sub => tbody.appendChild(sub));
+        }
+      });
+    });
+  });
+}
+initSortableTable('qc-mat-table');
+initSortableTable('bili-mat-table');
+</script>
+</html>

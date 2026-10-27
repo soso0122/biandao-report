@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拒审日报分析 0728</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --c-bg: #F8FAFC;
+  --c-surface: #FFFFFF;
+  --c-primary: #1E40AF;
+  --c-secondary: #3B82F6;
+  --c-accent: #D97706;
+  --c-muted: #E9EEF6;
+  --c-border: #DBEAFE;
+  --c-text: #1E293B;
+  --c-muted-text: #64748B;
+  --c-pass: #059669;
+  --c-pass-bg: #ECFDF5;
+  --c-pass-border: #A7F3D0;
+  --c-fail: #DC2626;
+  --c-fail-bg: #FEF2F2;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+}
+body {
+  font-family: 'Fira Sans', -apple-system, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  line-height: 1.6;
+  padding: 24px 16px 48px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+
+/* Header */
+.page-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 28px; padding-bottom: 16px;
+  border-bottom: 2px solid var(--c-border);
+}
+.page-title { font-size: 22px; font-weight: 700; color: var(--c-primary); letter-spacing: -.3px; }
+.page-date { font-family: 'Fira Code', monospace; font-size: 13px; color: var(--c-muted-text); }
+
+/* KPI 卡片 */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.kpi-card {
+  background: var(--c-surface); border-radius: var(--radius);
+  border: 1px solid var(--c-border); padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.kpi-label { font-size: 12px; color: var(--c-muted-text); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.kpi-value { font-size: 36px; font-weight: 700; line-height: 1; font-family: 'Fira Code', monospace; }
+.kpi-sub { font-size: 12px; color: var(--c-muted-text); margin-top: 5px; }
+.kpi-pass .kpi-value { color: var(--c-pass); }
+.kpi-fail .kpi-value { color: var(--c-fail); }
+.kpi-rate .kpi-value { color: var(--c-primary); }
+
+/* 图表区 */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+.chart-card {
+  background: var(--c-surface); border-radius: var(--radius);
+  border: 1px solid var(--c-border); padding: 20px;
+  box-shadow: var(--shadow);
+}
+.chart-full { grid-column: 1 / -1; }
+.chart-title { font-size: 14px; font-weight: 600; color: var(--c-text); margin-bottom: 16px; }
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap-tall { position: relative; height: 180px; }
+
+/* 关键发现 */
+.insight-bar {
+  background: linear-gradient(135deg, #1E40AF, #3B82F6);
+  color: #fff; border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 32px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow-md);
+}
+.insight-icon { font-size: 20px; flex-shrink: 0; }
+.insight-text { font-size: 14px; line-height: 1.5; }
+.insight-text strong { font-weight: 700; }
+
+/* 通过素材 */
+.section { margin-bottom: 32px; }
+.section-title {
+  font-size: 14px; font-weight: 700; color: var(--c-text);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--c-border);
+}
+.dot-pass { width: 8px; height: 8px; border-radius: 50%; background: var(--c-pass); flex-shrink: 0; }
+.dot-fail { width: 8px; height: 8px; border-radius: 50%; background: var(--c-fail); flex-shrink: 0; }
+.dot-info { width: 8px; height: 8px; border-radius: 50%; background: var(--c-secondary); flex-shrink: 0; }
+
+.passed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.passed-card {
+  background: var(--c-pass-bg); border: 1px solid var(--c-pass-border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: box-shadow .15s, transform .1s;
+}
+.passed-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.passed-icon { color: var(--c-pass); flex-shrink: 0; }
+.passed-name { font-size: 13px; font-family: 'Fira Code', monospace; flex: 1; word-break: break-all; }
+.play-hint { color: var(--c-secondary); opacity: .7; flex-shrink: 0; }
+
+/* badge */
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 20px; font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 拒审表格 */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--c-muted); color: var(--c-primary);
+  font-weight: 600; font-size: 12px; text-transform: uppercase;
+  letter-spacing: .4px; padding: 10px 12px; text-align: left;
+  border-bottom: 2px solid var(--c-border);
+}
+thead th.sortable { cursor: pointer; user-select: none; }
+thead th.sortable:hover { background: #dde8f6; }
+thead th .sort-icon { margin-left: 4px; opacity: .4; font-size: 10px; }
+thead th.asc .sort-icon::after { content: '▲'; }
+thead th.desc .sort-icon::after { content: '▼'; }
+thead th:not(.asc):not(.desc) .sort-icon::after { content: '⇅'; }
+tbody tr { border-bottom: 1px solid var(--c-muted); transition: background .15s; }
+tbody tr:hover { background: #F0F5FF; }
+td { padding: 9px 12px; vertical-align: middle; }
+.td-name { font-family: 'Fira Code', monospace; font-size: 12px; color: var(--c-text); max-width: 240px; word-break: break-all; }
+.td-reason { color: var(--c-muted-text); font-size: 12px; max-width: 320px; }
+.td-detail { color: var(--c-accent); font-size: 11px; margin-top: 3px; }
+.btn-play {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: none; border: 1px solid var(--c-secondary); border-radius: 4px;
+  color: var(--c-secondary); font-size: 11px; padding: 1px 6px;
+  cursor: pointer; margin-top: 4px; transition: background .15s;
+}
+.btn-play:hover { background: var(--c-secondary); color: #fff; }
+
+/* 视频预览 Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #111; border-radius: var(--radius);
+  padding: 16px; max-width: 720px; width: 90%;
+  position: relative;
+}
+.modal-title {
+  color: #e2e8f0; font-size: 13px; font-family: 'Fira Code', monospace;
+  margin-bottom: 10px; padding-right: 28px; word-break: break-all;
+}
+.modal-close {
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; color: #94a3b8;
+  font-size: 20px; cursor: pointer; line-height: 1;
+}
+.modal-close:hover { color: #fff; }
+.modal-video { width: 100%; border-radius: 6px; max-height: 60vh; }
+
+/* 标记说明 */
+.legend-card {
+  background: var(--c-surface); border-radius: var(--radius);
+  border: 1px solid var(--c-border); padding: 16px 20px;
+  display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+  box-shadow: var(--shadow);
+}
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.legend-label { font-weight: 500; }
+.legend-desc { color: var(--c-muted-text); }
+
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-full { grid-column: 1; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 页头 -->
+  <header class="page-header">
+    <div>
+      <div class="page-title">审核日报分析</div>
+      <div class="page-date">数据日期：2025-07-28  ·  导出自千川创作者后台</div>
+    </div>
+    <div class="page-date" style="text-align:right">
+      共提报 <strong style="color:var(--c-text)">59</strong> 条 &nbsp;·&nbsp;
+      通过 <strong style="color:var(--c-pass)">0</strong> &nbsp;·&nbsp;
+      拒审 <strong style="color:var(--c-fail)">59</strong>
+    </div>
+  </header>
+
+  <!-- KPI 卡片 -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">总提报数</div>
+      <div class="kpi-value" style="color:var(--c-primary)">59</div>
+      <div class="kpi-sub">本次导出全部素材</div>
+    </div>
+    <div class="kpi-card kpi-pass">
+      <div class="kpi-label">审核通过</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">通过率 0.0%</div>
+    </div>
+    <div class="kpi-card kpi-fail">
+      <div class="kpi-label">审核不通过</div>
+      <div class="kpi-value">59</div>
+      <div class="kpi-sub">拒审率 100.0%</div>
+    </div>
+    <div class="kpi-card kpi-rate">
+      <div class="kpi-label">改版素材通过率</div>
+      <div class="kpi-value">0.0%</div>
+      <div class="kpi-sub">0 / 10 全部通过</div>
+    </div>
+  </div>
+
+  <!-- 关键发现 -->
+  <div class="insight-bar">
+    <div class="insight-icon">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+      </svg>
+    </div>
+    <div class="insight-text">
+      <strong>核心发现：</strong>本批次所有 <strong>改版素材（带"改"标记）通过率 0.0%</strong>，共 0 / 10 条过审；
+      原版素材和测试素材（带 C/c）<strong>通过率均为 0%</strong>，全部拒审。
+      拒审主因为「中危行业」（0 条）和「资料图」（7 条）。
+    </div>
+  </div>
+
+  <!-- 图表区 -->
+  <div class="charts-grid">
+
+    <!-- 按素材类型 -->
+    <div class="chart-card">
+      <div class="chart-title">按素材类型 — 通过 vs 拒审</div>
+      <div class="chart-wrap">
+        <canvas id="typeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 拒审原因 -->
+    <div class="chart-card">
+      <div class="chart-title">拒审原因分布</div>
+      <div class="chart-wrap">
+        <canvas id="reasonChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 按编导 -->
+    <div class="chart-card chart-full">
+      <div class="chart-title">按编导/账户 — 提报数与通过情况</div>
+      <div class="chart-wrap-tall">
+        <canvas id="creatorChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 通过素材 -->
+  <div class="section">
+    <div class="section-title"><span class="dot-pass"></span>审核通过的素材（0 条）</div>
+    <div class="passed-grid">
+      
+    </div>
+  </div>
+
+  <!-- 拒审明细 -->
+  <div class="section">
+    <div class="section-title"><span class="dot-fail"></span>拒审明细（59 条）</div>
+    <div class="table-wrap">
+      <table id="rejectTable">
+        <thead>
+          <tr>
+            <th>素材名称</th>
+            <th class="sortable" data-col="type">类型 <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="reason">拒审类型 <span class="sort-icon"></span></th>
+            <th>审核建议 / 详细内容</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引导-魏怡-9.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/3393182880ab1a57e3d69ebc36d45e29/6a6c35ad/tos-cn-ve-51/oQ0laIjaXAkyqTQtanzQIpPoTTmRqmQWQECAd?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=957&bt=957&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY0NTxlZTk6NzxkOmhkaDloQGkzbWdvZG86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLmNiLmA0LV4yMTQyL2AwLmEjaGhwNmFhbi1oYS0tZDBhc3M%3D&btag=40000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引导-魏怡-9.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-8.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/114a6c2bd52811e4b04639154033ed7d/6a6c35a8/tos-cn-ve-51/oUmAcgN1qBIEDqea2E7ZeAQ2DANTRaHggNIgb9?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1286&bt=1286&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY6aWk1Z2ZnZzpnNmlpZjw8QGlqNGd0NG86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLWAzYjBiXjVeMTRiLzMvM2EjbXItM2FhXi1oYS0tZDBhc3M%3D&btag=40000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-8.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-7.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/18fcb42d7a05ede6311bd67794c1fe2d/6a6c35ac/tos-cn-ve-51/ootzIHYQQtpdICQmkAOkpBATdXaUKPIHQWmEz?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=897&bt=897&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY7M2hkZDk8OzZoaWU6OmU2QGlqPHc6Z286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLzZjMjUvNF9hMS0xYDZeYGEjbWU1NGFhXi1oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-7.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-国星引流-2c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/5dea5b8dcb342e386d4ff4e395e1d98a/6a6c35b1/tos-cn-ve-51/oU7NdoEpNh11dCaNBgoVtfACQAIQRDQeAZaqkD?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1156&bt=1156&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZpNjM1ZWRkaTVkNjk6aDxkQGlqam53OW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojL2AvX2JeNTVeMWNiMTY2X2EjXm5fc2FhXi1oYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-2c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-国星引流-6c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/e749c0e205b7b4cabe0c4a46766b7b36/6a6c35cd/tos-cn-ve-51/oYEkmHRdkBQJqpgJuQQzIMtwAk6FIASPjIWma?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1390&bt=1390&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY8NWU4ODhkODtmZmg2Njo7QGlqZjpuN286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLTEvNTUvMTYxMV5eNDZgLmEjMC1kL2FhZi1oYS0tZDAvc3M%3D&btag=80000200020000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-6c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-雅迪-引导-1c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/a749a75a4dd33616a6bba237bbb6069a/6a6c35a7/tos-cn-ve-51/osAOwFiTkIldWuEzQGwsmaIdaKmttAQUPpQmD?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=355&bt=355&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY3NWQ7NmVpOmVmZmlmPDw1QGlqanQ5Zm86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNS4yNDVgYl5eMWNgYzZeM2EjYmFla2FhXi1oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-雅迪-引导-1c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-10.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/cecefa02fb0cb3d17749a615c8eee784/6a6c35ab/tos-cn-ve-51/owRSkZ9DaBAae29IQEF2OBAweDAgQqS01DNp2R?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=820&bt=820&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY5PGdoODZoOTM7OGc0aWk4QGlqeHZpNm86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojXy8uNjUzY18xMTQwXl8vNmEjcjI2ZGFhXi1oYS0tZDAwc3M%3D&btag=40000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-10.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引导-嘉丽-2C.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/4093fb22913d175f15d2ac86e506360d/6a6c35bd/tos-cn-ve-51/oUDeARQfI7gHVUBAZkqDpaQBaEIuD6QogARttN?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=285&bt=285&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY8ZDw2MzNmZjRkOWg0OGZkQGlqamlnO286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMi5hNS8zLTZeMTA2My5jM2EjY25saGFhXi1oYS0tZDAwc3M%3D&btag=40000200018000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引导-嘉丽-2C.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/03dcf0f206beed085eec8509d1d89f98/6a6c35b8/tos-cn-ve-51/oMgdQhCP4xAImtiXWQkudap7ZQEIpQzkDAmNO?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1001&bt=1001&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZlNTs6ZTM5NTQ4N2Q0M2Q3QGkzdzd2NW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojXjReYzE2NDZeMS0vLzE1NGEjLnBhX2FhZi1oYS0tZDAvc3M%3D&btag=40000200018000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-国星引流-1c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/019fec58304492cfd6e2926fc206a2f6/6a6c35a3/tos-cn-ve-51/oMIaqaNQB7eZDBiNb7AA4DkA7xDPpOfQOgotNk?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=340&bt=340&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZpaDtlZjxlZGU3ODs0Nmc5QGlqOnA8O286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMjEuYGIuNDY2MWAtY2BgNWEjNTBvMGFhXi1oYS0tZDAwc3M%3D&btag=40000200008000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-1c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引导-嘉丽-1C.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/80940fccf0dac88112136c41ce8d3e06/6a6c35b1/tos-cn-ve-51/owjaDQeIarXAZBIpg7ohAfgT4t7cFqADAN0NFT?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=892&bt=892&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZkZjQ0aTZpNjM4ODk0NDVmQGkzbnF1OW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLzU2NWIwMV4uMTVjMGFgLmEjcWxmcmFhXi1oYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引导-嘉丽-1C.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="资料图">
+          <td class="td-name">
+            0727-引流-魏怡-1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/6ac5cb6b965c3f37aeff5bad86eb59fe/6a6c35b8/tos-cn-ve-51/oYdAbAqEpoMaPBfkgfNQZI7ptDANxQaWk1EmDI?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=886&bt=886&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZkZTxpPDVkaDhmZjVpODszQGlqZnZvZW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNV4tLTRjLzZeMTA1L2JfM2EjbjUwNmFhZi1oYS0tZDBhc3M%3D&btag=80000200018000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：25秒)<div class="td-detail">资料图</div></td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="引导字幕">
+          <td class="td-name">
+            0727-国星引流-5c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/00ddcc04d7b2587b0da4142022f42024/6a6c35a4/tos-cn-ve-51/ospLQtBNDaqlaxDAkgBlAnQjIoeeDJA76HENZQ?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=893&bt=893&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY7aDxoZjo3NmRoOmk8OmVoQGlqeDZ2O286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMC40LjQ0YV9iMTMvNi5fNWEjMjBrLWFhXi1oYS0tZDAwc3M%3D&btag=40000200008000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-5c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#e0f2fe;color:#0369a1">引导字幕</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：6秒)<div class="td-detail">以下均有电子版</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-4.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/bbfe4ee7f4753478fdac4ee9ad401397/6a6c35a7/tos-cn-ve-51/o4g2Qtmp1oAEtE0NQVUAakCLzdIF5WQI6QmPr?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1137&bt=1137&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZmZDU2O2ZnOmU2OjpmaTg0QGlqb3JoZW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMTIvMzAyYDVeMV5hMWE2Y2Ejam9iaGFhXi1oYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-4.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="资料图">
+          <td class="td-name">
+            0727-国星引流-4c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/ca21f0109ef99fba6a5dccf774426e97/6a6c35c2/tos-cn-ve-51/o8glQMa2pCC9aLeTAg1AIAaBNzqgIB7DEZ2fRb?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=464&bt=464&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZpaTM7ZDUzNDk5aWU2NzNpQGkzOHlmM286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojXmJhMzZiNF4zMTY1MjNhYmEjZzIyYmFhXi1oYS0tZDAvc3M%3D&btag=80000200018000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-4c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：19秒) | 您好，素材中涉及未授权的明星、名人、大师等人物名义及肖像等内容，请修改或提供相应授权，谢谢。<div class="td-detail">资料图</div></td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="名人名校">
+          <td class="td-name">
+            0727-国星引流-7c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/17adc3f605c238d1fbfe1b2b0578a700/6a6c35b7/tos-cn-ve-51/oIeIRWlRAaka1D0p8ut9gAE7NAMZQ9eoDDBqIZ?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=842&bt=842&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZkOjNlNDplN2U5OGQ2Njo7QGkzOHE3OW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMzYvNjQ1NV4yMWMzNWExMGEjazZiY2FhXi1oYS0tZDAwc3M%3D&btag=80000200018000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-7c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#ffedd5;color:#c2410c">名人名校</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：12秒)<div class="td-detail">明星表情包</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-3.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/bafc51be4ea1b668f2d2921eeee131c1/6a6c35b8/tos-cn-ve-51/ocB0qjf6GtcEIiIMIgUA0CoTQlbyA2qeTBeKjs?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1399&bt=1399&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY2NDo0Zzo5aWQ6ZDY0Zjg3QGlqNjY1Om86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLjNjNmIxYTZfMV5gYC8tM2EjNGllbWFhXi1oYS0tZDAvc3M%3D&btag=80000200018000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-3.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-国星引流-8c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/d399ac44018876b140e78b307486e438/6a6c35a7/tos-cn-ve-51/oEqzQTbDAa7EcgACqIoBotgNAANeeIMRNZakWg?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=561&bt=561&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY8ZDw8aWk8OmgzZDY6OzdlQGlqZzs8OW86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYTEwLWBiMDU1MWM0YzUyM2EjbnBmaGFhXi1oYS0tZDBhc3M%3D&btag=40000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-国星引流-8c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-5.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/fad89cbeb3860b06f44939d81acb73e1/6a6c35a7/tos-cn-ve-51/ocI1UmztCpQRnAhICazEmyQjizCPQQiWARkdT?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1122&bt=1122&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY3ZDxmZ2k0Z2ZlZjRnMzdlQGlqOmdmNG86aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojL2FhMGBgLjViMTU2LjBiMGEjbjBqZWFhXi1oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-5.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727-引流-魏怡-6.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/58fa1b2f1661ce6843c148f6d0698311/6a6c35a7/tos-cn-ve-51/oIjtMaQEUmImdAaWRAtkQgIPYQQBplkazK3oI?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1030&bt=1030&cs=0&ds=3&ft=J9ThAGkHH_Myq8Zef_Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY5PDg4OjZpNTpnaWUzOjtlQGkzOztwN286aXM8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMDAtYTEwYF8xMWNiNWA0MWEjMW0uamFhXi1oYS0tZDAvc3M%3D&btag=40000200010000&dy_q=1785303705&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=20260729134144A5BEB2BC8775BE3C7118&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727-引流-魏怡-6.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-引导-魏怡-4-IP类.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/2332842f8ca99d9c4a72cae487c681a0/6a6c2fd5/tos-cn-ve-51/osLIfLZ1aIrigST7AVtgmtmbOAIQ1EgQ73QFBN?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=854&bt=854&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY5OTRnPGYzZ2g8N2k5OmQ0QGkzOmo7PG86Z3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMDFhYWNfNF9iMV8vXmFjNmEjNWlocWFhZm9oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引导-魏怡-4-IP类.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="资料图">
+          <td class="td-name">
+            0728-引流-魏怡-9-图文.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/7ba53610f42ef08e6b7adac9b82c853f/6a6c2fd4/tos-cn-ve-51/owjBgNbhbIALdEONRZf7SIgEiQ7DxAaT1Q4mTt?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=903&bt=903&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZpODo4PGk0NGlkOzxpZDppQGlqaGo8NG86Z3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojY2E2YF5jLl40MS5fXjY0YWEjbGVrcGFhZm9oYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引流-魏怡-9-图文.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：13秒)<div class="td-detail">资料图</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="引导字幕">
+          <td class="td-name">
+            0728-引流-魏怡-5-效果保证.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/adc1b67377e3d78a1873927a94d976a0/6a6c2fd4/tos-cn-ve-51/ooumXN7bVFl4aShbBM7MfTQQaoAatggyzAR1LI?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1120&bt=1120&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY6MzppZTk2OTZlNzVlNDc6QGlqc2U8ZW86OXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLTJfL15jXl40MWJiLzI1X2EjX2dlbWFhXm9oYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引流-魏怡-5-效果保证.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#e0f2fe;color:#0369a1">引导字幕</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：13秒)<div class="td-detail">以上均有完整版，dd领取</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-引导-魏怡-1-IP类.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/857c4716504c69d0935e9e91c8f2bbe0/6a6c2fd5/tos-cn-ve-51/oILNmQbIav87LAfjQ7IiAxgUytAyE1gB0R0mhS?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=877&bt=877&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZlZjM7Nzk8Mzk2O2hpN2ZlQGkza3k5O286Z3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNDReYTNhNV4zMTQ2MWIvX2EjcWZeZGFhZm9oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引导-魏怡-1-IP类.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-引流-魏怡-10-图文.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/b7f764b4ba885857c5621c689aeb0e35/6a6c2fd4/tos-cn-ve-51/oUI1pHmTBpaNtSK7Xft7bQ8iAOEYIQARLSghXA?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1037&bt=1037&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoOTZoZDQ4OTo8NDozNmllQGlqPHR1O286Z3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMV4xNmNeYTVhMV8zMDFfLWEjMDQvaWFhZm9oYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引流-魏怡-10-图文.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-引导-魏怡-2-IP类.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/bc908806d6f2c2b467b2968d82809050/6a6c2fd0/tos-cn-ve-51/og9M7EgEQ7YDWiEgLf1BSabANIB2mTioQAltDm?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1197&bt=1197&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZkNzc3ZjQ6NTo8Zjc0OjQ8QGkzZjloNW86OXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMC8vYF8uM19iMV8vNjI0NGEjLmdsNmFhXm9oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引导-魏怡-2-IP类.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-引导-魏怡-3-IP类.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/f3d9381644699582b8727b73141095d7/6a6c2fd4/tos-cn-ve-51/o4lkBoJtoVTWSeZZeAHAA82xgHJlfCEbe2ROfA?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=764&bt=764&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZnPGU8PDloNTM5Ojo7ZTZpQGlqbHh4M286OXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLmItLS9hMjZiMS9iMS9fLmEjYGwtMGFhXm9oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引导-魏怡-3-IP类.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="资料图">
+          <td class="td-name">
+            0728-引流-魏怡-8-图文.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/e0e2114710e4eb4f6bd86df46c2e503b/6a6c2fd4/tos-cn-ve-51/o8gfLZORNq2IrNATB01Sz2aXjbWagA4QMafDID?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=747&bt=747&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoOzc2ZWZpZTg4PDg6Njc7QGlqeW5qaG86OXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojXzZjNmMxLV8yMTY2Ly80LmEjZ21rLmFhXm9oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引流-魏怡-8-图文.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：12秒)<div class="td-detail">资料图</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="引导字幕">
+          <td class="td-name">
+            0728-引流-魏怡-7-效果保证.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/04759eb166a4327bd4610a96e916835f/6a6c2fd4/tos-cn-ve-51/ow57QhkAbaAjfaFjALtEAm1gzBFQCArNItITS7?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1065&bt=1065&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY1ZWZlOWc3ZGY6Mzc0OzZmQGkzNHQ2NW86Z3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLmEzLjBeYV4wMWEzNjUvLmEjNjJeLWFhZm9oYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引流-魏怡-7-效果保证.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#e0f2fe;color:#0369a1">引导字幕</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：15秒)<div class="td-detail">以上均有完整版，dd领取</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728浩正瑞晨学姐2代-1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/57907ef49d67fbfde9862a0fa074a56c/6a6c2fd5/tos-cn-ve-51/oQvCH1ijGljU1BAAgs1obeeqAtpGafAw1v06Rb?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=745&bt=745&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZlM2RmOTc8NTU5aDo3aTU8QGkzaXFlO286N3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNTAuMV8zXzU0MTMvLi8yMWEjaXFkMGFhXm9oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728浩正瑞晨学姐2代-1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-引流-魏怡-6-效果保证.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/f89382bbc1cdc00359469abab0eb4e21/6a6c2fd4/tos-cn-ve-51/oglhuLeDNRKAsDmRRmgAdQ1qPb0a2AZXBgf29a?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1195&bt=1195&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY7NDU6ODdmaTM0ZDw7ZjY6QGlqdWo8N286OXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojM2BjMDNfX180MTI2XzYvMWEjamRuNmFhXm9oYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-引流-魏怡-6-效果保证.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728浩正瑞晨学姐2代-2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/9c9cc63995c1e5e108242201293635ce/6a6c2fd5/tos-cn-ve-51/oMbGQstB4QmIGuuSggaAI7NCmb1QfAzBEL7GIO?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=981&bt=981&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZmaGY7ZDQ0ODY1aTZpZjk5QGkzcWZ0NG86N3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMjFgMl4yLTUyMWA0LWIxXmEjXzMtM2FhL29oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728浩正瑞晨学姐2代-2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-浩正瑞晨大字报单科-2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/bfe61d2a6c79af200136c6b430cae236/6a6c2fd5/tos-cn-ve-51/ocQj8mA1LNSf6tnYPOjaaQgBhRAoAuk4PIEU7L?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=989&bt=989&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZmZzszZGQ5Mzs6OWQ3OThmQGlqO3k1Om86cXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYC1fMV8uYV8wMWNjNF9gNGEjZzRkbWFhXm5oYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-浩正瑞晨大字报单科-2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-浩正瑞晨大字报单科-4.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/374f6a5fc8b01ab93154fd0ec87e26fa/6a6c2fd5/tos-cn-ve-51/oILeQbBqAgJIgLNIE2MbRgIASdS1aa21XDCfjD?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=839&bt=839&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY6OjQ3ZTM4aTY8M2c2NDo7QGkzNzlpZ286cXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYTQvYzFgM15eMS01Mi5iY2EjLy9uZWFhXm5oYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-浩正瑞晨大字报单科-4.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="引导字幕">
+          <td class="td-name">
+            0728-浩正瑞晨大字报单科-1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/18203f8ad6fcfe5328373c8cf924f302/6a6c2fd7/tos-cn-ve-51/ocvIQ2NQcqlfgK1m2tLuB07CSaRboGAmmgA6zm?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=467&bt=467&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY0NGVmZDhlZzRnNjY0MzdkQGlqbW85O286cXE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMmEvLzZfLV81MWIyYWNfYmEjNmNua2FhXm5oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-浩正瑞晨大字报单科-1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#e0f2fe;color:#0369a1">引导字幕</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：18秒)<div class="td-detail">资料图+点击领取你的专属突破方案</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="资料图">
+          <td class="td-name">
+            0727浩正瑞晨引流-5.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/fb2c1c389aa188117a2ae02b4abb923b/6a6c2fdc/tos-cn-ve-51/o4L5Qm7aZWog7Pdgf1LSBpMIMFtVHmANxHATbQ?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=794&bt=794&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY4NDloOjtnOTxnNTo7OzdkQGkzbjZqOm86NnE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYTYwL2A0MjZeMTM1YTJeY2EjZ29zaWFhbm1oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727浩正瑞晨引流-5.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：23秒)<div class="td-detail">资料图+音频有高中</div></td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727浩正瑞晨引流c-4.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/1cafc72e9b02bf15ebdf0ab5c51f0a95/6a6c2fdc/tos-cn-ve-51/owQGi7Lv1gGcfJHJAaAPTJMNtg5QhIomLB5xSk?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=898&bt=898&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY2aWQ4PDw1Zjg5N2Y7NTY7QGkzN3lpN286NnE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYmMwLjFhMl4uMTU0NTNfMWEjbS8zcGFhbm1oYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727浩正瑞晨引流c-4.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="测试素材" data-reason="无明确原因">
+          <td class="td-name">
+            0727浩正瑞晨引流c-2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/7db4fadd3bbf727afd48d513674a968d/6a6c2fdd/tos-cn-ve-51/oIISqjzeZtFQILf2egTA1IUSQqtfAHEerERGrd?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=894&bt=894&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoNTpoZTtlNTxkOTRmNmk3QGlqZ2VzaG86NnE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMmJiYjBiYDYzMTBhYjA0NmEjay82Y2Fhbm1oYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727浩正瑞晨引流c-2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#dbeafe;color:#1e40af">测试 C</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-数字人1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/3c7b616ecaa396561b2eef65655fa4cc/6a6c2fe2/tos-cn-ve-51/oEaSbhbzIAtNSQ7tLomfB2dAA4DuLQOBgSAKt1?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1275&bt=1275&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY2NTwzaWRoaWlnOzs0N2Y2QGlqOjhqaG86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNl4wMzFeYDZhMTEzMC0wYWEjX2EyaGFhbmxoYS0tZDAvc3M%3D&btag=80000200018000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-数字人1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="引导字幕">
+          <td class="td-name">
+            0728-国星引流-数字人2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/0ffad46c725d199a45d7c222acce220f/6a6c2fdd/tos-cn-ve-51/oIA2mQafNTLo4GiqS2Gah1z7gkPtQB1sgIQALX?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=903&bt=903&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY8aTM6OGg4aGczNDszOWhnQGkzZW9tOm86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMDIvMF4zLzUuMWNhYF4wX2EjbWBecWFhbmxoYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-数字人2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#e0f2fe;color:#0369a1">引导字幕</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：7秒)<div class="td-detail">资料图+高中生一定要拿，均有电子版，可分享可打印</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-成绩单3.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/008379022d1c08908f277b912bcfa5e0/6a6c2fd3/tos-cn-ve-51/oUM47gma1AfRy4st7DcLxAQcBgqSoNqQ2mIKzz?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=764&bt=764&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY3OWQ2OzY8MzY2NDM0M2k8QGkzc285O286c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNi1gLjU2MDU0MTYuXjMuLmEjMGBua2FhbmxoYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-成绩单3.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="资料图">
+          <td class="td-name">
+            0727浩正瑞晨引流-6.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/2584f443cc590d231198e52cb1039071/6a6c2fdd/tos-cn-ve-51/o8wMgjoamQNJmh1BRf3MDN8LSAKAS75QtgFHIQ?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=767&bt=767&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY2ZjloOzk4NmQ6ODc8ZDRpQGkzeDo8OW86NnE8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMmMzYy0wYl8vMTIyYGBeXmEjMC5maGFhbm1oYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0727浩正瑞晨引流-6.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：24秒)<div class="td-detail">资料图</div></td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-2c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/72276e40ab169dba8e48b7846e791efc/6a6c2fd8/tos-cn-ve-51/o4SWxfgUQ2S57TFAXfqDS1KBaIuzCTIRgAaa7N?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=905&bt=905&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY3aTdkOTQ2aWU6Ojg0OGlkQGkzPGxwaW86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYy42NTFfYzZjMTNhMC5gNWEjMmdjamFhZmxoYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-2c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="资料图">
+          <td class="td-name">
+            0724-国星引流2改-3c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/89ee6895894e3db74cefd2932537f9c5/6a6c2fd3/tos-cn-ve-51/o4p4BFS7mm2I04DMfQgLYIQNQAt1jKaiLrLgtA?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1140&bt=1140&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY0NjlpNTxlOzQ3PGdoOjY8QGkzdjpoOG86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojXzJjXjRgLzZeMS1fMjU1MWEjMGhuX2FhZmxoYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-3c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e">资料图</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：7秒)<div class="td-detail">资料图</div></td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-图文1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/ebe93d5b65611dc89c31ac32d48a0594/6a6c2fc5/tos-cn-ve-51/owIm4h1AL39bBzSSagQqYNtrADVAuQIZ7fB8FL?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1127&bt=1127&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY8NWY6ZmhlO2QzNDNkZmQ7QGlqZndyZm86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMTFeYGNiL19iMTFeMzReYmEjMV5qamFhZmxoYS0tZDAwc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-图文1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-5c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/86e1aa536d40f206144b00e2d4a195bf/6a6c2fdf/tos-cn-ve-51/okQZMmA1vNSf4tDXCozaMQgBmIgIArbjGIIQ7L?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1145&bt=1145&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZmOjtpNmVkMztkaDYzZ2c0QGkzN2Z0NG86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMC8uXy80Ll8uMTUwMDY1YGEjXjAtM2FhZmxoYS0tZDBhc3M%3D&btag=80000200018000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-5c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-8c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/4baea855cfd0f9bc379e1c035147e738/6a6c2fcc/tos-cn-ve-51/o0WffXo31ITLySixAyagDdNWMBRmqDAQ2PgdDa?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1195&bt=1195&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY2OmdoZzg7aTY5OTY7Ozg7QGlqOXl3O286b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLTEyMzUuYDYyMTFhLmAvMWEjYGZvamFhZmxoYS0tZDAwc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-8c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-成绩单2mp4.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/27adbd9fa1d6d4710b14dbef20521329/6a6c2fd0/tos-cn-ve-51/oEONtZJ0AjQbAQ7KUlITml1DGfBSEvjfCeVSqR?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=359&bt=359&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoOjY2ZGVoNTRlODhmPGhnQGlqeXdtZG86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojNWEvYS1iNV8tMTItYy0vLWEjMXMzLmFhbmxoYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-成绩单2mp4.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-数字人3.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/51f55aeef59d1d6a775d20d636a74e81/6a6c2fd2/tos-cn-ve-51/okGtZetXgRfGGo0CplPqjBMbjOA0A4vAGmeURw?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=786&bt=786&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY2NDk7OjpmZGg2NDQ8OjlkQGlqdHM6Om86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojXy4uYy9gMzZeMS9eY14yM2EjNmotbmFhbmxoYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-数字人3.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-9c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/cb27cc99f0f872cd58f26466c1f5ae35/6a6c2fcb/tos-cn-ve-51/oorSSwQI7raANhMtLWAIr1f4OO1gmBSHQvLHIC?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=458&bt=458&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoZTczOWloOjo2ODszNmk3QGlqNjM8Om86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMDA0YTRhNl41MTZfYWAyNmEjaC8wYWFhZmxoYS0tZDAwc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-9c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-通知书2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/c8c452aaf9fda0f32a0b6be0299b8547/6a6c2fd1/tos-cn-ve-51/oo2FICpRXLAQSlDNmfaqfgaxgqn1yLgAAWqoSB?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1379&bt=1379&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoN2UzaWc6NTRmaWk7ODs5QGkzMzd4ZG86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojM2M0LTReL15eMTAxYl8zLWEjNWo2a2FhZmxoYS0tZDAvc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-通知书2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-图文2.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/cf60b97fafae147b649160f0695cb980/6a6c2fcc/tos-cn-ve-51/owsnfUi7jACNYmqOGKWSjHIAf0bsv0pICGtQBe?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=519&bt=519&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY6OjNmZzQ8ZTs3NDc1NDY6QGlqZXlpN286c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYzUyMzUvL15jMV4xNl9jXmEjNC4zcGFhbmxoYS0tZDAwc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-图文2.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-6c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/3e5feb5b5b0e6aa0f218ccd7a29ed55c/6a6c2fce/tos-cn-ve-51/oEySWjx23MNxTIJQpBaqAfT1geN5LAULRXaDWT?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=371&bt=371&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY7NTw2Z2hpPGc7NzU3ZzdnQGlqZmtmN286b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojY2IvYi5hMF5gMWMvMzBjM2Eja19tcGFhZmxoYS0tZDBhc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-6c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="无明确原因">
+          <td class="td-name">
+            0728-国星引流-通知书1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/4a834c267ac015692c4015fdeb96c14f/6a6c2fd1/tos-cn-ve-51/oIbSzc472nmRgIbQkAt1AfraQamTEgZLILNBOK?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1183&bt=1183&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY3OGhmMzY7ZWlnZTQ5ZDVpQGlqZzU3OG86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojL19eLjFhNDVfMS8yNGAvMGEjamJxNGFhZmxoYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-通知书1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-10c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/9095451065f97769fd2d73aa61ff9493/6a6c2fc9/tos-cn-ve-51/oQteBCbGgBAjUQWl8U0AVQyeGC0iye0qvTcskR?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=940&bt=940&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY6PDY7NTU2M2hpPGloZjU3QGkzZjM3NW86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojM14zM18wNTUwMTI1MDQtYmEjZnNpNGFhZmxoYS0tZDAwc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-10c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="知识点动画演示">
+          <td class="td-name">
+            0724-国星引流2改-4c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/ba2eb3be027004c04acf3a5b88fdb872/6a6c2fd1/tos-cn-ve-51/oopfLgFw1TgW3nGSAVt7Q4arBNAmFvJIQ1IYhL?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1289&bt=1289&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY3aDVlO2Q2OjM6aTk4M2Y1QGkzbWZnZG86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojYi81LWIxNl4zMV8vNDI0LmEjcGwxcWFhZmxoYS0tZDAwc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-4c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">知识点动画演示</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (广告<视频画面、视频字幕>中存在“拉密定理”“光滑水平面板块模型”“最终共速:mv0=(M+m)v”“能量不守恒: Ek1=Ek1'+Ek2'+Q”，推广中小学学科教育相关内容时直接提及了学科相关内容，未满足允许情形，因此不通过。)<div class="td-detail">知识点文字内容</div></td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="无明确原因">
+          <td class="td-name">
+            0724-国星引流2改-1c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/021177b6049208fc5e1b172ddcec6939/6a6c2fce/tos-cn-ve-51/oYLLuaNoIAhrI5gBNAf72M4FcQzmQLtL1SA98I?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1588&bt=1588&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGZoNTdoNjk8ZzdpZ2g8aTk7QGkzdnA6OW86b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojMmAxYGEtMDU1MS4yYl5eM2Ejc2BoZmFhZmxoYS0tZDAvc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-1c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">无明确原因</span></td>
+          <td class="td-reason">—</td>
+        </tr>
+
+        <tr data-type="原版素材" data-reason="引导字幕">
+          <td class="td-name">
+            0728-国星引流-成绩单1.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/915918a5788158071aa773da22c8820a/6a6c2fcf/tos-cn-ve-51/osUSmLYu1QmGBIgOfANtAL47ISag0nA9zQInLw?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=1705&bt=1705&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY7OTo3ZDo6OTlkOTxkNGczQGkzZDg5Om86c3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojLmBjYjEzYDZjMTVfXmFhX2EjM3EuYWFhZmxoYS0tZDBhc3M%3D&btag=80000200010000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0728-国星引流-成绩单1.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">原版</span></td>
+          <td><span class="badge" style="background:#e0f2fe;color:#0369a1">引导字幕</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：10秒)<div class="td-detail">资料图+高中生一定要拿，点击下方领取</div></td>
+        </tr>
+
+        <tr data-type="测试改版" data-reason="手写笔记">
+          <td class="td-name">
+            0724-国星引流2改-7c.mp4
+            <button class="btn-play" data-url="https://video-cn.oceanengine.com/2269a2f2e29aa25349a8a90b32e65d4b/6a6c2fcc/tos-cn-ve-51/o8gqaA1LgAB2F2SERDAgRAVakXlWOsXxWe1NCe?a=1402&ch=0&cr=0&dr=3&cd=0%7C0%7C0%7C0&br=953&bt=953&cs=0&ds=3&ft=J9ThAGkHH_Myq8ZLp2Y_e2NvjTQ&mime_type=video_mp4&qs=0&rc=NXZpTGRTaFBnKWxncmd5aHFsc3IxZGY8OTM6ODQ3Nzg5PDY7Z2g3QGlqbzdwN286b3E8MzM0NjMzQFNsa3ZpcUQ6amtqXmJmK2BeaWpgYTojM2M2YV9eLzZfMS9gMGM2NGEjcTIuamFhZmxoYS0tZDAvc3M%3D&btag=80000200008000&dy_q=1785302209&feature_id=d6a18d7c5414b1f1e95a75faf9147845&l=202607291316483772ADFCC9046333B48F&ply_type=3&policy=eyJ2bSI6MywidWlkIjoiMzEyOTY1MDYwMzg4ODE4NSJ9" data-name="0724-国星引流2改-7c.mp4" title="预览视频">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              预览
+            </button>
+          </td>
+          <td><span class="badge" style="background:#ede9fe;color:#5b21b6">测试改</span></td>
+          <td><span class="badge" style="background:#f1f5f9;color:#475569">手写笔记</span></td>
+          <td class="td-reason">您好，广告中涉及暂不接受投放的中危行业或内容等，请修改，谢谢。 (违规点：11秒)<div class="td-detail">手写笔记</div></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 素材标记说明 -->
+  <div class="section">
+    <div class="section-title"><span class="dot-info"></span>素材命名标记说明</div>
+    <div class="legend-card">
+      <div class="legend-item">
+        <span class="badge" style="background:#d1fae5;color:#065f46">改</span>
+        <span class="legend-label">改版素材</span>
+        <span class="legend-desc">——  名称中含「改」，已针对拒审原因修改后重新提报</span>
+      </div>
+      <div class="legend-item">
+        <span class="badge" style="background:#dbeafe;color:#1e40af">C / c</span>
+        <span class="legend-label">测试素材</span>
+        <span class="legend-desc">——  名称中含大写 C 或小写 c，属测试版本</span>
+      </div>
+      <div class="legend-item">
+        <span class="badge" style="background:#ede9fe;color:#5b21b6">C + 改</span>
+        <span class="legend-label">测试改版</span>
+        <span class="legend-desc">——  同时带 c 和「改」，测试素材的修改版</span>
+      </div>
+      <div class="legend-item">
+        <span class="badge" style="background:#f1f5f9;color:#475569">原版</span>
+        <span class="legend-label">原版素材</span>
+        <span class="legend-desc">——  无特殊标记</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- 视频预览 Modal -->
+<div class="modal-overlay" id="videoModal" onclick="closeVideo(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <video class="modal-video" id="modalVideo" controls autoplay></video>
+  </div>
+</div>
+
+<script>
+Chart.defaults.font.family = "'Fira Sans', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = "#64748B";
+
+const PASS_COLOR = "#059669";
+const FAIL_COLOR = "#DC2626";
+const PASS_BG = "rgba(5,150,105,.18)";
+const FAIL_BG = "rgba(220,38,38,.18)";
+
+// 素材类型图
+new Chart(document.getElementById("typeChart"), {
+  type: "bar",
+  data: {
+    labels: ["原版素材", "测试素材", "改版素材", "测试改版"],
+    datasets: [
+      { label: "通过", data: [0, 0, 0, 0], backgroundColor: PASS_BG, borderColor: PASS_COLOR, borderWidth: 2, borderRadius: 4 },
+      { label: "拒审", data: [37, 12, 0, 10], backgroundColor: FAIL_BG, borderColor: FAIL_COLOR, borderWidth: 2, borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: "top" }, tooltip: { mode: "index" } },
+    scales: {
+      x: { grid: { color: "#F1F5F9" } },
+      y: { grid: { color: "#F1F5F9" }, ticks: { stepSize: 1 }, beginAtZero: true }
+    }
+  }
+});
+
+// 拒审原因图
+new Chart(document.getElementById("reasonChart"), {
+  type: "bar",
+  data: {
+    labels: ["无明确原因", "资料图", "引导字幕", "名人名校", "知识点动画演示", "手写笔记"],
+    datasets: [{
+      label: "数量",
+      data: [43, 7, 6, 1, 1, 1],
+      backgroundColor: ["rgba(220,38,38,.2)","rgba(234,88,12,.2)","rgba(234,179,8,.2)","rgba(14,165,233,.2)","rgba(244,63,94,.2)","rgba(100,116,139,.2)"],
+      borderColor:     ["#DC2626","#EA580C","#EAB308","#0EA5E9","#F43F5E","#64748B"],
+      borderWidth: 2, borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: "y",
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} 条` } } },
+    scales: {
+      x: { grid: { color: "#F1F5F9" }, ticks: { stepSize: 1 }, beginAtZero: true },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// 编导图
+new Chart(document.getElementById("creatorChart"), {
+  type: "bar",
+  data: {
+    labels: ["国星", "魏怡", "瑞晨", "嘉丽", "雅迪"],
+    datasets: [
+      { label: "通过·改版", data: [0, 0, 0, 0, 0],   backgroundColor: "rgba(5,150,105,.7)",  borderColor: "#059669", borderWidth: 1, borderRadius: 4, stack: "pass" },
+      { label: "通过·原版", data: [0, 0, 0, 0, 0],  backgroundColor: "rgba(5,150,105,.25)", borderColor: "#059669", borderWidth: 1, borderRadius: 4, stack: "pass" },
+      { label: "拒审·改版", data: [10, 0, 0, 0, 0],   backgroundColor: "rgba(220,38,38,.6)",  borderColor: "#DC2626", borderWidth: 1, borderRadius: 4, stack: "fail" },
+      { label: "拒审·原版", data: [17, 20, 9, 2, 1],  backgroundColor: "rgba(220,38,38,.2)",  borderColor: "#DC2626", borderWidth: 1, borderRadius: 4, stack: "fail" }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: "top" }, tooltip: { mode: "index" } },
+    scales: {
+      x: { grid: { color: "#F1F5F9" }, stacked: true },
+      y: { grid: { color: "#F1F5F9" }, ticks: { stepSize: 1 }, beginAtZero: true, stacked: true }
+    }
+  }
+});
+
+// ── 表格排序 ──
+(function() {
+  const table = document.getElementById("rejectTable");
+  const ths = table.querySelectorAll("th.sortable");
+  let sortCol = null, sortDir = 1;
+  ths.forEach(th => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+      ths.forEach(t => t.classList.remove("asc","desc"));
+      th.classList.add(sortDir === 1 ? "asc" : "desc");
+      const tbody = table.querySelector("tbody");
+      const rows = [...tbody.querySelectorAll("tr")];
+      rows.sort((a, b) => {
+        const av = a.dataset[col] || "", bv = b.dataset[col] || "";
+        return av.localeCompare(bv, "zh") * sortDir;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+})();
+
+// ── 视频 Modal ──
+function openVideo(url, name) {
+  document.getElementById("modalTitle").textContent = name;
+  const v = document.getElementById("modalVideo");
+  v.src = url;
+  v.load();
+  document.getElementById("videoModal").classList.add("open");
+}
+function closeModal() {
+  const v = document.getElementById("modalVideo");
+  v.pause(); v.src = "";
+  document.getElementById("videoModal").classList.remove("open");
+}
+function closeVideo(e) {
+  if (e.target === document.getElementById("videoModal")) closeModal();
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// 通过素材卡片点击
+document.querySelectorAll(".passed-card[data-url]").forEach(el => {
+  el.addEventListener("click", () => openVideo(el.dataset.url, el.dataset.name));
+  el.addEventListener("keydown", e => { if (e.key === "Enter") openVideo(el.dataset.url, el.dataset.name); });
+});
+
+// 拒审表格预览按钮
+document.querySelectorAll(".btn-play[data-url]").forEach(btn => {
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    openVideo(btn.dataset.url, btn.dataset.name);
+  });
+});
+</script>
+</body>
+</html>

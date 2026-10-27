@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open *.html)",
+      "Bash(open /Users/soso/Desktop/eagle-data-parser/*)",
+      "Bash(curl -s http://localhost:3456/*)",
+      "Bash(python3 /Users/soso/.claude/skills/ui-ux-pro-max/.claude/skills/ui-ux-pro-max/scripts/search.py *)",
+      "Bash(wc -l *)"
+    ]
+  }
+}

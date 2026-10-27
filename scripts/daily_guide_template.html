@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>引导素材日报 · {date_str}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+:root{{
+  --bg:#F8FAFC;--card:#FFFFFF;--border:#DBEAFE;
+  --primary:#1E40AF;--primary-light:#3B82F6;
+  --accent:#D97706;--accent-bg:#FFFBEB;--accent-light:#FEF3C7;
+  --text:#1E3A8A;--text-secondary:#64748B;--text-muted:#94A3B8;
+  --success:#059669;--danger:#DC2626;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.04);
+  --radius:10px;--radius-sm:6px;
+  font-family:'Fira Sans',system-ui,sans-serif;
+}}
+body{{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}}
+
+/* ── header ── */
+.header{{
+  background:linear-gradient(135deg,#1E3A8A 0%,#1E40AF 60%,#2563EB 100%);
+  padding:20px 28px 18px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}}
+.header-left h1{{color:#fff;font-size:18px;font-weight:700;letter-spacing:.3px}}
+.header-left p{{color:rgba(255,255,255,.65);font-size:12px;margin-top:2px}}
+.header-badge{{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;
+  backdrop-filter:blur(4px);
+}}
+
+/* ── layout ── */
+.page{{max-width:1400px;margin:0 auto;padding:20px 24px}}
+
+/* ── kpi cards ── */
+.kpi-grid{{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}}
+.kpi-card{{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow);transition:box-shadow .15s;
+}}
+.kpi-card:hover{{box-shadow:var(--shadow-md)}}
+.kpi-card.accent{{background:var(--accent-bg);border-color:#FCD34D}}
+.kpi-label{{font-size:11px;color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}}
+.kpi-value{{font-size:24px;font-weight:700;color:var(--primary);font-family:'Fira Code',monospace;line-height:1.1}}
+.kpi-card.accent .kpi-value{{color:var(--accent)}}
+.kpi-sub{{font-size:11px;color:var(--text-muted);margin-top:3px}}
+
+/* ── section ── */
+.section-title{{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;
+  display:flex;align-items:center;gap:6px}}
+.section-title::before{{content:'';display:inline-block;width:3px;height:14px;
+  background:var(--primary-light);border-radius:2px}}
+
+/* ── charts row ── */
+.charts-row{{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}}
+.chart-card{{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;box-shadow:var(--shadow)}}
+.chart-wrap{{position:relative;height:220px}}
+
+/* ── filter bar ── */
+.filter-bar{{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px 14px;
+  margin-bottom:12px;box-shadow:var(--shadow);
+}}
+.filter-label{{font-size:12px;color:var(--text-secondary);font-weight:500;white-space:nowrap}}
+.filter-btn{{
+  padding:4px 12px;border-radius:20px;border:1.5px solid transparent;
+  font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;background:var(--bg);
+  color:var(--text-secondary);
+}}
+.filter-btn:hover{{border-color:currentColor;opacity:.9}}
+.filter-btn.active{{color:#fff;border-color:transparent}}
+.filter-sep{{width:1px;height:18px;background:var(--border);margin:0 4px}}
+
+/* ── table ── */
+.table-card{{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden}}
+.table-toolbar{{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+}}
+.table-info{{font-size:12px;color:var(--text-secondary)}}
+.table-info span{{font-weight:600;color:var(--primary)}}
+.table-wrap{{overflow-x:auto}}
+table{{width:100%;border-collapse:collapse;font-size:13px}}
+thead th{{
+  padding:9px 12px;text-align:left;font-size:11px;font-weight:600;
+  color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px;
+  background:#F1F5F9;border-bottom:1px solid var(--border);white-space:nowrap;
+  cursor:pointer;user-select:none;
+}}
+thead th:hover{{color:var(--primary)}}
+thead th.sorted-asc::after{{content:' ↑'}}
+thead th.sorted-desc::after{{content:' ↓'}}
+tbody tr{{border-bottom:1px solid #F1F5F9;transition:background .1s}}
+tbody tr:hover{{background:#F8FAFC}}
+tbody td{{padding:9px 12px;vertical-align:middle}}
+tbody tr:last-child{{border-bottom:none}}
+
+.person-badge{{
+  display:inline-flex;align-items:center;padding:2px 8px;
+  border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;
+}}
+.ext-badge{{
+  display:inline-flex;align-items:center;padding:2px 6px;
+  border-radius:4px;font-size:10px;font-weight:600;
+  background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;margin-left:4px;
+}}
+.status-badge{{
+  display:inline-flex;align-items:center;padding:1px 6px;
+  border-radius:4px;font-size:10px;font-weight:500;
+}}
+.status-active{{background:#ECFDF5;color:#059669}}
+.status-inactive{{background:#F8FAFC;color:#94A3B8}}
+.mat-name{{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:12px;color:var(--text)}}
+.num{{font-family:'Fira Code',monospace;font-size:12px}}
+.num-zero{{color:var(--text-muted)}}
+.num-hi{{color:var(--success);font-weight:600}}
+.gaoquan-cell{{font-family:'Fira Code',monospace;font-size:13px;font-weight:700;color:var(--accent)}}
+.gaoquan-zero{{color:var(--text-muted);font-weight:400}}
+
+.btn-play{{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);
+  background:var(--bg);color:var(--primary-light);font-size:11px;font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}}
+.btn-play:hover{{background:var(--primary);color:#fff;border-color:var(--primary)}}
+.btn-play svg{{width:12px;height:12px;flex-shrink:0}}
+
+/* ── modal ── */
+.modal-overlay{{
+  position:fixed;inset:0;background:rgba(15,23,42,.7);
+  display:none;align-items:center;justify-content:center;z-index:1000;
+  backdrop-filter:blur(4px);
+}}
+.modal-overlay.open{{display:flex}}
+.modal{{
+  background:#0F172A;border-radius:14px;overflow:hidden;
+  width:min(900px,95vw);box-shadow:0 25px 50px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;max-height:90vh;
+}}
+.modal-header{{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);
+}}
+.modal-title{{color:#E2E8F0;font-size:13px;font-weight:500;
+  max-width:calc(100% - 40px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+.modal-meta{{display:flex;gap:8px;align-items:center;padding:8px 16px;flex-wrap:wrap;background:#0F172A}}
+.modal-badge{{
+  padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;
+  background:rgba(255,255,255,.1);color:#CBD5E1;
+}}
+.modal-badge.accent{{background:#92400E;color:#FDE68A}}
+.modal-close{{
+  width:28px;height:28px;border-radius:6px;border:none;
+  background:rgba(255,255,255,.1);color:#94A3B8;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  transition:all .15s;flex-shrink:0;
+}}
+.modal-close:hover{{background:rgba(255,255,255,.2);color:#fff}}
+.video-wrap{{background:#000;display:flex;align-items:center;justify-content:center;flex:1}}
+video{{max-width:100%;max-height:65vh;display:block}}
+.video-error{{color:#94A3B8;font-size:13px;text-align:center;padding:40px 20px}}
+.video-error a{{color:#60A5FA;text-decoration:underline}}
+
+/* ── empty ── */
+.empty-state{{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px}}
+
+@media(max-width:900px){{
+  .kpi-grid{{grid-template-columns:repeat(3,1fr)}}
+  .charts-row{{grid-template-columns:1fr}}
+}}
+@media(max-width:600px){{
+  .kpi-grid{{grid-template-columns:repeat(2,1fr)}}
+  .page{{padding:12px}}
+}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>引导素材日报</h1>
+    <p>数据来源：千川素材看板 · 引导加微</p>
+  </div>
+  <div class="header-badge">{date_str}</div>
+</div>
+
+<div class="page">
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">总消耗</div>
+      <div class="kpi-value">¥{total_spend}</div>
+      <div class="kpi-sub">{material_count} 条素材</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">总展示</div>
+      <div class="kpi-value">{total_imp}</div>
+      <div class="kpi-sub">次曝光</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">平均点击率</div>
+      <div class="kpi-value">{avg_ctr}</div>
+      <div class="kpi-sub">CTR</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">总转化数</div>
+      <div class="kpi-value">{total_conv}</div>
+      <div class="kpi-sub">次转化</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">平均 CPA</div>
+      <div class="kpi-value">¥{avg_cpa}</div>
+      <div class="kpi-sub">转化成本</div>
+    </div>
+    <div class="kpi-card accent">
+      <div class="kpi-label">高潜成交</div>
+      <div class="kpi-value">{total_gaoquan}</div>
+      <div class="kpi-sub">深度转化 · 核心指标</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="section-title">消耗分布（按人）</div>
+      <div class="chart-wrap"><canvas id="chartSpend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">转化成本 CPA（按人）</div>
+      <div class="chart-wrap"><canvas id="chartCPA"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <span class="filter-label">筛选</span>
+    <button class="filter-btn active" data-person="all" onclick="filterBy('all',this)">全部</button>
+    <div class="filter-sep"></div>
+    <div id="personFilters"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div class="section-title" style="margin:0">素材明细</div>
+      <div class="table-info">显示 <span id="visibleCount">-</span> / {material_count} 条 · 点击列头排序</div>
+    </div>
+    <div class="table-wrap">
+      <table id="matTable">
+        <thead>
+          <tr>
+            <th data-col="person">人物</th>
+            <th data-col="name">素材名称</th>
+            <th data-col="status">状态</th>
+            <th data-col="spend" class="sorted-desc">消耗 ↓</th>
+            <th data-col="impressions">展示数</th>
+            <th data-col="ctr">点击率%</th>
+            <th data-col="conversions">转化数</th>
+            <th data-col="cpa">CPA</th>
+            <th data-col="gaoquan" title="高潜成交（深度转化核心指标）">高潜成交 ★</th>
+            <th>视频</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none">该筛选条件下暂无数据</div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- Video Modal -->
+<div class="modal-overlay" id="videoModal" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">素材名称</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="video-wrap" id="videoWrap"></div>
+  </div>
+</div>
+
+<script>
+const PERSON_COLORS = {person_colors_js};
+const PERSON_BG = {person_bg_js};
+const ALL_ROWS = {rows_js};
+const P_LABELS = {person_labels};
+const P_SPEND  = {person_spend};
+const P_CONV   = {person_conv};
+const P_CPA    = {person_cpa};
+const P_GAOQUAN= {person_gaoquan};
+const P_COLORS = {person_bg_arr};
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+const chartDefaults = {{
+  responsive: true, maintainAspectRatio: false,
+  plugins: {{ legend: {{ display: false }}, tooltip: {{ callbacks: {{}} }} }},
+  scales: {{ x: {{ grid: {{ color: '#F1F5F9' }} }}, y: {{ grid: {{ color: '#F1F5F9' }}, ticks: {{ font: {{ size: 11 }} }} }} }},
+}};
+
+new Chart(document.getElementById('chartSpend'), {{
+  type: 'bar',
+  data: {{
+    labels: P_LABELS,
+    datasets: [{{ label: '消耗(元)', data: P_SPEND, backgroundColor: P_COLORS,
+      borderRadius: 4, borderSkipped: false }}]
+  }},
+  options: {{ ...chartDefaults,
+    plugins: {{ ...chartDefaults.plugins,
+      tooltip: {{ callbacks: {{ label: ctx => ' ¥' + ctx.parsed.y.toFixed(2) }} }} }},
+    scales: {{ ...chartDefaults.scales,
+      y: {{ ...chartDefaults.scales.y, ticks: {{ font:{{size:11}}, callback: v => '¥'+v }} }} }}
+  }}
+}});
+
+new Chart(document.getElementById('chartCPA'), {{
+  type: 'bar',
+  data: {{
+    labels: P_LABELS,
+    datasets: [{{ label: 'CPA(元)', data: P_CPA, backgroundColor: P_COLORS,
+      borderRadius: 4, borderSkipped: false }}]
+  }},
+  options: {{ ...chartDefaults,
+    plugins: {{ ...chartDefaults.plugins,
+      tooltip: {{ callbacks: {{ label: ctx => ' CPA ¥' + ctx.parsed.y.toFixed(2) }} }} }},
+    scales: {{ ...chartDefaults.scales,
+      y: {{ ...chartDefaults.scales.y, ticks: {{ font:{{size:11}}, callback: v => '¥'+v }} }} }}
+  }}
+}});
+
+// ── Filter Buttons ────────────────────────────────────────────────────────────
+const personsInData = [...new Set(ALL_ROWS.map(r => r.person))];
+const filterContainer = document.getElementById('personFilters');
+personsInData.forEach(p => {{
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn';
+  btn.dataset.person = p;
+  btn.textContent = p;
+  btn.style.color = PERSON_COLORS[p] || '#64748B';
+  btn.onclick = function(){{ filterBy(p, this); }};
+  filterContainer.appendChild(btn);
+}});
+
+let currentFilter = 'all';
+let sortCol = 'spend';
+let sortAsc = false;
+
+function filterBy(person, btn) {{
+  currentFilter = person;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (person !== 'all') {{
+    btn.style.background = PERSON_COLORS[person] || '#1E40AF';
+    btn.style.color = '#fff';
+  }} else {{
+    document.querySelectorAll('.filter-btn').forEach(b => {{
+      if (b.dataset.person !== 'all') {{ b.style.background=''; b.style.color = PERSON_COLORS[b.dataset.person]||'#64748B'; }}
+    }});
+  }}
+  renderTable();
+}}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('thead th[data-col]').forEach(th => {{
+  th.onclick = function() {{
+    const col = this.dataset.col;
+    if (sortCol === col) sortAsc = !sortAsc;
+    else {{ sortCol = col; sortAsc = col === 'name' || col === 'person'; }}
+    document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted-asc','sorted-desc'));
+    this.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+    renderTable();
+  }};
+}});
+
+function sortRows(rows) {{
+  return [...rows].sort((a, b) => {{
+    let va = a[sortCol], vb = b[sortCol];
+    if (typeof va === 'string') return sortAsc ? va.localeCompare(vb,'zh') : vb.localeCompare(va,'zh');
+    return sortAsc ? va - vb : vb - va;
+  }});
+}}
+
+function fmt(n) {{
+  if (n === 0 || n === null || n === undefined) return '<span class="num num-zero">—</span>';
+  return '<span class="num">' + n.toFixed(2) + '</span>';
+}}
+function fmtInt(n) {{
+  if (!n) return '<span class="num num-zero">—</span>';
+  return '<span class="num">' + n.toLocaleString() + '</span>';
+}}
+
+function renderTable() {{
+  const filtered = currentFilter === 'all' ? ALL_ROWS : ALL_ROWS.filter(r => r.person === currentFilter);
+  const sorted   = sortRows(filtered);
+  const tbody    = document.getElementById('tableBody');
+  const empty    = document.getElementById('emptyState');
+  document.getElementById('visibleCount').textContent = sorted.length;
+
+  if (!sorted.length) {{ tbody.innerHTML = ''; empty.style.display = 'block'; return; }}
+  empty.style.display = 'none';
+
+  tbody.innerHTML = sorted.map((r, i) => {{
+    const pc = PERSON_COLORS[r.person] || '#94A3B8';
+    const bg = PERSON_BG[r.person]  || '#F8FAFC';
+    const extBadge = r.is_external ? '<span class="ext-badge">外部</span>' : '';
+    const statusCls = r.status === '已使用' ? 'status-active' : 'status-inactive';
+    const cpaDisp = r.cpa > 0 ? fmt(r.cpa) : '<span class="num num-zero">—</span>';
+    const gaoquanDisp = r.gaoquan > 0
+      ? '<span class="gaoquan-cell">' + r.gaoquan + '</span>'
+      : '<span class="gaoquan-zero num-zero">—</span>';
+    const hasVideo = r.video_url && r.video_url.length > 10;
+    const playBtn = hasVideo
+      ? `<button class="btn-play" onclick="openVideo(${{i}},'${{encodeURIComponent(r.name)}}')">
+           <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 3l10 5-10 5V3z"/></svg>播放
+         </button>`
+      : '<span style="color:var(--text-muted);font-size:11px">无链接</span>';
+    return `<tr>
+      <td><span class="person-badge" style="background:${{bg}};color:${{pc}}">${{r.person}}</span></td>
+      <td><div style="display:flex;align-items:center;gap:4px">
+        <span class="mat-name" title="${{r.name}}">${{r.name}}</span>${{extBadge}}</div></td>
+      <td><span class="status-badge ${{statusCls}}">${{r.status}}</span></td>
+      <td>${{fmt(r.spend)}}</td>
+      <td>${{fmtInt(r.impressions)}}</td>
+      <td><span class="num">${{r.ctr > 0 ? r.ctr.toFixed(2)+'%' : '—'}}</span></td>
+      <td>${{r.conversions > 0 ? '<span class="num num-hi">'+r.conversions+'</span>' : '<span class="num num-zero">—</span>'}}</td>
+      <td>${{cpaDisp}}</td>
+      <td>${{gaoquanDisp}}</td>
+      <td>${{playBtn}}</td>
+    </tr>`;
+  }}).join('');
+}}
+
+// ── Video Modal ───────────────────────────────────────────────────────────────
+function openVideo(idx, encodedName) {{
+  const sorted = sortRows(currentFilter === 'all' ? ALL_ROWS : ALL_ROWS.filter(r => r.person === currentFilter));
+  const r = sorted[idx];
+  document.getElementById('modalTitle').textContent = decodeURIComponent(encodedName);
+  const meta = document.getElementById('modalMeta');
+  const pc = PERSON_COLORS[r.person] || '#64748B';
+  meta.innerHTML = `
+    <span class="modal-badge" style="background:${{pc}}22;color:${{pc}}">${{r.person}}</span>
+    ${{r.is_external ? '<span class="modal-badge" style="background:#92400E44;color:#FDE68A">外部素材</span>' : ''}}
+    <span class="modal-badge">消耗 ¥${{r.spend.toFixed(2)}}</span>
+    <span class="modal-badge">转化 ${{r.conversions}}</span>
+    <span class="modal-badge">CPA ¥${{r.cpa > 0 ? r.cpa.toFixed(2) : '—'}}</span>
+    ${{r.gaoquan > 0 ? '<span class="modal-badge accent">高潜成交 ' + r.gaoquan + '</span>' : ''}}
+  `;
+  const wrap = document.getElementById('videoWrap');
+  if (r.video_url) {{
+    wrap.innerHTML = `<video controls autoplay preload="metadata" style="max-width:100%;max-height:65vh">
+      <source src="${{r.video_url}}" type="video/mp4">
+      <div class="video-error">浏览器不支持内嵌播放。<br><a href="${{r.video_url}}" target="_blank">点击在新窗口打开视频</a></div>
+    </video>`;
+  }} else {{
+    wrap.innerHTML = '<div class="video-error">暂无视频链接</div>';
+  }}
+  document.getElementById('videoModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}}
+
+function closeModal(e) {{
+  if (e && e.target !== document.getElementById('videoModal') && !e.currentTarget.classList?.contains('modal-close')) return;
+  document.getElementById('videoModal').classList.remove('open');
+  document.getElementById('videoWrap').innerHTML = '';
+  document.body.style.overflow = '';
+}}
+
+document.addEventListener('keydown', e => {{ if (e.key === 'Escape') closeModal({{target:document.getElementById('videoModal')}}); }});
+
+renderTable();
+</script>
+</body>
+</html>

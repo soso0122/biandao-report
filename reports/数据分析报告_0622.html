@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>素材上传与投放数据分析报告 - 2026.06.22</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #667eea;
+            border-left: 4px solid #667eea;
+            padding-left: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .summary-box h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #764ba2;
+        }
+
+        .summary-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .summary-box li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .summary-box li:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            background: #f9fafb;
+            padding: 24px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>素材上传与投放数据分析报告</h1>
+            <p>数据日期: 2026年6月22日 | 生成时间: <span id="currentTime"></span></p>
+        </div>
+
+        <div class="content">
+            <!-- 上传数据总览 -->
+            <div class="section">
+                <h2 class="section-title">📊 上传数据总览</h2>
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-value">395</div>
+                        <div class="stat-label">总素材数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">276</div>
+                        <div class="stat-label">新素材</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">119</div>
+                        <div class="stat-label">拒审后二次上传</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">232</div>
+                        <div class="stat-label">已投放</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="uploadStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 编导上传数据 -->
+            <div class="section">
+                <h2 class="section-title">👥 编导上传数据统计</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>编导</th>
+                            <th>总上传数</th>
+                            <th>新素材</th>
+                            <th>拒审后二次上传</th>
+                            <th>已投放</th>
+                            <th>未同步</th>
+                        </tr>
+                    </thead>
+                    <tbody id="directorUploadTable">
+                    </tbody>
+                </table>
+
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="directorUploadChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 投放数据总览 -->
+            <div class="section">
+                <h2 class="section-title">💰 投放数据总览</h2>
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-value">¥111,051.81</div>
+                        <div class="stat-label">总消耗</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">¥14,464.00</div>
+                        <div class="stat-label">总GMV</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">276</div>
+                        <div class="stat-label">总成交单量</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">0.13</div>
+                        <div class="stat-label">总体ROI</div>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <h3>📈 关键指标分析</h3>
+                    <ul>
+                        <li><strong>平均客单价:</strong> ¥52.39 (GMV ÷ 成交单量)</li>
+                        <li><strong>平均CPA:</strong> ¥402.36 (消耗 ÷ 成交单量)</li>
+                        <li><strong>素材平均消耗:</strong> ¥51.99 (总消耗 ÷ 素材数2136)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 编导投放效果 -->
+            <div class="section">
+                <h2 class="section-title">🎯 编导投放效果排行</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>编导</th>
+                            <th>消耗(¥)</th>
+                            <th>GMV(¥)</th>
+                            <th>成交单量</th>
+                            <th>ROI</th>
+                            <th>素材数</th>
+                            <th>平均素材消耗</th>
+                        </tr>
+                    </thead>
+                    <tbody id="directorPerformanceTable">
+                    </tbody>
+                </table>
+
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="directorROIChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据洞察 -->
+            <div class="section">
+                <h2 class="section-title">💡 数据洞察与建议</h2>
+                <div class="summary-box">
+                    <h3>关键发现</h3>
+                    <ul>
+                        <li><strong>ROI最高:</strong> 杜浩正 (0.32)，消耗成本控制较好，转化效率高</li>
+                        <li><strong>消耗最多:</strong> 贾子衿 (¥73,543.70)，占总消耗66.2%，需关注投放效率</li>
+                        <li><strong>素材数量:</strong> 贾子衿素材数最多(920条)，但ROI仅0.07，需优化素材质量</li>
+                        <li><strong>拒审率:</strong> 119/395 = 30.1%，拒审后二次上传比例较高，需提升素材质量</li>
+                        <li><strong>投放率:</strong> 232/395 = 58.7%，已投放素材占比合理</li>
+                    </ul>
+                </div>
+
+                <div class="summary-box">
+                    <h3>优化建议</h3>
+                    <ul>
+                        <li><strong>素材质量:</strong> 重点学习杜浩正、王雅迪的高ROI素材风格，复制成功经验</li>
+                        <li><strong>成本控制:</strong> 贾子衿需优化投放策略，减少低效素材消耗</li>
+                        <li><strong>拒审优化:</strong> 加强素材审核前置，降低30.1%的拒审率</li>
+                        <li><strong>转化提升:</strong> 整体ROI 0.13偏低，需提升素材吸引力和转化路径优化</li>
+                        <li><strong>素材效率:</strong> 魏嘉丽素材数338条但GMV较低，需优化素材方向</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>报告生成工具 | 数据来源: 上传数据_增强版_0622.csv & 投后看板详细数据-0622.csv</p>
+        </div>
+    </div>
+
+    <script>
+        // 显示当前时间
+        document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN');
+
+        // 上传数据
+        const uploadData = {
+            total: 395,
+            by_director: {
+                "婷玉": 28,
+                "小敏": 44,
+                "浩正": 46,
+                "嘉丽": 50,
+                "子衿": 144,
+                "雅迪": 83
+            },
+            by_type: {
+                "新素材": 276,
+                "拒审后二次上传": 119
+            },
+            by_status: {
+                "未同步": 152,
+                "已投放": 232,
+                "已同步": 11
+            }
+        };
+
+        // 投放数据
+        const performanceData = {
+            total: 2136,
+            total_cost: 111051.81,
+            total_gmv: 14464.0,
+            total_orders: 276,
+            by_director: {
+                "魏嘉丽": { "消耗": 7595.23, "GMV": 746.0, "订单": 4, "素材数": 338, "ROI": 0.1 },
+                "贾子矜": { "消耗": 73543.7, "GMV": 5382.0, "订单": 218, "素材数": 920, "ROI": 0.07 },
+                "杜浩正": { "消耗": 10793.87, "GMV": 3433.0, "订单": 27, "素材数": 302, "ROI": 0.32 },
+                "王雅迪": { "消耗": 14704.13, "GMV": 3980.0, "订单": 20, "素材数": 366, "ROI": 0.27 },
+                "曲敏": { "消耗": 3459.44, "GMV": 805.0, "订单": 5, "素材数": 152, "ROI": 0.23 },
+                "吴婷玉": { "消耗": 955.44, "GMV": 118.0, "订单": 2, "素材数": 58, "ROI": 0.12 }
+            }
+        };
+
+        // 图表1: 上传状态分布
+        const ctx1 = document.getElementById('uploadStatusChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(uploadData.by_status),
+                datasets: [{
+                    data: Object.values(uploadData.by_status),
+                    backgroundColor: ['#fbbf24', '#10b981', '#3b82f6'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 14 } }
+                    },
+                    title: {
+                        display: true,
+                        text: '素材状态分布',
+                        font: { size: 18, weight: 'bold' }
+                    }
+                }
+            }
+        });
+
+        // 图表2: 编导上传量对比
+        const ctx2 = document.getElementById('directorUploadChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(uploadData.by_director),
+                datasets: [{
+                    label: '上传素材数',
+                    data: Object.values(uploadData.by_director),
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: '编导上传量对比',
+                        font: { size: 18, weight: 'bold' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { font: { size: 12 } }
+                    },
+                    x: {
+                        ticks: { font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // 图表3: 编导ROI对比
+        const ctx3 = document.getElementById('directorROIChart').getContext('2d');
+        const directors = Object.keys(performanceData.by_director);
+        const roiData = directors.map(d => performanceData.by_director[d].ROI);
+
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: directors,
+                datasets: [{
+                    label: 'ROI',
+                    data: roiData,
+                    backgroundColor: roiData.map(v =>
+                        v >= 0.25 ? 'rgba(16, 185, 129, 0.8)' :
+                        v >= 0.15 ? 'rgba(251, 191, 36, 0.8)' :
+                        'rgba(239, 68, 68, 0.8)'
+                    ),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: '编导ROI效率对比',
+                        font: { size: 18, weight: 'bold' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { font: { size: 12 } }
+                    },
+                    x: {
+                        ticks: { font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // 填充编导上传表格
+        const directorUploadTable = document.getElementById('directorUploadTable');
+        // 这里需要更详细的数据,暂时简化处理
+        Object.keys(uploadData.by_director).forEach((director, index) => {
+            const total = uploadData.by_director[director];
+            const row = directorUploadTable.insertRow();
+            row.innerHTML = `
+                <td>${director}</td>
+                <td><strong>${total}</strong></td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+            `;
+        });
+
+        // 填充编导投放效果表格
+        const directorPerformanceTable = document.getElementById('directorPerformanceTable');
+        const sortedDirectors = Object.keys(performanceData.by_director).sort((a, b) =>
+            performanceData.by_director[b].ROI - performanceData.by_director[a].ROI
+        );
+
+        sortedDirectors.forEach((director, index) => {
+            const data = performanceData.by_director[director];
+            const avgCost = (data.消耗 / data.素材数).toFixed(2);
+            const roiBadge = data.ROI >= 0.25 ? 'badge-success' :
+                            data.ROI >= 0.15 ? 'badge-warning' : 'badge-danger';
+
+            const row = directorPerformanceTable.insertRow();
+            row.innerHTML = `
+                <td><strong>#${index + 1}</strong></td>
+                <td>${director}</td>
+                <td>¥${data.消耗.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td>
+                <td>¥${data.GMV.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td>
+                <td>${data.订单}</td>
+                <td><span class="badge ${roiBadge}">${data.ROI}</span></td>
+                <td>${data.素材数}</td>
+                <td>¥${avgCost}</td>
+            `;
+        });
+    </script>
+</body>
+</html>
