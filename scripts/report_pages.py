@@ -418,7 +418,8 @@ def build_timing_data():
             b['open_n'] += 1
         if x['gd']:
             b['order_n'] += 1
-        if (x['gq_total'] or 0) >= 5:
+        # run_n：有转化且历史深转≥5（与 conv_run_rate 分子同口径，防超100%）
+        if x['cd'] and (x['gq_total'] or 0) >= 5:
             b['run_n'] += 1
     # 过审文件里的素材（投放数据未出现的）也计入产出数量
     for (p, bn), pd in audit_keys.items():
@@ -693,7 +694,7 @@ function computeFourRates(p, dates, pdRange, pdSet, type, win, mode){
   // mode: 'any'（默认，窗口内任意一天有转化/高潜）| 'first'（首次转化/高潜在窗口内）
   const dr = win || _dateRange(dates);
   const m = mode || 'any';
-  let total=0, conv=0, gq=0, runout=0;
+  let total=0, conv=0, gq=0, runout=0, runout_conv=0;
   (OPEN_RATE_DATA || []).forEach(x => {
     if (p !== '__ALL__' && x.p !== p) return;
     // 类型过滤（type 为空按视频处理）
@@ -719,28 +720,34 @@ function computeFourRates(p, dates, pdRange, pdSet, type, win, mode){
       if (!(x.mn <= dr.e && x.mx >= dr.s)) return;
     }
     total++;
+    let convCounted = false;
     if (m === 'first') {
-      if (x.cd && x.cd >= dr.s && x.cd <= dr.e) conv++;
+      if (x.cd && x.cd >= dr.s && x.cd <= dr.e) { conv++; convCounted = true; }
       if (x.gd && x.gd >= dr.s && x.gd <= dr.e) gq++;
     } else if (m === 'hist') {
       // 历史口径：只要有过转化/高潜（不限窗口）
-      if (x.cd) conv++;
+      if (x.cd) { conv++; convCounted = true; }
       if (x.gd) gq++;
     } else {
       // 窗口内任一转化/高潜：首日<=窗口末 且 末日>=窗口首
-      if (x.cd && x.ld && x.cd <= dr.e && x.ld >= dr.s) conv++;
+      if (x.cd && x.ld && x.cd <= dr.e && x.ld >= dr.s) { conv++; convCounted = true; }
       if (x.gd && x.lg && x.gd <= dr.e && x.lg >= dr.s) gq++;
     }
-    if ((x.gq_total || 0) >= 5) runout++;
+    // 跑出（历史累计深转≥5）：计入「高潜跑出率」的分子；「高潜跑出率（转化）」的分子
+    // 只算有转化且跑出的素材（与分母 conv 同口径，防超100%）
+    if ((x.gq_total || 0) >= 5) {
+      runout++;
+      if (convCounted) runout_conv++;
+    }
   });
   const pct = (a,b) => b > 0 ? Math.round(a/b*1000)/10 : null;
   return {
-    total, conv, gq, runout,
+    total, conv, gq, runout, runout_conv,
     open_rate: pct(conv, total),           // 转化成交率（内部键沿用旧名）
     order_rate: pct(gq, Math.max(conv, gq)),  // 高潜成交率（转化）
     chulv_rate: pct(gq, total),            // 高潜成交率
     run_rate: pct(runout, total),          // 高潜跑出率
-    conv_run_rate: pct(runout, conv),      // 高潜跑出率（转化）
+    conv_run_rate: pct(runout_conv, conv), // 高潜跑出率（转化）
   };
 }
 
@@ -1144,7 +1151,7 @@ function renderAllDirectorCard(){
     ['高潜成交率（转化）', _all4.order_rate != null ? _all4.order_rate+'%' : '—', _all4.gq+'/'+Math.max(_all4.gq,_all4.conv)+' 条', '#8B5CF6'],
     ['高潜成交率', _all4.chulv_rate != null ? _all4.chulv_rate+'%' : '—', _all4.gq+'/'+_all4.total+' 条', '#D97706'],
     ['高潜跑出率', _all4.run_rate != null ? _all4.run_rate+'%' : '—', _all4.runout+'/'+_all4.total+' 条', '#D97706'],
-    ['高潜跑出率（转化）', _all4.conv_run_rate != null ? _all4.conv_run_rate+'%' : '—', _all4.runout+'/'+_all4.conv+' 条', '#9A3412']
+    ['高潜跑出率（转化）', _all4.conv_run_rate != null ? _all4.conv_run_rate+'%' : '—', _all4.runout_conv+'/'+_all4.conv+' 条', '#9A3412']
   ];
   const cellHtml = cells.map(c =>
     '<div style="background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center"><div style="font-size:10px;color:#94A3B8">' + c[0] + '</div><div style="font-size:13px;font-weight:700;font-family:monospace;color:' + c[3] + '">' + c[1] + '</div>' + (c[2] ? '<div style="font-size:9px;color:#64748B">' + c[2] + '</div>' : '') + '</div>'
@@ -1833,7 +1840,8 @@ const P3 = {
     // 五率（基础名行集合，指标累计窗口内判断）
     const convN = computed.filter(c => c.conv > 0).length;
     const gqN = computed.filter(c => c.gq > 0).length;
-    const runN = computed.filter(c => c.gq >= 5).length;
+    const runN = computed.filter(c => c.gq >= 5 && c.conv > 0).length;   // 有转化且深转≥5
+    const runN_all = computed.filter(c => c.gq >= 5).length;               // 深转≥5（跑出率/总）
     const total = computed.length;
     // 产出数量（全量工作量口径，含过审/未过审，0-3改按基础名算1条）
     const prodN = prod.length;
@@ -1855,7 +1863,7 @@ const P3 = {
       ${cell('转化成交率', total > 0 ? pct1(Math.round(convN/total*1000)/10) : '—')}
       ${cell('高潜成交率（转化）', (convN || gqN) > 0 ? pct1(Math.round(gqN/Math.max(convN,gqN)*1000)/10) : '—')}
       ${cell('高潜成交率', total > 0 ? pct1(Math.round(gqN/total*1000)/10) : '—')}
-      ${cell('高潜跑出率', total > 0 ? pct1(Math.round(runN/total*1000)/10) : '—')}
+      ${cell('高潜跑出率', total > 0 ? pct1(Math.round(runN_all/total*1000)/10) : '—')}
       ${cell('高潜跑出率（转化）', convN > 0 ? pct1(Math.round(runN/convN*1000)/10) : '—')}
       ${cell('产出素材数', prodN)}
       ${cell('图文/视频', prodTw + ' / ' + prodVd)}
@@ -1908,7 +1916,8 @@ const P3 = {
       const total = sub.length;
       const convN = sub.filter(c => c.conv > 0).length;
       const gqN = sub.filter(c => c.gq > 0).length;
-      const runN = sub.filter(c => c.gq >= 5).length;
+      const runN = sub.filter(c => c.gq >= 5 && c.conv > 0).length;   // 有转化且深转≥5
+      const runN_all = sub.filter(c => c.gq >= 5).length;
       // 编导产出数量（全量工作量口径）
       const ps = (prod || []).filter(x => x.p === p);
       const tw = ps.filter(x => x.t === 'tuwen').length;
@@ -1930,8 +1939,8 @@ const P3 = {
           ${cell('转化成交率', '转化成交率 = 转化>0素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(convN/total*1000)/10) : '—', convN+'/'+total, '#1E40AF')}
           ${cell('高潜成交率（转化）', '高潜成交率（转化） = 深转>0素材数 ÷ 转化>0素材数', (convN||gqN)>0 ? pct1(Math.round(gqN/Math.max(convN,gqN)*1000)/10) : '—', gqN+'/'+Math.max(convN,gqN), '#8B5CF6')}
           ${cell('高潜成交率', '高潜成交率 = 深转>0素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(gqN/total*1000)/10) : '—', gqN+'/'+total, '#D97706')}
-          ${cell('高潜跑出率', '高潜跑出率 = 深转≥5素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(runN/total*1000)/10) : '—', runN+'/'+total, '#D97706')}
-          ${cell('高潜跑出率（转化）', '高潜跑出率（转化） = 深转≥5素材数 ÷ 转化>0素材数', convN>0 ? pct1(Math.round(runN/convN*1000)/10) : '—', runN+'/'+convN, '#9A3412')}
+          ${cell('高潜跑出率', '高潜跑出率 = 深转≥5素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(runN_all/total*1000)/10) : '—', runN_all+'/'+total, '#D97706')}
+          ${cell('高潜跑出率（转化）', '高潜跑出率（转化） = 深转≥5且转化>0素材数 ÷ 转化>0素材数', convN>0 ? pct1(Math.round(runN/convN*1000)/10) : '—', runN+'/'+convN, '#9A3412')}
         </div>
       </div>`;
     }).filter(Boolean);
@@ -1961,16 +1970,17 @@ const P3 = {
           .map(r => this.compute(r, m.s, endTime));
         const convN = computed.filter(c => c.conv > 0).length;
         const gqN = computed.filter(c => c.gq > 0).length;
-        const runN = computed.filter(c => c.gq >= 5).length;
+        const runN = computed.filter(c => c.gq >= 5 && c.conv > 0).length;   // 有转化且深转≥5
+        const runN_all = computed.filter(c => c.gq >= 5).length;
         const total = computed.length;
-        return {convN, gqN, runN, total,
+        return {convN, gqN, runN, runN_all, total,
                 cr: total>0 ? (convN/total*100).toFixed(1) : '—',
                 crFrac: convN+'/'+total,
                 gqcr: (convN||gqN)>0 ? (gqN/Math.max(convN,gqN)*100).toFixed(1) : '—',
                 gqcrFrac: gqN+'/'+Math.max(convN,gqN),
                 gqr: total>0 ? (gqN/total*100).toFixed(1) : '—',
                 gqrFrac: gqN+'/'+total,
-                runr: total>0 ? (runN/total*100).toFixed(1) : '—',
+                runr: total>0 ? (runN_all/total*100).toFixed(1) : '—',
                 runrFrac: runN+'/'+total,
                 crrun: convN>0 ? (runN/convN*100).toFixed(1) : '—',
                 crrunFrac: runN+'/'+convN};
@@ -2182,7 +2192,7 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
         "    if (kind === 'order') return f.gq + ' / ' + Math.max(f.gq, f.conv) + ' \\u6761';\n"
         "    if (kind === 'run') return f.runout + ' / ' + f.total + ' \\u6761';\n"
         "    if (kind === 'chulv') return f.gq + ' / ' + f.total + ' \\u6761';\n"
-        "    if (kind === 'conv_run') return f.runout + ' / ' + f.conv + ' \\u6761';\n"
+        "    if (kind === 'conv_run') return f.runout_conv + ' / ' + f.conv + ' \\u6761';\n"
         "    return f.conv + ' / ' + f.total + ' \\u6761';\n"
         "  }\n"
         "  function frTip(p, kind){\n"
@@ -2190,7 +2200,7 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
         "    if (kind === 'order') return '\\u6df1\\u8f6c>0\\u7d20\\u6750 ' + f.gq + ' \\u6761 \\u00f7 \\u8f6c\\u5316>0\\u7d20\\u6750 ' + Math.max(f.gq, f.conv) + ' \\u6761';\n"
         "    if (kind === 'run') return '\\u6df1\\u8f6c\\u22655\\u5355\\u7d20\\u6750 ' + f.runout + ' \\u6761 \\u00f7 \\u4ea7\\u51fa\\u6295\\u653e\\u7d20\\u6750 ' + f.total + ' \\u6761';\n"
         "    if (kind === 'chulv') return '\\u6df1\\u8f6c>0\\u7d20\\u6750 ' + f.gq + ' \\u6761 \\u00f7 \\u4ea7\\u51fa\\u6295\\u653e\\u7d20\\u6750 ' + f.total + ' \\u6761';\n"
-        "    if (kind === 'conv_run') return '\\u6df1\\u8f6c\\u22655\\u5355\\u7d20\\u6750 ' + f.runout + ' \\u6761 \\u00f7 \\u8f6c\\u5316>0\\u7d20\\u6750 ' + f.conv + ' \\u6761';\n"
+        "    if (kind === 'conv_run') return '\\u6df1\\u8f6c\\u22655\\u5355\\u4e14\\u6709\\u8f6c\\u5316\\u7684\\u7d20\\u6750 ' + f.runout_conv + ' \\u6761 \\u00f7 \\u8f6c\\u5316>0\\u7d20\\u6750 ' + f.conv + ' \\u6761';\n"
         "    return '\\u8f6c\\u5316>0\\u7d20\\u6750 ' + f.conv + ' \\u6761 \\u00f7 \\u4ea7\\u51fa\\u6295\\u653e\\u7d20\\u6750 ' + f.total + ' \\u6761';\n"
         "  }\n"
         "  renderAllDirectorCard();"
@@ -2234,7 +2244,7 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
         "      ['\\u9ad8\\u6f5c\\u6210\\u4ea4\\u7387\\uff08\\u8f6c\\u5316\\uff09', _all4.order_rate != null ? _all4.order_rate+'%' : '\\u2014', _all4.gq+'/'+Math.max(_all4.gq,_all4.conv)+' \\u6761', '#8B5CF6'],\n"
         "      ['\\u9ad8\\u6f5c\\u6210\\u4ea4\\u7387', _all4.chulv_rate != null ? _all4.chulv_rate+'%' : '\\u2014', _all4.gq+'/'+_all4.total+' \\u6761', '#D97706'],\n"
         "      ['\\u9ad8\\u6f5c\\u8dd1\\u51fa\\u7387', _all4.run_rate != null ? _all4.run_rate+'%' : '\\u2014', _all4.runout+'/'+_all4.total+' \\u6761', '#D97706'],\n"
-        "      ['\\u9ad8\\u6f5c\\u8dd1\\u51fa\\u7387\\uff08\\u8f6c\\u5316\\uff09', _all4.conv_run_rate != null ? _all4.conv_run_rate+'%' : '\\u2014', _all4.runout+'/'+_all4.conv+' \\u6761', '#9A3412']\n"
+        "      ['\\u9ad8\\u6f5c\\u8dd1\\u51fa\\u7387\\uff08\\u8f6c\\u5316\\uff09', _all4.conv_run_rate != null ? _all4.conv_run_rate+'%' : '\\u2014', _all4.runout_conv+'/'+_all4.conv+' \\u6761', '#9A3412']\n"
         "    ];\n"
         "    const cellHtml = cells.map(c => '<div style=\"background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center\"><div style=\"font-size:10px;color:#94A3B8\">' + c[0] + '</div><div style=\"font-size:13px;font-weight:700;font-family:monospace;color:' + c[3] + '\">' + c[1] + '</div>' + (c[2] ? '<div style=\"font-size:9px;color:#64748B\">' + c[2] + '</div>' : '') + '</div>').join('');\n"
         "    _el.innerHTML = '<div style=\"background:#fff;border:1.5px solid #1E40AF44;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06)\">' +\n"
