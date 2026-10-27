@@ -127,7 +127,7 @@ def main():
             for r in csv.DictReader(fh):
                 name = clean_name((r.get('视频名称') or '').strip())
                 sid = (r.get('素材id') or '').strip()
-                if not sid or not name or is_homepage(name):
+                if not sid or not name:
                     continue
                 sp = fnum(r.get('消耗'))
                 id_spend[sid] += sp
@@ -152,14 +152,15 @@ def main():
         with open(fp, encoding='utf-8-sig') as fh:
             for r in csv.DictReader(fh):
                 name = clean_name((r.get('视频名称') or '').strip())
-                if not name or is_homepage(name):
+                if not name:
                     continue
                 sid = (r.get('素材id') or '').strip()
                 account = (r.get('账户id') or '').strip() or (r.get('账户名称') or '').strip()
                 # 渠道账户不进明细（会拉低深转率），跳过
                 if account in CHANNEL_ACCOUNTS:
                     continue
-                key = name_to_id.get(name) or sid or f"{name}|{account}"
+                # 素材ID优先：同名多个ID/科学计数法通用名的行，有真实ID就按ID归（防错归）
+                key = sid or name_to_id.get(name) or f"{name}|{account}"
                 d = day_map[key]
                 row_spend = fnum(r.get('消耗'))
                 d['spend'] += row_spend
@@ -192,11 +193,15 @@ def main():
                     info[key]['aliases'].append(name)
         day_maps.append(dict(day_map))
 
-    # 同一素材id多名称时：展示名取消耗最大的名称，其余保留为别名（供搜索）
+    # 同一素材id多名称时：优先显示正常名（非纯数字/非科学计数法，消耗最大者）；
+    # 没有正常名才用消耗最大的名称；其余保留为别名（供搜索）
+    def _is_plain_name(n):
+        return not (re.fullmatch(r'\d+', n) or re.fullmatch(r'[\d.]+[eE][+\-]?\d+', n))
     for key, m in info.items():
         cand = alias_spend.get(key)
         if cand:
-            main_name = max(cand, key=lambda n: cand[n])
+            normal = {n: s for n, s in cand.items() if _is_plain_name(n)}
+            main_name = max(normal, key=lambda n: normal[n]) if normal else max(cand, key=lambda n: cand[n])
             m['name'] = main_name
             m['aliases'] = [n for n in m['aliases'] if n != main_name]
             m['tag'] = get_tag(main_name, m['id'], label_map)
