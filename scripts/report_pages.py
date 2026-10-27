@@ -1869,8 +1869,43 @@ const P3 = {
         <div style="font-size:11px;color:var(--text-muted)">${computed.length} 条</div>
       </div>
       ${summary}
+      ${this.directorCards(computed)}
       ${table}
     </div>`;
+  },
+  // 各编导表现卡（每区块内，五率+素材数）
+  directorCards(computed){
+    const CORE = ['小敏', '瑞晨', '嘉丽', '雅迪'];
+    const colors = PERSON_COLORS;
+    const pct1 = v => v != null ? v + '%' : '—';
+    const cards = CORE.map(p => {
+      const sub = computed.filter(c => c.r.person === p);
+      if (!sub.length) return '';
+      const total = sub.length;
+      const convN = sub.filter(c => c.conv > 0).length;
+      const gqN = sub.filter(c => c.gq > 0).length;
+      const runN = sub.filter(c => c.gq >= 5).length;
+      const tw = sub.filter(c => c.r.type === 'tuwen').length;
+      const vd = total - tw;
+      const cell = (label, tip, val, frac, color) => `<div style="background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center"><div style="font-size:10px;color:#94A3B8">${label} <span class="help-tip" data-tip="${tip}"></span></div><div style="font-size:13px;font-weight:700;color:${color};font-family:monospace">${val}</div><div style="font-size:9px;color:#64748B;font-family:monospace">${frac} 条</div></div>`;
+      return `<div style="background:#fff;border:1.5px solid ${colors[p]||'#64748B'}44;border-radius:10px;padding:10px 12px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${colors[p]||'#64748B'};display:inline-block"></span>
+          <span style="font-size:12px;font-weight:700;color:${colors[p]||'#64748B'}">${p}</span>
+          <span style="font-size:10px;color:#94A3B8;margin-left:auto">图文${tw} / 视频${vd}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
+          ${cell('转化成交率', '转化成交率 = 转化>0素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(convN/total*1000)/10) : '—', convN+'/'+total, '#1E40AF')}
+          ${cell('高潜成交率（转化）', '高潜成交率（转化） = 深转>0素材数 ÷ 转化>0素材数', (convN||gqN)>0 ? pct1(Math.round(gqN/Math.max(convN,gqN)*1000)/10) : '—', gqN+'/'+Math.max(convN,gqN), '#8B5CF6')}
+          ${cell('高潜成交率', '高潜成交率 = 深转>0素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(gqN/total*1000)/10) : '—', gqN+'/'+total, '#D97706')}
+          ${cell('高潜跑出率', '高潜跑出率 = 深转≥5素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(runN/total*1000)/10) : '—', runN+'/'+total, '#D97706')}
+          ${cell('高潜跑出率（转化）', '高潜跑出率（转化） = 深转≥5素材数 ÷ 转化>0素材数', convN>0 ? pct1(Math.round(runN/convN*1000)/10) : '—', runN+'/'+convN, '#9A3412')}
+        </div>
+      </div>`;
+    }).filter(Boolean);
+    return cards.length
+      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:10px;margin-bottom:12px">${cards.join('')}</div>`
+      : '';
   },
   // 环比对比表：周位配对（第3 vs 第3、第2 vs 第2、第1 vs 第1），双列实时累计口径
   renderCompare(){
