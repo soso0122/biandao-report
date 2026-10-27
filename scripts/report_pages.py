@@ -1775,22 +1775,22 @@ const P3 = {
   fmtSec(v){ return v >= 0 ? v.toFixed(1) + 's' : '<span style="color:var(--text-muted)">—</span>'; },
   cellHtml(c){
     return `<tr>
-      <td><div class="mat-name" style="max-width:280px" title="${c.r.name}">${c.r.name}</div></td>
-      <td>${c.r.id ? '<span class="num" style="font-family:monospace">' + c.r.id + '</span>' : '<span style="color:var(--text-muted)">—</span>'}</td>
-      <td>${c.r.type === 'tuwen' ? '<span style="color:#8B5CF6;font-size:10px;font-weight:600">图文</span>' : '<span style="color:#3B82F6;font-size:10px;font-weight:600">视频</span>'}</td>
-      <td><span class="num">${c.r.version}</span></td>
-      <td>${this.fmtDateStr(c.r.push_day)}</td>
-      <td><span class="num num-hi">¥${c.spend.toFixed(2)}</span></td>
-      <td><span class="num">${this.fmtPct(c.ctr)}</span></td>
-      <td>${c.conv > 0 ? '<span class="num num-hi">' + c.conv + '</span>' : '<span class="num num-zero">—</span>'}</td>
-      <td><span class="num">${c.cpa >= 0 ? '¥' + c.cpa.toFixed(0) : '—'}</span></td>
-      <td>${c.gq > 0 ? '<span class="gaoquan-cell">' + c.gq + '</span>' : '<span class="gaoquan-zero num-zero">—</span>'}</td>
-      <td><span class="num" style="color:${c.deep_rate >= 15 ? '#D97706' : '#94A3B8'}">${c.deep_rate >= 0 ? c.deep_rate.toFixed(1) + '%' : '—'}</span></td>
-      <td><span class="num">${this.fmtPct(c.qf)}</span></td>
-      <td><span class="num">${this.fmtPct(c.q3)}</span></td>
-      <td><span class="num">${this.fmtPct(c.q5)}</span></td>
-      <td><span class="num">${this.fmtSec(c.qd)}</span></td>
-      <td><span class="num">${c.active_days}</span></td>
+      <td data-k="name"><div class="mat-name" style="max-width:280px" title="${c.r.name}">${c.r.name}</div></td>
+      <td data-k="id">${c.r.id ? '<span class="num" style="font-family:monospace">' + c.r.id + '</span>' : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td data-k="type">${c.r.type === 'tuwen' ? '<span style="color:#8B5CF6;font-size:10px;font-weight:600">图文</span>' : '<span style="color:#3B82F6;font-size:10px;font-weight:600">视频</span>'}</td>
+      <td data-k="version"><span class="num">${c.r.version}</span></td>
+      <td data-k="push_day" data-v="${c.r.push_day || 0}">${this.fmtDateStr(c.r.push_day)}</td>
+      <td data-k="spend" data-v="${c.spend.toFixed(2)}"><span class="num num-hi">¥${c.spend.toFixed(2)}</span></td>
+      <td data-k="ctr" data-v="${c.ctr.toFixed(4)}"><span class="num">${this.fmtPct(c.ctr)}</span></td>
+      <td data-k="conv" data-v="${c.conv}">${c.conv > 0 ? '<span class="num num-hi">' + c.conv + '</span>' : '<span class="num num-zero">—</span>'}</td>
+      <td data-k="cpa" data-v="${c.cpa.toFixed(2)}"><span class="num">${c.cpa >= 0 ? '¥' + c.cpa.toFixed(0) : '—'}</span></td>
+      <td data-k="gq" data-v="${c.gq}">${c.gq > 0 ? '<span class="gaoquan-cell">' + c.gq + '</span>' : '<span class="gaoquan-zero num-zero">—</span>'}</td>
+      <td data-k="deep_rate" data-v="${c.deep_rate.toFixed(3)}"><span class="num" style="color:${c.deep_rate >= 15 ? '#D97706' : '#94A3B8'}">${c.deep_rate >= 0 ? c.deep_rate.toFixed(1) + '%' : '—'}</span></td>
+      <td data-k="qf" data-v="${c.qf.toFixed(4)}"><span class="num">${this.fmtPct(c.qf)}</span></td>
+      <td data-k="q3" data-v="${c.q3.toFixed(4)}"><span class="num">${this.fmtPct(c.q3)}</span></td>
+      <td data-k="q5" data-v="${c.q5.toFixed(4)}"><span class="num">${this.fmtPct(c.q5)}</span></td>
+      <td data-k="qd" data-v="${c.qd.toFixed(3)}"><span class="num">${this.fmtSec(c.qd)}</span></td>
+      <td data-k="active_days" data-v="${c.active_days}"><span class="num">${c.active_days}</span></td>
       <td>${c.r.url && c.r.url.length > 10 ? `<button class="btn-play" onclick="P3.play('${encodeURIComponent(c.r.url)}')"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 3l10 5-10 5V3z"/></svg>播放</button>` : '<span style="color:var(--text-muted);font-size:11px">无链接</span>'}</td>
     </tr>`;
   },
@@ -1807,6 +1807,7 @@ const P3 = {
     document.body.style.overflow = 'hidden';
   },
   // 渲染全部3周 / 第3周 / 第2周 / 第1周 四个区块
+  sortState: {},   // label -> {col, asc}
   renderAll(){
     this.renderCompare();
     const w = this.weeks();
@@ -1832,6 +1833,42 @@ const P3 = {
       });
       return this.blockHtml(b.label, this.f(b.s), this.f(b.e), computed, prod);
     }).join('');
+    blocks.forEach(b => this.bindTableSort(b.label));
+  },
+  // 明细表排序：每区块独立（点击表头切换升降序）
+  bindTableSort(label){
+    const table = document.getElementById('passTable-' + label);
+    if (!table) return;
+    const st = this.sortState[label] || (this.sortState[label] = {col: 'spend', asc: false});
+    const thead = table.querySelectorAll('thead th[data-col]');
+    const body = table.querySelector('tbody');
+    thead.forEach(th => {
+      th.style.cursor = 'pointer';
+      th.onclick = () => {
+        const col = th.dataset.col;
+        if (st.col === col) st.asc = !st.asc;
+        else { st.col = col; st.asc = (col === 'name' || col === 'id' || col === 'push_day'); }
+        const rows = [...body.querySelectorAll('tr')];
+        rows.sort((a, b) => {
+          const ca = a.querySelector('td[data-k="' + col + '"]');
+          const cb = b.querySelector('td[data-k="' + col + '"]');
+          if (!ca || !cb) return 0;
+          // 数值列用 data-v，文本列用 data-v（数字日期）或文本
+          if (ca.dataset.v !== undefined && cb.dataset.v !== undefined) {
+            const na = parseFloat(ca.dataset.v), nb = parseFloat(cb.dataset.v);
+            return st.asc ? na - nb : nb - na;
+          }
+          const ta = ca.textContent.trim(), tb = cb.textContent.trim();
+          return st.asc ? ta.localeCompare(tb, 'zh') : tb.localeCompare(ta, 'zh');
+        });
+        rows.forEach(r => body.appendChild(r));
+        thead.forEach(t => t.classList.remove('sorted-asc', 'sorted-desc'));
+        th.classList.add(st.asc ? 'sorted-asc' : 'sorted-desc');
+      };
+    });
+    thead.forEach(t => {
+      if (t.dataset.col === st.col) t.classList.add(st.asc ? 'sorted-asc' : 'sorted-desc');
+    });
   },
   blockHtml(label, s, e, computed, prod){
     const tSpend = computed.reduce((s,c) => s+c.spend, 0);
@@ -1874,11 +1911,11 @@ const P3 = {
       ${cell('图文/视频', prodTw + ' / ' + prodVd)}
     </div>`;
     const table = `<div class="table-wrap" style="max-height:460px;overflow-y:auto">
-      <table style="font-size:12px">
+      <table style="font-size:12px" id="passTable-${label}">
         <thead><tr>
-          <th>素材名称</th><th>素材ID</th><th>类型</th><th>改版</th><th>产出日</th><th>消耗</th><th>点击率</th><th>转化</th><th>CPA</th><th>深转</th><th>深转率</th><th>完播率</th><th>3秒播放率</th><th>5秒播放率</th><th>播放时长</th><th>在投天数</th><th>视频</th>
+          <th data-col="name">素材名称</th><th data-col="id">素材ID</th><th data-col="type">类型</th><th data-col="version">改版</th><th data-col="push_day">产出日</th><th data-col="spend" class="sorted-desc">消耗 ↓</th><th data-col="ctr">点击率</th><th data-col="conv">转化</th><th data-col="cpa">CPA</th><th data-col="gq">深转</th><th data-col="deep_rate">深转率</th><th data-col="qf">完播率</th><th data-col="q3">3秒播放率</th><th data-col="q5">5秒播放率</th><th data-col="qd">播放时长</th><th data-col="active_days">在投天数</th><th>视频</th>
         </tr></thead>
-        <tbody>${computed.map(c => this.cellHtml(c)).join('') || '<tr><td colspan="17" style="text-align:center;color:#94A3B8">该周无素材</td></tr>'}</tbody>
+        <tbody>${[...computed].sort((a, b) => b.spend - a.spend).map(c => this.cellHtml(c)).join('') || '<tr><td colspan="17" style="text-align:center;color:#94A3B8">该周无素材</td></tr>'}</tbody>
       </table>
     </div>`;
     return `<div class="chart-card" style="margin-bottom:16px">
