@@ -860,7 +860,8 @@ def build_recent_pass_analysis():
             return ''
         return f'{mm:02d}{dd:02d}'
 
-    # ---- 第一遍：全文件流式聚合（含无ID老素材；卡审/池判定后置） ----
+    # ---- 第一遍：全文件流式聚合（含无ID老素材、未推送自投视频、无前缀图文、卡审视频） ----
+    # 全部投放素材都进 agg（产出数量=全量工作量口径）；池内过滤放到行构建阶段
     agg = {}      # key=(person, base_name) -> 行聚合
     key_order = []
     for f in sorted(data_dir.glob('引导加微每日数据-*.csv')):
@@ -878,24 +879,20 @@ def build_recent_pass_analysis():
                     continue
                 typ = (r.get('素材类型') or '').strip()
                 is_tuwen = (typ == '图文')
-                if is_tuwen:
-                    if not produce_day(name):
-                        continue  # 无日期前缀的图文不进本表
-                else:
-                    if not name.startswith('推送视频_'):
-                        continue  # 非推送池视频不进本表
                 bn = base_material_name(clean_name(name))
                 p = person_of(name)
                 key = (p, bn)
                 if key not in agg:
                     agg[key] = {
                         'names': [], 'name_set': set(), 'ids': [], 'id_set': set(),
-                        'is_tuwen': is_tuwen, 'pd': '', 'pd_prefix': False,
+                        'is_tuwen': is_tuwen, 'is_pushed': False, 'pd': '', 'pd_prefix': False,
                         'first': mmdd, 'last': mmdd, 'rejected': False,
                         'daily': {}, 'url': '',
                     }
                     key_order.append(key)
                 a = agg[key]
+                if name.startswith('推送视频_'):
+                    a['is_pushed'] = True
                 if name not in a['name_set']:
                     a['name_set'].add(name)
                     a['names'].append(name)
@@ -916,7 +913,6 @@ def build_recent_pass_analysis():
                     a['url'] = url
                 if not is_tuwen and '不通过' in (r.get('审核建议') or ''):
                     a['rejected'] = True
-                    continue  # 视频卡审行不累计数据（整条素材从池中剔除）；图文不卡审口径
                 d = a['daily'].setdefault(mmdd, {'spend': 0.0, 'conv': 0.0, 'gq': 0.0,
                                                  'imp': 0.0, 'click': 0.0,
                                                  'w3': 0.0, 'w5': 0.0, 'wf': 0.0, 'wd': 0.0})
@@ -932,10 +928,16 @@ def build_recent_pass_analysis():
                 d['wd'] += safe_float(r.get('平均单次播放时长')) or 0
 
     rows = []
+    produce = []
     for key in key_order:
         a = agg[key]
-        if a['rejected']:
-            continue  # 视频投放过且卡审过 → 出池
+        # 池内行（指标用）：图文=名称有日期前缀；视频=推送池且从未卡审
+        if a['is_tuwen']:
+            if not a['pd_prefix']:
+                continue  # 无日期前缀的图文不进池（仍计入产出数量）
+        else:
+            if not a['is_pushed'] or a['rejected']:
+                continue  # 未推送/卡审视频不进池（仍计入产出数量）
         # 产出日：名称前缀优先；无前缀用首现日兜底
         push_day = a['pd'] or a['first']
         rows.append({
@@ -950,10 +952,17 @@ def build_recent_pass_analysis():
             'daily': a['daily'],
             'url': a['url'],
         })
+    # 产出数量（全量工作量口径，0改/1改/2改/3改按基础名算1条）
+    for key in key_order:
+        a = agg[key]
+        produce.append({'p': key[0],
+                        't': 'tuwen' if a['is_tuwen'] else 'video',
+                        'pd': a['pd'] or a['first']})
     rows.sort(key=lambda x: x['push_day'], reverse=True)
 
-    # ---- 过审提交分周统计（分图文/视频；多次修改按基础名算1次；归属首次提交日所在自然周） ----
-    audit_first = {}   # base_name -> {'first_day', 'passed', 'is_tuwen'}
+    # ---- 过审提交统计（全按视频；多次修改按基础名算1次） ----
+    # 归属日：任一版本通过 → 首次通过日；一直不通过 → 首次提交日（用户 2026-10-27 定）
+    audit_first = {}   # base_name -> {'first_day', 'pass_day', 'name'}
     for f in sorted(data_dir.glob('*投放过审.csv')):
         m = re.fullmatch(r'(\d{4})投放过审', f.stem)
         if not m:
@@ -964,34 +973,41 @@ def build_recent_pass_analysis():
                 name = (r.get('视频名称') or '').strip()
                 if not name:
                     continue
-                is_tuwen = '图文' in name
                 bn = base_material_name(clean_name(name))
-                rec = audit_first.get(bn)
-                if rec is None:
-                    audit_first[bn] = {
-                        'first_day': mmdd, 'is_tuwen': is_tuwen,
-                        'passed': ((r.get('审核建议') or '').strip() == '审核通过'),
-                    }
-                else:
-                    if ((r.get('审核建议') or '').strip() == '审核通过'):
-                        rec['passed'] = True
+                rec = audit_first.setdefault(bn, {'first_day': mmdd, 'name': name, 'pass_day': ''})
+                if (r.get('审核建议') or '').strip() == '审核通过' and not rec['pass_day']:
+                    rec['pass_day'] = mmdd
     audit_week = {}
+    # 产出数量补过审素材：投放数据未出现的过审素材也计入（工作量口径），产出日=名称MMDD前缀、无则首次提交日
     for bn, rec in audit_first.items():
-        day = rec['first_day']
+        day = rec['pass_day'] or rec['first_day']
         d = datetime.date(2026, int(day[:2]), int(day[2:]))
         sunday = d + datetime.timedelta(days=(6 - d.weekday()))
         wk = f'{sunday.month:02d}{sunday.day:02d}'
-        w = audit_week.setdefault(wk, {'video': {'submitted': 0, 'passed': 0},
-                                       'tuwen': {'submitted': 0, 'passed': 0}})
-        k = 'tuwen' if rec['is_tuwen'] else 'video'
-        w[k]['submitted'] += 1
-        if rec['passed']:
-            w[k]['passed'] += 1
+        w = audit_week.setdefault(wk, {'submitted': 0, 'passed': 0, 'by_person': {}})
+        w['submitted'] += 1
+        if rec['pass_day']:
+            w['passed'] += 1
+            p = person_of(rec['name'])
+            bp = w['by_person'].setdefault(p, {'submitted': 0, 'passed': 0})
+            bp['submitted'] += 1
+            bp['passed'] += 1
+        else:
+            p = person_of(rec['name'])
+            bp = w['by_person'].setdefault(p, {'submitted': 0, 'passed': 0})
+            bp['submitted'] += 1
+        # 产出清单补录（过审提交过的素材，哪怕从未进投放数据也算产出；过审文件全按视频）
+        agg_bases = {bn_ for (_, bn_) in key_order}
+        if bn not in agg_bases:
+            produce.append({'p': person_of(rec['name']),
+                            't': 'video',
+                            'pd': produce_day(rec['name']) or rec['first_day']})
 
     return {
         'latest': latest or '',
         'rows': rows,
         'audit_week': audit_week,
+        'produce': produce,
     }
 
 

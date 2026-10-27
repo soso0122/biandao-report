@@ -1822,10 +1822,15 @@ const P3 = {
         return t >= this.dkey(this.f(b.s).replace('/','')) && t <= this.dkey(this.f(b.e).replace('/',''));
       });
       const computed = rows.map(r => this.compute(r, m.s, m.e));
-      return this.blockHtml(b.label, this.f(b.s), this.f(b.e), computed);
+      // 产出数量（全量工作量口径）：produce 里产出日落在该周的素材（含未过审/未推送/过审文件，基础名去重）
+      const prod = (RECENT_PASS_ANALYSIS.produce || []).filter(x => {
+        const t = this.dkey(x.pd);
+        return t >= this.dkey(this.f(b.s).replace('/','')) && t <= this.dkey(this.f(b.e).replace('/',''));
+      });
+      return this.blockHtml(b.label, this.f(b.s), this.f(b.e), computed, prod);
     }).join('');
   },
-  blockHtml(label, s, e, computed){
+  blockHtml(label, s, e, computed, prod){
     const tSpend = computed.reduce((s,c) => s+c.spend, 0);
     const tConv = computed.reduce((s,c) => s+c.conv, 0);
     const tGq = computed.reduce((s,c) => s+c.gq, 0);
@@ -1839,21 +1844,30 @@ const P3 = {
     const gqN = computed.filter(c => c.gq > 0).length;
     const runN = computed.filter(c => c.gq >= 5).length;
     const total = computed.length;
-    const cell = (l, v) => `<div style="background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center"><div style="font-size:10px;color:#94A3B8">${l}</div><div style="font-size:14px;font-weight:700;font-family:monospace;color:#1E40AF">${v}</div></div>`;
+    // 产出数量（全量工作量口径，含过审/未过审，0-3改按基础名算1条）
+    const prodN = prod.length;
+    const prodTw = prod.filter(x => x.t === 'tuwen').length;
+    const prodVd = prodN - prodTw;
+    // 过审率：归属周日落在该区块内的提交素材（通过归通过日、未通过归首次提交日）
+    const as = this.auditStatsFor(s, e);
+    const passRate = as.submitted ? (as.passed/as.submitted*100).toFixed(1)+'%' : '—';
+    const passFrac = as.submitted ? as.passed+'/'+as.submitted : '—';
+    const cell = (l, v, tip) => `<div style="background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center"${tip ? ' title="'+tip+'"' : ''}><div style="font-size:10px;color:#94A3B8">${l}</div><div style="font-size:14px;font-weight:700;font-family:monospace;color:#1E40AF">${v}</div></div>`;
     const pct1 = v => v != null ? v + '%' : '—';
-    const summary = `<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-bottom:10px">
+    const summary = `<div style="display:grid;grid-template-columns:repeat(13,1fr);gap:6px;margin-bottom:10px">
       ${cell('点击率', ctr >= 0 ? ctr.toFixed(2)+'%' : '—')}
       ${cell('CPA', cpa >= 0 ? '¥'+cpa.toFixed(0) : '—')}
       ${cell('转化', tConv)}
       ${cell('高潜', tGq)}
       ${cell('深转率', deep >= 0 ? deep.toFixed(1)+'%' : '—')}
+      ${cell('过审率', passRate, '过审 ' + passFrac + ' 条（通过归通过日/未通过归首次提交日）')}
       ${cell('转化成交率', total > 0 ? pct1(Math.round(convN/total*1000)/10) : '—')}
       ${cell('高潜成交率（转化）', (convN || gqN) > 0 ? pct1(Math.round(gqN/Math.max(convN,gqN)*1000)/10) : '—')}
       ${cell('高潜成交率', total > 0 ? pct1(Math.round(gqN/total*1000)/10) : '—')}
       ${cell('高潜跑出率', total > 0 ? pct1(Math.round(runN/total*1000)/10) : '—')}
       ${cell('高潜跑出率（转化）', convN > 0 ? pct1(Math.round(runN/convN*1000)/10) : '—')}
-      ${cell('产出素材数', total)}
-      ${cell('图文/视频', computed.filter(c=>c.r.type==='tuwen').length + ' / ' + computed.filter(c=>c.r.type==='video').length)}
+      ${cell('产出素材数', prodN)}
+      ${cell('图文/视频', prodTw + ' / ' + prodVd)}
     </div>`;
     const table = `<div class="table-wrap" style="max-height:460px;overflow-y:auto">
       <table style="font-size:12px">
@@ -1869,12 +1883,31 @@ const P3 = {
         <div style="font-size:11px;color:var(--text-muted)">${computed.length} 条</div>
       </div>
       ${summary}
-      ${this.directorCards(computed)}
+      ${this.directorCards(computed, prod, s, e)}
       ${table}
     </div>`;
   },
-  // 各编导表现卡（每区块内，五率+素材数）
-  directorCards(computed){
+  // 过审统计聚合：归属周日落在 [s, e] 内的提交素材（s/e 为 'MM/DD' 字符串）
+  auditStatsFor(s, e){
+    const audit = RECENT_PASS_ANALYSIS.audit_week || {};
+    const out = {submitted:0, passed:0, by_person:{}};
+    const ks = this.dkey(String(s).replace('/',''));
+    const ke = this.dkey(String(e).replace('/',''));
+    Object.entries(audit).forEach(([wk, v]) => {
+      const k = this.dkey(wk);
+      if (k < ks || k > ke) return;
+      out.submitted += v.submitted || 0;
+      out.passed += v.passed || 0;
+      Object.entries(v.by_person || {}).forEach(([p, b]) => {
+        const bp = out.by_person[p] || (out.by_person[p] = {submitted:0, passed:0});
+        bp.submitted += b.submitted || 0;
+        bp.passed += b.passed || 0;
+      });
+    });
+    return out;
+  },
+  // 各编导表现卡（每区块内，五率+过审率+素材数）
+  directorCards(computed, prod, s, e){
     const CORE = ['小敏', '瑞晨', '嘉丽', '雅迪'];
     const colors = PERSON_COLORS;
     const pct1 = v => v != null ? v + '%' : '—';
@@ -1885,8 +1918,15 @@ const P3 = {
       const convN = sub.filter(c => c.conv > 0).length;
       const gqN = sub.filter(c => c.gq > 0).length;
       const runN = sub.filter(c => c.gq >= 5).length;
-      const tw = sub.filter(c => c.r.type === 'tuwen').length;
-      const vd = total - tw;
+      // 编导产出数量（全量工作量口径）
+      const ps = (prod || []).filter(x => x.p === p);
+      const tw = ps.filter(x => x.t === 'tuwen').length;
+      const vd = ps.length - tw;
+      // 编导过审率：该区块归属周内、该编导的提交素材（通过归通过日/未通过归首次提交日）
+      const as = this.auditStatsFor(s, e);
+      const bp = (as.by_person || {})[p] || {submitted:0, passed:0};
+      const pRate = bp.submitted ? (bp.passed/bp.submitted*100).toFixed(1)+'%' : '—';
+      const pFrac = bp.submitted ? bp.passed+'/'+bp.submitted : '—';
       const cell = (label, tip, val, frac, color) => `<div style="background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center"><div style="font-size:10px;color:#94A3B8">${label} <span class="help-tip" data-tip="${tip}"></span></div><div style="font-size:13px;font-weight:700;color:${color};font-family:monospace">${val}</div><div style="font-size:9px;color:#64748B;font-family:monospace">${frac} 条</div></div>`;
       return `<div style="background:#fff;border:1.5px solid ${colors[p]||'#64748B'}44;border-radius:10px;padding:10px 12px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
@@ -1894,7 +1934,8 @@ const P3 = {
           <span style="font-size:12px;font-weight:700;color:${colors[p]||'#64748B'}">${p}</span>
           <span style="font-size:10px;color:#94A3B8;margin-left:auto">图文${tw} / 视频${vd}</span>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px">
+          ${cell('过审率', '过审率 = 过审数÷提交数（多次修改按基础名算1次；通过归通过日/未通过归首次提交日）', pRate, pFrac, '#059669')}
           ${cell('转化成交率', '转化成交率 = 转化>0素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(convN/total*1000)/10) : '—', convN+'/'+total, '#1E40AF')}
           ${cell('高潜成交率（转化）', '高潜成交率（转化） = 深转>0素材数 ÷ 转化>0素材数', (convN||gqN)>0 ? pct1(Math.round(gqN/Math.max(convN,gqN)*1000)/10) : '—', gqN+'/'+Math.max(convN,gqN), '#8B5CF6')}
           ${cell('高潜成交率', '高潜成交率 = 深转>0素材数 ÷ 产出投放素材数', total>0 ? pct1(Math.round(gqN/total*1000)/10) : '—', gqN+'/'+total, '#D97706')}
@@ -1904,68 +1945,71 @@ const P3 = {
       </div>`;
     }).filter(Boolean);
     return cards.length
-      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:10px;margin-bottom:12px">${cards.join('')}</div>`
+      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:10px;margin-bottom:12px">${cards.join('')}</div>`
       : '';
   },
-  // 环比对比表：周位配对（第3 vs 第3、第2 vs 第2、第1 vs 第1），双列实时累计口径
+  // 环比对比表：周位配对（第3 vs 第3、第2 vs 第2、第1 vs 第1）
+  // 素材：每格只算该格子区间内产出；指标：上周列→上周窗口周日，本周列→锁定窗口周日
+  // 过审率：归属日（通过→通过日；不通过→首次提交日）落在该格子周内，独立算、无累计
   renderCompare(){
     const el = document.getElementById('passCompare');
     if (!el) return;
-    const w = this.weeks();
+    const w = this.weeks();   // [w3s,w3e,w2s,w2e,w1s,w1e]，自然周
     const m = this.metricRange();
     const audit = RECENT_PASS_ANALYSIS.audit_week || {};
     const f = this.f;
+    const curWinEnd = this.dkey(f(w[5]).replace('/',''));     // 本周列终点=窗口第1周周日
+    const prevWinEnd = this.dkey(f(w[3]).replace('/',''));   // 上周列终点=窗口第2周周日
     const rows = [];
     for (let i = 2; i >= 0; i--) {
-      const curS = w[(2-i)*2], curE = w[(2-i)*2+1];
+      const curS = w[i*2], curE = w[i*2+1];
       const prevS = new Date(curS.getTime() - 7*86400000), prevE = new Date(curE.getTime() - 7*86400000);
-      const mk = (s, e) => {
-        // 指标：第1天→该周周日累计（本周列=第1天→curE；上周列=第1天→prevE）
-        const me = this.dkey(f(e).replace('/',''));
-        // 分母：仅产出日 ≤ 该周周日的素材（该周之后产出的素材不计入本期累计）
-        const eligible = (RECENT_PASS_ANALYSIS.rows || []).filter(r => this.dkey(r.push_day) <= me);
-        const computed = eligible.map(r => this.compute(r, m.s, me));
+      const mk = (s, e, endTime) => {
+        const ks = this.dkey(f(s).replace('/','')), ke = this.dkey(f(e).replace('/',''));
+        // 素材：产出日在该格子区间内；指标累计到 endTime
+        const computed = (RECENT_PASS_ANALYSIS.rows || [])
+          .filter(r => this.dkey(r.push_day) >= ks && this.dkey(r.push_day) <= ke)
+          .map(r => this.compute(r, m.s, endTime));
         const convN = computed.filter(c => c.conv > 0).length;
         const gqN = computed.filter(c => c.gq > 0).length;
         const runN = computed.filter(c => c.gq >= 5).length;
         const total = computed.length;
-        // 过审率：首次提交在该周的图文/视频基础名
-        const a = audit[f(e).replace('/','')] || {video:{submitted:0,passed:0},tuwen:{submitted:0,passed:0}};
-        const pr = (b) => b.submitted ? (b.passed/b.submitted*100).toFixed(1)+'%' : '—';
+        // 过审率：归属周日 = 该格子周日
+        const a = audit[f(e).replace('/','')] || {submitted:0, passed:0, by_person:{}};
         return {convN, gqN, runN, total,
                 cr: total>0 ? (convN/total*100).toFixed(1) : '—',
                 gqcr: (convN||gqN)>0 ? (gqN/Math.max(convN,gqN)*100).toFixed(1) : '—',
                 gqr: total>0 ? (gqN/total*100).toFixed(1) : '—',
                 runr: total>0 ? (runN/total*100).toFixed(1) : '—',
                 crrun: convN>0 ? (runN/convN*100).toFixed(1) : '—',
-                prV: pr(a.video), prT: pr(a.tuwen)};
+                pr: a.submitted ? (a.passed/a.submitted*100).toFixed(1)+'%' : '—',
+                prFrac: a.submitted ? a.passed+'/'+a.submitted : '—'};
       };
-      const cur = mk(curS, curE);
-      const prev = mk(prevS, prevE);
-      rows.push({label:'第'+(i+1)+'周', cs:f(curS), ce:f(curE), ps:f(prevS), pe:f(prevE), cur, prev});
+      const cur = mk(curS, curE, curWinEnd);
+      const prev = mk(prevS, prevE, prevWinEnd);
+      rows.push({label:'第'+(3-i)+'周', cs:f(curS), ce:f(curE), ps:f(prevS), pe:f(prevE), cur, prev});
     }
-    const diff = (a, b, suffix) => {
+    const diff = (a, b) => {
       const va = parseFloat(a), vb = parseFloat(b);
       if (isNaN(va) || isNaN(vb)) return '<span style="color:#94A3B8">—</span>';
       const d = va - vb;
       const cls = d > 0 ? '#059669' : d < 0 ? '#DC2626' : '#94A3B8';
       const arrow = d > 0 ? '▲' : d < 0 ? '▼' : '＝';
-      return `<span style="color:${cls};font-size:11px">${arrow} ${Math.abs(d).toFixed(1)}${suffix||'%'}</span>`;
+      return `<span style="color:${cls};font-size:11px">${arrow} ${Math.abs(d).toFixed(1)}%</span>`;
     };
     el.innerHTML = `<div class="chart-card" style="margin-bottom:16px">
-      <div class="section-title" style="margin-bottom:8px">周环比对比（相邻自然周配对 · 双列实时累计：第1天→周周日）</div>
+      <div class="section-title" style="margin-bottom:8px">周环比对比（相邻自然周配对 · 上周列指标到${f(new Date(prevWinEnd))} · 本周列指标到${f(new Date(curWinEnd))}）</div>
       <div class="table-wrap" style="overflow-x:auto">
-        <table style="font-size:12px;min-width:1080px">
+        <table style="font-size:12px;min-width:960px">
           <thead><tr>
             <th>周位</th><th>上周区间</th><th>本周区间</th>
-            <th>过审率·图文</th><th>过审率·视频</th><th>转化成交率</th><th>高潜成交率（转化）</th><th>高潜成交率</th><th>高潜跑出率</th><th>高潜跑出率（转化）</th>
+            <th>过审率</th><th>转化成交率</th><th>高潜成交率（转化）</th><th>高潜成交率</th><th>高潜跑出率</th><th>高潜跑出率（转化）</th>
           </tr></thead>
           <tbody>${rows.map(r => `<tr>
             <td><b>${r.label}</b></td>
             <td style="color:#64748B">${r.ps} ~ ${r.pe}</td>
             <td style="color:#1E40AF;font-weight:600">${r.cs} ~ ${r.ce}</td>
-            <td>${r.prev.prT} → ${r.cur.prT} ${diff(r.cur.prT, r.prev.prT)}</td>
-            <td>${r.prev.prV} → ${r.cur.prV} ${diff(r.cur.prV, r.prev.prV)}</td>
+            <td title="${r.prev.prFrac} → ${r.cur.prFrac}">${r.prev.pr} → ${r.cur.pr} ${diff(r.cur.pr, r.prev.pr)}</td>
             <td>${r.prev.cr} → ${r.cur.cr} ${diff(r.cur.cr, r.prev.cr)}</td>
             <td>${r.prev.gqcr} → ${r.cur.gqcr} ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
             <td>${r.prev.gqr} → ${r.cur.gqr} ${diff(r.cur.gqr, r.prev.gqr)}</td>
@@ -1974,7 +2018,7 @@ const P3 = {
           </tr>`).join('')}</tbody>
         </table>
       </div>
-      <div class="legend" style="margin-top:6px">过审率口径：过审数÷提交数（多次修改按基础名算1次，任一版本通过即过审，归属首次提交日所在自然周）。转化成交率等5率口径：按（编导+基础名）去重，指标从有数据第1天累计到各周周日，实时重算（无历史快照）。</div>
+      <div class="legend" style="margin-top:6px">过审率：过审数÷提交数（多次修改按基础名算1次；通过归通过日、未通过归首次提交日所在自然周；过审文件全按视频）。五率：每格素材=该格区间内产出（基础名去重），指标从有数据第1天累计——上周列到上周窗口周日、本周列到锁定窗口周日。</div>
     </div>`;
   }
 };
