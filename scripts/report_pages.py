@@ -1120,7 +1120,7 @@ function renderAllDirectorCard(){
   let vS=0, tS=0, cV=0, cK=0, iM=0, gQ=0;
   _personRows.forEach(r => {
     if (r.spend === 0 || r.is_ai) return;
-    const isTw = r.is_tuwen || r.is_homepage;
+    const isTw = r.is_tuwen;
     if (isTw) tS += r.spend; else vS += r.spend;
     if (_personType === 'all' || (_personType === 'video' && !isTw) || (_personType === 'tuwen' && isTw)) {
       cV += r.conversions; cK += r.clicks; iM += r.impressions; gQ += r.gaoquan;
@@ -1222,27 +1222,18 @@ function updatePersonOrderRates(sortedRows){
   const container = document.getElementById('personOrderRates');
   if (!container) return;
   const CORE = ['小敏','瑞晨','嘉丽','雅迪'];
-  const stats = {};
-  sortedRows.forEach(r => {
-    if (!CORE.includes(r.person)) return;
-    if (!stats[r.person]) stats[r.person] = {total:0, conv:0, gq:0, run:0, seen:new Set()};
-    let bn = (r.name || '').replace(/\.mp4$/,'').replace(/-(\d)改$/,'').replace(/-改$/,'');
-    if (stats[r.person].seen.has(bn)) return;
-    stats[r.person].seen.add(bn);
-    stats[r.person].total += 1;
-    if ((r.conversions || 0) > 0) stats[r.person].conv += 1;
-    if ((r.gaoquan || 0) > 0) stats[r.person].gq += 1;
-    if ((r.gaoquan || 0) >= 5) stats[r.person].run += 1;
-  });
+  const _selDates4 = (window.DateBar && DateBar.selected && DateBar.selected.length) ? DateBar.selected : [ALL_DATES[ALL_DATES.length-1]];
   const colors = PERSON_COLORS;
-  container.innerHTML = CORE.filter(p => stats[p]).map(p => {
-    const s = stats[p];
-    const openRate = s.total > 0 ? (s.conv/s.total*100).toFixed(0) : 0;
-    const tipText = '有转化素材 ' + s.conv + ' 条 / 总素材 ' + s.total + ' 条';
+  container.innerHTML = CORE.map(p => {
+    // 与编导卡同源：computeFourRates（基础名去重、含无消耗、跟随当前类型/产出日筛选）
+    const f = computeFourRates(p, _selDates4, 'set', produceDaySet, _personType, null, 'any');
+    if (!f || !f.total) return '';
+    const rate = f.open_rate != null ? f.open_rate.toFixed(0)+'%' : '—';
+    const tipText = '有转化素材 ' + f.conv + ' 条 / 总素材 ' + f.total + ' 条（基础名去重，含无消耗）';
     return `<span class="order-rate-badge" data-tip="${tipText}" style="display:inline-flex;align-items:center;gap:4px;background:${colors[p]||'#F8FAFC'}18;border:1px solid ${colors[p]}44;border-radius:14px;padding:3px 10px;font-size:11px;font-weight:600;color:${colors[p]}">
-      ${p} 转化成交率 ${openRate}%<span style="opacity:.6;font-weight:400">（${s.conv}/${s.total}）</span>
+      ${p} 转化成交率 ${rate}<span style="opacity:.6;font-weight:400">（${f.conv}/${f.total}）</span>
     </span>`;
-  }).join('') || '<span style="font-size:11px;color:var(--text-muted)">该筛选下无编导数据</span>';
+  }).filter(Boolean).join('') || '<span style="font-size:11px;color:var(--text-muted)">该筛选下无编导数据</span>';
 }
 
 // 明细页日期联动：多日合并 + 编导卡 + 明细表
@@ -1950,13 +1941,11 @@ const P3 = {
   },
   // 环比对比表：周位配对（第3 vs 第3、第2 vs 第2、第1 vs 第1）
   // 素材：每格只算该格子区间内产出；指标：上周列→上周窗口周日，本周列→锁定窗口周日
-  // 过审率：归属日（通过→通过日；不通过→首次提交日）落在该格子周内，独立算、无累计
   renderCompare(){
     const el = document.getElementById('passCompare');
     if (!el) return;
     const w = this.weeks();   // [w3s,w3e,w2s,w2e,w1s,w1e]，自然周
     const m = this.metricRange();
-    const audit = RECENT_PASS_ANALYSIS.audit_week || {};
     const f = this.f;
     const curWinEnd = this.dkey(f(w[5]).replace('/',''));     // 本周列终点=窗口第1周周日
     const prevWinEnd = this.dkey(f(w[3]).replace('/',''));   // 上周列终点=窗口第2周周日
@@ -1974,16 +1963,12 @@ const P3 = {
         const gqN = computed.filter(c => c.gq > 0).length;
         const runN = computed.filter(c => c.gq >= 5).length;
         const total = computed.length;
-        // 过审率：归属周日 = 该格子周日
-        const a = audit[f(e).replace('/','')] || {submitted:0, passed:0, by_person:{}};
         return {convN, gqN, runN, total,
                 cr: total>0 ? (convN/total*100).toFixed(1) : '—',
                 gqcr: (convN||gqN)>0 ? (gqN/Math.max(convN,gqN)*100).toFixed(1) : '—',
                 gqr: total>0 ? (gqN/total*100).toFixed(1) : '—',
                 runr: total>0 ? (runN/total*100).toFixed(1) : '—',
-                crrun: convN>0 ? (runN/convN*100).toFixed(1) : '—',
-                pr: a.submitted ? (a.passed/a.submitted*100).toFixed(1)+'%' : '—',
-                prFrac: a.submitted ? a.passed+'/'+a.submitted : '—'};
+                crrun: convN>0 ? (runN/convN*100).toFixed(1) : '—'};
       };
       const cur = mk(curS, curE, curWinEnd);
       const prev = mk(prevS, prevE, prevWinEnd);
@@ -2003,13 +1988,12 @@ const P3 = {
         <table style="font-size:12px;min-width:960px">
           <thead><tr>
             <th>周位</th><th>上周区间</th><th>本周区间</th>
-            <th>过审率</th><th>转化成交率</th><th>高潜成交率（转化）</th><th>高潜成交率</th><th>高潜跑出率</th><th>高潜跑出率（转化）</th>
+            <th>转化成交率</th><th>高潜成交率（转化）</th><th>高潜成交率</th><th>高潜跑出率</th><th>高潜跑出率（转化）</th>
           </tr></thead>
           <tbody>${rows.map(r => `<tr>
             <td><b>${r.label}</b></td>
             <td style="color:#64748B">${r.ps} ~ ${r.pe}</td>
             <td style="color:#1E40AF;font-weight:600">${r.cs} ~ ${r.ce}</td>
-            <td title="${r.prev.prFrac} → ${r.cur.prFrac}">${r.prev.pr} → ${r.cur.pr} ${diff(r.cur.pr, r.prev.pr)}</td>
             <td>${r.prev.cr} → ${r.cur.cr} ${diff(r.cur.cr, r.prev.cr)}</td>
             <td>${r.prev.gqcr} → ${r.cur.gqcr} ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
             <td>${r.prev.gqr} → ${r.cur.gqr} ${diff(r.cur.gqr, r.prev.gqr)}</td>
@@ -2018,7 +2002,7 @@ const P3 = {
           </tr>`).join('')}</tbody>
         </table>
       </div>
-      <div class="legend" style="margin-top:6px">过审率：过审数÷提交数（多次修改按基础名算1次；通过归通过日、未通过归首次提交日所在自然周；过审文件全按视频）。五率：每格素材=该格区间内产出（基础名去重），指标从有数据第1天累计——上周列到上周窗口周日、本周列到锁定窗口周日。</div>
+      <div class="legend" style="margin-top:6px">五率口径：每格素材=该格区间内产出（基础名去重），指标从有数据第1天累计——上周列到上周窗口周日、本周列到锁定窗口周日。</div>
     </div>`;
   }
 };
@@ -2083,13 +2067,13 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
                             'click': round(s['total_clicks']), 'conv': round(s['total_conv']),
                             'gq': round(s['total_gaoquan']), 'materials': len(rows)}
         day_spend[label] = round(s['total_spend'], 2)
-        # 标签聚合（仅视频、非图文、非主页、消耗>0）
+        # 标签聚合（仅视频、非图文、消耗>0）
         ts = {'A1': {'spend': 0, 'conv': 0, 'gq': 0, 'click': 0, 'imp': 0},
               'A2': {'spend': 0, 'conv': 0, 'gq': 0, 'click': 0, 'imp': 0},
               'A3': {'spend': 0, 'conv': 0, 'gq': 0, 'click': 0, 'imp': 0},
               'A4': {'spend': 0, 'conv': 0, 'gq': 0, 'click': 0, 'imp': 0}}
         for r in rows:
-            if r['_is_tuwen'] or r['_is_homepage'] or r['_消耗'] == 0:
+            if r['_is_tuwen'] or r['_消耗'] == 0:
                 continue
             tag = r['_tag']
             if not tag:
@@ -2110,7 +2094,7 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
                 continue
             if r['_is_ai']:
                 k = 'ai'
-            elif r['_is_tuwen'] and not r['_is_homepage']:
+            elif r['_is_tuwen']:
                 k = 'tuwen'
             else:
                 k = 'video'
@@ -2221,7 +2205,7 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
         "    let vS=0, tS=0, cV=0, cK=0, iM=0, gQ=0;\n"
         "    _personRows.forEach(r => {\n"
         "      if (r.spend === 0 || r.is_ai) return;\n"
-        "      const isTw = r.is_tuwen || r.is_homepage;\n"
+        "      const isTw = r.is_tuwen;\n"
         "      if (isTw) tS += r.spend; else vS += r.spend;\n"
         "      if (_personType === 'all' || (_personType === 'video' && !isTw) || (_personType === 'tuwen' && isTw)) {\n"
         "        cV += r.conversions; cK += r.clicks; iM += r.impressions; gQ += r.gaoquan;\n"
@@ -2278,10 +2262,9 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
     .filter(r => r.spend > 0)
     .filter(r => currentAccountFilter === 'all' ? true : r.account === currentAccountFilter)
     .filter(r => currentType === 'all' ? true :
-      currentType === 'tuwen' ? (r.is_tuwen && !r.is_homepage && !r.is_ai) :
-      currentType === 'homepage' ? r.is_homepage :
+      currentType === 'tuwen' ? (r.is_tuwen && !r.is_ai) :
       currentType === 'ai' ? r.is_ai :
-      (!r.is_tuwen && !r.is_homepage && !r.is_ai))
+      (!r.is_tuwen && !r.is_ai))
     .filter(r => currentTag === 'all' ? true :
       currentTag === 'none' ? !r.tag :
       currentTag === 'keytest' ? r.is_key_test :
@@ -2291,10 +2274,9 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
         '''  const filteredAll = (currentFilter === 'all' ? rows : rows.filter(r => r.person === currentFilter))
     .filter(r => currentAccountFilter === 'all' ? true : (r.account || '').split(' / ').includes(currentAccountFilter))
     .filter(r => currentType === 'all' ? true :
-      currentType === 'tuwen' ? (r.is_tuwen && !r.is_homepage && !r.is_ai) :
-      currentType === 'homepage' ? r.is_homepage :
+      currentType === 'tuwen' ? (r.is_tuwen && !r.is_ai) :
       currentType === 'ai' ? r.is_ai :
-      (!r.is_tuwen && !r.is_homepage && !r.is_ai))
+      (!r.is_tuwen && !r.is_ai))
     .filter(r => currentTag === 'all' ? true :
       currentTag === 'none' ? !r.tag :
       currentTag === 'keytest' ? r.is_key_test :
@@ -2319,7 +2301,7 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
 
     # 旧 JS 里带 {{}} 占位符：替换 person_order
     person_cards_js = js['person_cards'].replace('{person_order_js}',
-                                                  json.dumps(gdg.EDITORS + gdg.CUTTERS + ['外部', '主页', '其他'], ensure_ascii=False))
+                                                  json.dumps(gdg.EDITORS + gdg.CUTTERS + ['外部', '其他'], ensure_ascii=False))
 
     # openVideoByName：优先按素材 ID 从 ID_URL_MAP 取链接
     js['open_video'] = js['open_video'].replace(

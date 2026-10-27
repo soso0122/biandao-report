@@ -32,12 +32,12 @@ ACCOUNT_NAMES = {
 PERSON_COLORS = {
     '小敏': '#3B82F6', '嘉丽': '#8B5CF6', '瑞晨': '#10B981',
     '浩正': '#F59E0B', '雅迪': '#EC4899', '魏怡': '#EF4444',
-    '婷玉': '#14B8A6', '其他': '#94A3B8', '外部': '#F97316', '主页': '#059669', 'AI': '#6366F1',
+    '婷玉': '#14B8A6', '其他': '#94A3B8', '外部': '#F97316', 'AI': '#6366F1',
 }
 PERSON_BG = {
     '小敏': '#EFF6FF', '嘉丽': '#F5F3FF', '瑞晨': '#ECFDF5',
     '浩正': '#FFFBEB', '雅迪': '#FDF2F8', '魏怡': '#FEF2F2',
-    '婷玉': '#F0FDFA', '其他': '#F8FAFC', '外部': '#FFF7ED', '主页': '#ECFDF5', 'AI': '#EEF2FF',
+    '婷玉': '#F0FDFA', '其他': '#F8FAFC', '外部': '#FFF7ED', 'AI': '#EEF2FF',
 }
 
 def safe_float(v):
@@ -72,11 +72,7 @@ def has_known_person(name):
     return any(p in name for p in EDITORS + CUTTERS)
 
 def is_tuwen(name):
-    return '图文' in name and not is_homepage(name)
-
-def is_homepage(name):
-    n = name.strip()
-    return bool(re.fullmatch(r'\d+', n) or re.fullmatch(r'[\d.]+[eE][+\-]?\d+', n))
+    return '图文' in name
 
 def extract_tag_from_name(name):
     """从名称提取 A1/A2/A3/A4 标签"""
@@ -192,16 +188,14 @@ def load_csv(path):
         r['_id']          = r.get('素材id', '').strip()
         video_url         = r.get('视频链接', '').strip()
         mat_type          = r.get('素材类型', '')
-        r['_is_homepage'] = is_homepage(name)
         # 优先用"素材类型"列判断（merge_daily_csv.py 写入），fallback 到视频链接
         if mat_type:
-            r['_is_tuwen'] = not r['_is_homepage'] and mat_type == '图文'
+            r['_is_tuwen'] = mat_type == '图文'
         else:
-            r['_is_tuwen'] = not r['_is_homepage'] and len(video_url) < 10
+            r['_is_tuwen'] = len(video_url) < 10
         r['_is_external'] = is_external(name)
-        r['_is_ai']       = is_ai(name) and not r['_is_homepage']
-        r['_person']      = ('主页' if r['_is_homepage'] else
-                             'AI'   if r['_is_ai'] else
+        r['_is_ai']       = is_ai(name)
+        r['_person']      = ('AI'   if r['_is_ai'] else
                              '外部' if (is_external(name) or not has_known_person(name)) else
                              extract_person(name))
         r['_collab']      = extract_collab(name)
@@ -216,7 +210,7 @@ def load_csv(path):
         r['_account']     = ACCOUNT_NAMES.get(_raw_account, _raw_account)
         r['_is_channel']  = _raw_account in CHANNEL_ACCOUNTS
         r['_tag']         = ''  # 由 main 里 load_label_map 后再填充
-        r['_version']     = extract_version(name) if not r['_is_tuwen'] and not r['_is_homepage'] else ''
+        r['_version']     = extract_version(name) if not r['_is_tuwen'] else ''
         # 产出日期：名称 MMDD- 前缀；无前缀用基础名首现日兜底
         _pd = extract_produce_day(clean_name(name))
         if not _pd:
@@ -280,7 +274,6 @@ def rows_to_json(rows, include_video_url=True):
             'account': r['_account'],
             'is_external': r['_is_external'],
             'is_tuwen': r['_is_tuwen'],
-            'is_homepage': r['_is_homepage'],
             'is_ai': r['_is_ai'],
             'collab': r['_collab'],
             'tag': r['_tag'],
@@ -1034,16 +1027,10 @@ def build_compare(days_data):
                     'name': r['_name'],
                     'person': r['_person'],
                     'is_external': r['_is_external'],
-                    'is_homepage': r['_is_homepage'],
-                    'is_ai': r['_is_ai'],
+                            'is_ai': r['_is_ai'],
                     'video_url': r['_视频链接'],
                     'days': {}
                 }
-            elif r['_is_homepage'] and not mat_map[key]['is_homepage']:
-                # 用科学计数法名称更新（更准确的主页标识）
-                mat_map[key]['is_homepage'] = True
-                mat_map[key]['person'] = '主页'
-                mat_map[key]['name'] = r['_name']
             if label not in mat_map[key]['days']:
                 mat_map[key]['days'][label] = {
                     'spend': r['_消耗'], 'conv': r['_转化数'],
@@ -1063,7 +1050,6 @@ def build_compare(days_data):
             'name': m['name'],
             'person': m['person'],
             'is_external': m['is_external'],
-            'is_homepage': m['is_homepage'],
             'video_url': m['video_url']
         }
         for d in date_labels:
@@ -1645,7 +1631,6 @@ video{{max-width:100%;max-height:65vh;display:block}}
       <button class="filter-btn active" data-type="all" onclick="filterType('all',this)">全部</button>
       <button class="filter-btn filter-btn-video" data-type="video" onclick="filterType('video',this)">视频</button>
       <button class="filter-btn filter-btn-tuwen" data-type="tuwen" onclick="filterType('tuwen',this)">图文</button>
-      <button class="filter-btn filter-btn-homepage" data-type="homepage" onclick="filterType('homepage',this)">主页</button>
       <button class="filter-btn" data-type="ai" onclick="filterType('ai',this)" style="color:#6366F1">Ai</button>
     </div>
     <div style="width:100%;height:1px;background:var(--border)"></div>
@@ -1885,7 +1870,7 @@ function updateTagCards(rows) {{  const container = document.getElementById('tag
   const stats = {{}};
   TAG_ORDER_JS.forEach(t => stats[t] = {{spend:0,conv:0,gq:0,click:0,imp:0}});
   rows.forEach(r => {{
-    if (!r.tag || r.spend === 0 || r.is_tuwen || r.is_homepage) return;
+    if (!r.tag || r.spend === 0 || r.is_tuwen) return;
     r.tag.split(',').forEach(t => {{
       const base = t.split('-')[0].trim();
       if (stats[base]) {{
@@ -1990,7 +1975,7 @@ function updatePersonCards(rows, auditData) {{
     const p = r.person;
     if (!CORE_EDITORS.includes(p)) return;  // 只统计核心4编导
     if (!personStats[p]) personStats[p] = {{videoSpend:0,tuwenSpend:0,conv:0,gq:0,click:0,imp:0,person:p}};
-    const isTw = r.is_tuwen || r.is_homepage;
+    const isTw = r.is_tuwen;
     if (isTw) personStats[p].tuwenSpend += r.spend;
     else       personStats[p].videoSpend += r.spend;
     // 只在对应类型下累计转化/高潜/点击/展示
@@ -2170,7 +2155,7 @@ function updateTypeCards(rows) {{  const container = document.getElementById('ty
       const prevRows = ALL_ROWS_BY_DATE[prevLabel] || [];
       prevByType = {{ video: {{spend:0,imp:0,click:0,conv:0,gq:0}}, tuwen: {{spend:0,imp:0,click:0,conv:0,gq:0}}, ai: {{spend:0,imp:0,click:0,conv:0,gq:0}} }};
       prevRows.forEach(r => {{
-        const t = r.is_ai ? 'ai' : (r.is_tuwen && !r.is_homepage) ? 'tuwen' : 'video';
+        const t = r.is_ai ? 'ai' : r.is_tuwen ? 'tuwen' : 'video';
         const p = prevByType[t];
         p.spend += r.spend; p.imp += r.impressions; p.click += r.clicks;
         p.conv += r.conversions; p.gq += r.gaoquan;
@@ -2188,9 +2173,9 @@ function updateTypeCards(rows) {{  const container = document.getElementById('ty
 
   const types = [
     {{ key: 'video',    label: '视频', color: '#3B82F6', bg: '#EFF6FF',
-       filter: r => !r.is_tuwen && !r.is_homepage }},
+       filter: r => !r.is_tuwen }},
     {{ key: 'tuwen',   label: '图文', color: '#8B5CF6', bg: '#F5F3FF',
-       filter: r => r.is_tuwen && !r.is_homepage }},
+       filter: r => r.is_tuwen }},
     {{ key: 'ai',      label: 'Ai',   color: '#6366F1', bg: '#EEF2FF',
        filter: r => r.is_ai }},
   ];
@@ -3722,10 +3707,9 @@ function renderTable() {{
     .filter(r => r.spend > 0)
     .filter(r => currentAccountFilter === 'all' ? true : r.account === currentAccountFilter)
     .filter(r => currentType === 'all' ? true :
-      currentType === 'tuwen' ? (r.is_tuwen && !r.is_homepage && !r.is_ai) :
-      currentType === 'homepage' ? r.is_homepage :
+      currentType === 'tuwen' ? (r.is_tuwen && !r.is_ai) :
       currentType === 'ai' ? r.is_ai :
-      (!r.is_tuwen && !r.is_homepage && !r.is_ai))
+      (!r.is_tuwen && !r.is_ai))
     .filter(r => currentTag === 'all' ? true :
       currentTag === 'none' ? !r.tag :
       currentTag === 'keytest' ? r.is_key_test :
@@ -3753,7 +3737,6 @@ function renderTable() {{
     const bg = PERSON_BG[r.person]  || '#F8FAFC';
     const extBadge = r.is_external ? '<span class="ext-badge">外部</span>' : '';
     const tuwenBadge = r.is_tuwen ? '<span class="ext-badge" style="background:#F5F3FF;color:#7C3AED;border-color:#DDD6FE">图文</span>' : '';
-    const homepageBadge = r.is_homepage ? '<span class="ext-badge" style="background:#ECFDF5;color:#059669;border-color:#A7F3D0">主页</span>' : '';
     const aiBadge = r.is_ai ? '<span class="ext-badge" style="background:#EEF2FF;color:#6366F1;border-color:#C7D2FE">Ai</span>' : '';
     const collabBadge = r.collab ? `<span class="ext-badge" style="background:#F0F9FF;color:#0369A1;border-color:#BAE6FD">${{r.collab}}</span>` : '';
     const statusCls = r.status === '已使用' ? 'status-active' : 'status-inactive';
@@ -3766,7 +3749,7 @@ function renderTable() {{
       : '<span class="num num-zero">—</span>';
     const qDisp = v => (v != null && v > 0) ? '<span class="num">' + v.toFixed(2) + '%</span>' : '<span class="num num-zero">—</span>';
     const qdDisp = (r.qd != null && r.qd > 0) ? '<span class="num">' + r.qd.toFixed(1) + 's</span>' : '<span class="num num-zero">—</span>';
-    const hasVideo = r.video_url && r.video_url.length > 10 && !r.is_tuwen && !r.is_homepage;
+    const hasVideo = r.video_url && r.video_url.length > 10 && !r.is_tuwen;
     const playBtn = hasVideo
       ? `<button class="btn-play" onclick="openVideoByName('${{encodeURIComponent(r.name)}}','${{encodeURIComponent(r.id || '')}}')">
            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 3l10 5-10 5V3z"/></svg>播放
@@ -3784,7 +3767,7 @@ function renderTable() {{
       <td><span class="person-badge" style="background:${{bg}};color:${{pc}}">${{r.person}}</span></td>
       <td><span style="font-size:11px;color:var(--text-secondary);white-space:nowrap" title="${{r.account}}">${{(r.account||'').replace('高中-猿起武汉-', '').replace('【agent测试】', '').replace('【agent智擎】', '').replace('高中-渠道-', '渠道-')}}</span></td>
       <td><div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap">
-        <span class="mat-name" title="${{r.name}}">${{r.name}}</span>${{extBadge}}${{tuwenBadge}}${{homepageBadge}}${{aiBadge}}${{collabBadge}}${{keyTestBadge}}</div></td>
+        <span class="mat-name" title="${{r.name}}">${{r.name}}</span>${{extBadge}}${{tuwenBadge}}${{aiBadge}}${{collabBadge}}${{keyTestBadge}}</div></td>
       <td><span class="mat-id" style="font-family:monospace;font-size:11px;color:var(--text-muted);white-space:nowrap" title="${{r.id}}">${{r.id || '—'}}</span></td>
       <td>${{tagDisp}}</td>
       <td>${{versionDisp}}</td>
@@ -4281,13 +4264,13 @@ def generate_html(days_data):
     person_cpa = json.dumps([round(d['CPA'], 2) for _, d in sorted_persons])
     person_bg_arr = json.dumps([PERSON_COLORS.get(p, '#94A3B8') for p, _ in sorted_persons])
 
-    # 标签分组统计（仅视频素材，非图文非主页）
+    # 标签分组统计（仅视频素材，非图文）
     TAG_ORDER = ['A1', 'A2', 'A3', 'A4']
     TAG_NAMES = {'A1': 'A1技巧', 'A2': 'A2经历', 'A3': 'A3结果', 'A4': 'A4情绪'}
     TAG_COLORS_PY = {'A1': '#3B82F6', 'A2': '#8B5CF6', 'A3': '#10B981', 'A4': '#F59E0B'}
     tag_stats = defaultdict(lambda: {'消耗': 0, '转化': 0, '高潜': 0, '素材数': 0})
     for r in latest_rows:
-        if r['_is_tuwen'] or r['_is_homepage'] or r['_消耗'] == 0:
+        if r['_is_tuwen'] or r['_消耗'] == 0:
             continue
         tag_str = r['_tag']
         if not tag_str:
@@ -4436,7 +4419,7 @@ def generate_html(days_data):
         person_bg_js=json.dumps(PERSON_BG, ensure_ascii=False),
         rows_js=json.dumps(rows_to_json(latest_rows, include_video_url=True), ensure_ascii=False),
         person_labels=person_labels,
-        person_order_js=json.dumps(EDITORS + CUTTERS + ['外部', '主页', '其他'], ensure_ascii=False),
+        person_order_js=json.dumps(EDITORS + CUTTERS + ['外部', '其他'], ensure_ascii=False),
         person_spend=person_spend,
         person_cpa=person_cpa,
         person_bg_arr=person_bg_arr,
@@ -4500,7 +4483,7 @@ def main():
         rows = load_csv(f)
         # 填充标签（需在 load_label_map 之后）
         for r in rows:
-            r['_tag'] = get_label(r) if not r['_is_tuwen'] and not r['_is_homepage'] else ''
+            r['_tag'] = get_label(r) if not r['_is_tuwen'] else ''
         days_data.append((label, rows))
         s = compute_stats(rows)
         print(f"{label}: {len(rows)}条  消耗¥{s['total_spend']:.2f}  转化{s['total_conv']:.0f}  高潜{s['total_gaoquan']:.0f}")
@@ -4510,7 +4493,7 @@ def main():
     unlabeled = []
     for r in latest_rows:
         if safe_float(r.get('_转化数', 0)) == 0: continue
-        if r['_is_tuwen'] or r['_is_homepage']: continue
+        if r['_is_tuwen']: continue
         if r.get('_is_channel'): continue
         if not r['_tag']:
             unlabeled.append((r['_消耗'], r['_转化数'], r['_name']))
