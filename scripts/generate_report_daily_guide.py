@@ -1692,7 +1692,7 @@ video{{max-width:100%;max-height:65vh;display:block}}
         <div class="table-info">显示 <span id="visibleCount">-</span> / {material_count} 条 · 点击列头排序 · <span id="pagerBox"></span></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center" id="personOrderRateRow">
-        <span style="font-size:11px;color:var(--text-secondary)">编导高潜成交率<span class="help-tip" data-tip="高潜成交率 = 深转>0 的素材数 ÷ 该编导总素材数（按名称基础名去重：同名多版本算一条，任一版本深转>0 即高潜成交）；跟随顶部日期、产出日期、标签/类型筛选联动"></span></span>
+        <span style="font-size:11px;color:var(--text-secondary)">编导转化成交率<span class="help-tip" data-tip="转化成交率 = 转化>0 的素材数 ÷ 该编导总素材数（按名称基础名去重：同名多版本算一条）；跟随顶部日期、产出日期、标签/类型筛选联动"></span></span>
         <span id="personOrderRates" style="display:flex;gap:6px;flex-wrap:wrap"></span>
       </div>
     </div>
@@ -3790,7 +3790,7 @@ function renderTable() {{
   updatePersonOrderRates(sorted);
 }}
 
-// ---------- 编导高潜成交率徽章（跟随筛选联动） ----------
+// ---------- 编导转化成交率徽章（跟随筛选联动） ----------
 function updatePersonOrderRates(sortedRows) {{
   const container = document.getElementById('personOrderRates');
   if (!container) return;

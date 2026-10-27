@@ -2150,8 +2150,8 @@ def generate_pages(days_data, latest_label, latest_mmdd, out_dir):
     css = css.replace('.mat-name{{max-width:260px;', '.mat-name{{max-width:420px;')
 
     table_html = table_html.replace(
-        '编导出单率<span class="help-tip" data-tip="出单率 = 深转>0 的素材数 ÷ 该编导总素材数（按名称基础名去重：同名多版本算一条，任一版本深转>0 即出单）；跟随顶部日期、产出日期、标签/类型筛选联动"></span>',
-        '编导转化成交率<span class="help-tip" data-tip="转化成交率 = 转化>0 的素材数 ÷ 该编导总素材数（按名称基础名去重）；跟随顶部日期、产出日期、标签/类型筛选联动"></span>'
+        '编导高潜成交率<span class="help-tip" data-tip="高潜成交率 = 深转>0 的素材数 ÷ 该编导总素材数（按名称基础名去重：同名多版本算一条，任一版本深转>0 即高潜成交）；跟随顶部日期、产出日期、标签/类型筛选联动"></span>',
+        '编导转化成交率<span class="help-tip" data-tip="转化成交率 = 转化>0 的素材数 ÷ 该编导总素材数（按名称基础名去重：同名多版本算一条）；跟随顶部日期、产出日期、标签/类型筛选联动"></span>'
     )
 
     chart_js_code = ''
