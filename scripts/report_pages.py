@@ -794,7 +794,7 @@ TOPBAR_CSS = """
 /* 表头问号 tooltip：确保悬停时在列头之上显示 */
 .table-wrap thead th .help-tip{position:relative;z-index:9991}
 /* 数值格悬浮提示：仅提示，不改变内容样式（区别于 help-tip 的 ? 图标） */
-.cell-tip{position:relative;cursor:help}
+.cell-tip{position:relative}
 .cell-tip:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
   background:#1E3A8A;color:#fff;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;
   white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.25)}
