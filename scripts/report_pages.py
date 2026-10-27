@@ -1965,10 +1965,15 @@ const P3 = {
         const total = computed.length;
         return {convN, gqN, runN, total,
                 cr: total>0 ? (convN/total*100).toFixed(1) : '—',
+                crFrac: convN+'/'+total,
                 gqcr: (convN||gqN)>0 ? (gqN/Math.max(convN,gqN)*100).toFixed(1) : '—',
+                gqcrFrac: gqN+'/'+Math.max(convN,gqN),
                 gqr: total>0 ? (gqN/total*100).toFixed(1) : '—',
+                gqrFrac: gqN+'/'+total,
                 runr: total>0 ? (runN/total*100).toFixed(1) : '—',
-                crrun: convN>0 ? (runN/convN*100).toFixed(1) : '—'};
+                runrFrac: runN+'/'+total,
+                crrun: convN>0 ? (runN/convN*100).toFixed(1) : '—',
+                crrunFrac: runN+'/'+convN};
       };
       const cur = mk(curS, curE, curWinEnd);
       const prev = mk(prevS, prevE, prevWinEnd);
@@ -1994,11 +1999,11 @@ const P3 = {
             <td><b>${r.label}</b></td>
             <td style="color:#64748B">${r.ps} ~ ${r.pe}</td>
             <td style="color:#1E40AF;font-weight:600">${r.cs} ~ ${r.ce}</td>
-            <td>${r.prev.cr} → ${r.cur.cr} ${diff(r.cur.cr, r.prev.cr)}</td>
-            <td>${r.prev.gqcr} → ${r.cur.gqcr} ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
-            <td>${r.prev.gqr} → ${r.cur.gqr} ${diff(r.cur.gqr, r.prev.gqr)}</td>
-            <td>${r.prev.runr} → ${r.cur.runr} ${diff(r.cur.runr, r.prev.runr)}</td>
-            <td>${r.prev.crrun} → ${r.cur.crrun} ${diff(r.cur.crrun, r.prev.crrun)}</td>
+            <td title="上周 ${r.prev.crFrac} → 本周 ${r.cur.crFrac}">${r.prev.cr} → ${r.cur.cr} ${diff(r.cur.cr, r.prev.cr)}</td>
+            <td title="上周 ${r.prev.gqcrFrac} → 本周 ${r.cur.gqcrFrac}">${r.prev.gqcr} → ${r.cur.gqcr} ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
+            <td title="上周 ${r.prev.gqrFrac} → 本周 ${r.cur.gqrFrac}">${r.prev.gqr} → ${r.cur.gqr} ${diff(r.cur.gqr, r.prev.gqr)}</td>
+            <td title="上周 ${r.prev.runrFrac} → 本周 ${r.cur.runrFrac}">${r.prev.runr} → ${r.cur.runr} ${diff(r.cur.runr, r.prev.runr)}</td>
+            <td title="上周 ${r.prev.crrunFrac} → 本周 ${r.cur.crrunFrac}">${r.prev.crrun} → ${r.cur.crrun} ${diff(r.cur.crrun, r.prev.crrun)}</td>
           </tr>`).join('')}</tbody>
         </table>
       </div>
