@@ -2003,17 +2003,21 @@ const P3 = {
         <table style="font-size:12px;min-width:960px">
           <thead><tr>
             <th>周位</th><th>上周区间</th><th>本周区间</th>
-            <th>转化成交率</th><th>高潜成交率（转化）</th><th>高潜成交率</th><th>高潜跑出率</th><th>高潜跑出率（转化）</th>
+            <th>转化成交率<span class="help-tip" data-tip="转化成交率 = 转化>0素材数 ÷ 产出投放素材数。悬停数字格可看上周/本周的分子分母"></span></th>
+            <th>高潜成交率（转化）<span class="help-tip" data-tip="高潜成交率（转化） = 深转>0素材数 ÷ 转化>0素材数"></span></th>
+            <th>高潜成交率<span class="help-tip" data-tip="高潜成交率 = 深转>0素材数 ÷ 产出投放素材数"></span></th>
+            <th>高潜跑出率<span class="help-tip" data-tip="高潜跑出率 = 深转≥5素材数 ÷ 产出投放素材数"></span></th>
+            <th>高潜跑出率（转化）<span class="help-tip" data-tip="高潜跑出率（转化） = 深转≥5且转化>0素材数 ÷ 转化>0素材数"></span></th>
           </tr></thead>
           <tbody>${rows.map(r => `<tr>
             <td><b>${r.label}</b></td>
             <td style="color:#64748B">${r.ps} ~ ${r.pe}</td>
             <td style="color:#1E40AF;font-weight:600">${r.cs} ~ ${r.ce}</td>
-            <td title="上周 ${r.prev.crFrac} → 本周 ${r.cur.crFrac}">${r.prev.cr} → ${r.cur.cr} ${diff(r.cur.cr, r.prev.cr)}</td>
-            <td title="上周 ${r.prev.gqcrFrac} → 本周 ${r.cur.gqcrFrac}">${r.prev.gqcr} → ${r.cur.gqcr} ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
-            <td title="上周 ${r.prev.gqrFrac} → 本周 ${r.cur.gqrFrac}">${r.prev.gqr} → ${r.cur.gqr} ${diff(r.cur.gqr, r.prev.gqr)}</td>
-            <td title="上周 ${r.prev.runrFrac} → 本周 ${r.cur.runrFrac}">${r.prev.runr} → ${r.cur.runr} ${diff(r.cur.runr, r.prev.runr)}</td>
-            <td title="上周 ${r.prev.crrunFrac} → 本周 ${r.cur.crrunFrac}">${r.prev.crrun} → ${r.cur.crrun} ${diff(r.cur.crrun, r.prev.crrun)}</td>
+            <td><span class="help-tip" data-tip="上周 ${r.prev.crFrac} → 本周 ${r.cur.crFrac}">${r.prev.cr} → ${r.cur.cr}</span> ${diff(r.cur.cr, r.prev.cr)}</td>
+            <td><span class="help-tip" data-tip="上周 ${r.prev.gqcrFrac} → 本周 ${r.cur.gqcrFrac}">${r.prev.gqcr} → ${r.cur.gqcr}</span> ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
+            <td><span class="help-tip" data-tip="上周 ${r.prev.gqrFrac} → 本周 ${r.cur.gqrFrac}">${r.prev.gqr} → ${r.cur.gqr}</span> ${diff(r.cur.gqr, r.prev.gqr)}</td>
+            <td><span class="help-tip" data-tip="上周 ${r.prev.runrFrac} → 本周 ${r.cur.runrFrac}">${r.prev.runr} → ${r.cur.runr}</span> ${diff(r.cur.runr, r.prev.runr)}</td>
+            <td><span class="help-tip" data-tip="上周 ${r.prev.crrunFrac} → 本周 ${r.cur.crrunFrac}">${r.prev.crrun} → ${r.cur.crrun}</span> ${diff(r.cur.crrun, r.prev.crrun)}</td>
           </tr>`).join('')}</tbody>
         </table>
       </div>
