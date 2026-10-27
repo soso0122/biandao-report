@@ -753,7 +753,7 @@ function computeFourRates(p, dates, pdRange, pdSet, type, win, mode){
 
 // ---------- 问号 tooltip 跟随定位（旧模板恢复：按问号实际位置显示，不居中） ----------
 document.addEventListener('mouseover', e => {
-  const tip = e.target.closest && e.target.closest('.help-tip');
+  const tip = e.target.closest && (e.target.closest('.help-tip') || e.target.closest('.cell-tip'));
   if (!tip) return;
   const rect = tip.getBoundingClientRect();
   const text = tip.getAttribute('data-tip') || '';
@@ -764,7 +764,7 @@ document.addEventListener('mouseover', e => {
   if (top < 8) top = rect.bottom + 8;
   const style = document.createElement('style');
   style.id = 'helpTipPos';
-  style.textContent = `.help-tip:hover::after{left:${left}px !important;top:${top}px !important;transform:none !important}`;
+  style.textContent = `.help-tip:hover::after,.cell-tip:hover::after{left:${left}px !important;top:${top}px !important;transform:none !important}`;
   const oldStyle = document.getElementById('helpTipPos');
   if (oldStyle) oldStyle.remove();
   document.head.appendChild(style);
@@ -793,6 +793,11 @@ TOPBAR_CSS = """
 .range-btn.active{background:#1E40AF;color:#fff;border-color:#1E40AF}
 /* 表头问号 tooltip：确保悬停时在列头之上显示 */
 .table-wrap thead th .help-tip{position:relative;z-index:9991}
+/* 数值格悬浮提示：仅提示，不改变内容样式（区别于 help-tip 的 ? 图标） */
+.cell-tip{position:relative;cursor:help}
+.cell-tip:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
+  background:#1E3A8A;color:#fff;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;
+  white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 """
 
 LEGEND_CSS = """
@@ -2013,11 +2018,11 @@ const P3 = {
             <td><b>${r.label}</b></td>
             <td style="color:#64748B">${r.ps} ~ ${r.pe}</td>
             <td style="color:#1E40AF;font-weight:600">${r.cs} ~ ${r.ce}</td>
-            <td><span class="help-tip" data-tip="上周 ${r.prev.crFrac} → 本周 ${r.cur.crFrac}">${r.prev.cr} → ${r.cur.cr}</span> ${diff(r.cur.cr, r.prev.cr)}</td>
-            <td><span class="help-tip" data-tip="上周 ${r.prev.gqcrFrac} → 本周 ${r.cur.gqcrFrac}">${r.prev.gqcr} → ${r.cur.gqcr}</span> ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
-            <td><span class="help-tip" data-tip="上周 ${r.prev.gqrFrac} → 本周 ${r.cur.gqrFrac}">${r.prev.gqr} → ${r.cur.gqr}</span> ${diff(r.cur.gqr, r.prev.gqr)}</td>
-            <td><span class="help-tip" data-tip="上周 ${r.prev.runrFrac} → 本周 ${r.cur.runrFrac}">${r.prev.runr} → ${r.cur.runr}</span> ${diff(r.cur.runr, r.prev.runr)}</td>
-            <td><span class="help-tip" data-tip="上周 ${r.prev.crrunFrac} → 本周 ${r.cur.crrunFrac}">${r.prev.crrun} → ${r.cur.crrun}</span> ${diff(r.cur.crrun, r.prev.crrun)}</td>
+            <td><span class="cell-tip" data-tip="上周 ${r.prev.crFrac} → 本周 ${r.cur.crFrac}">${r.prev.cr} → ${r.cur.cr}</span> ${diff(r.cur.cr, r.prev.cr)}</td>
+            <td><span class="cell-tip" data-tip="上周 ${r.prev.gqcrFrac} → 本周 ${r.cur.gqcrFrac}">${r.prev.gqcr} → ${r.cur.gqcr}</span> ${diff(r.cur.gqcr, r.prev.gqcr)}</td>
+            <td><span class="cell-tip" data-tip="上周 ${r.prev.gqrFrac} → 本周 ${r.cur.gqrFrac}">${r.prev.gqr} → ${r.cur.gqr}</span> ${diff(r.cur.gqr, r.prev.gqr)}</td>
+            <td><span class="cell-tip" data-tip="上周 ${r.prev.runrFrac} → 本周 ${r.cur.runrFrac}">${r.prev.runr} → ${r.cur.runr}</span> ${diff(r.cur.runr, r.prev.runr)}</td>
+            <td><span class="cell-tip" data-tip="上周 ${r.prev.crrunFrac} → 本周 ${r.cur.crrunFrac}">${r.prev.crrun} → ${r.cur.crrun}</span> ${diff(r.cur.crrun, r.prev.crrun)}</td>
           </tr>`).join('')}</tbody>
         </table>
       </div>
