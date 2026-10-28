@@ -123,6 +123,27 @@ def load_label_map(csv_path):
             if sid:  _LABEL_MAP[sid]  = tag
             if name: _LABEL_MAP[name] = tag
 
+def link_label_names_to_ids(data_files):
+    """打标表里只有名称的记录（素材ID列为空）补上ID映射：
+    扫描全部每日CSV建立 名称→素材ID，若打标表某名称有标签但按ID查不到，
+    则把该名称对应的素材ID也注册进 _LABEL_MAP。"""
+    name_to_id = {}
+    for fp in sorted(data_files):
+        try:
+            with open(fp, encoding='utf-8-sig') as fh:
+                for r in csv.DictReader(fh):
+                    sid = (r.get('素材id') or '').strip().lstrip('\t')
+                    name = (r.get('视频名称') or '').strip()
+                    if re.fullmatch(r'\d{16,}', sid) and name and name not in name_to_id:
+                        name_to_id[name] = sid
+        except Exception:
+            continue
+    # 反向登记：打标表名称有标签，但其ID还没有标签时补上
+    for name, sid in name_to_id.items():
+        tag_by_name = _LABEL_MAP.get(name)
+        if tag_by_name and not _LABEL_MAP.get(sid):
+            _LABEL_MAP[sid] = tag_by_name
+
 def get_label(row):
     """从打标字典获取标签，fallback 到名称提取"""
     sid  = row.get('_id', '')
@@ -4474,6 +4495,8 @@ def main():
     label_csv = data_dir / '历史打标.csv'
     if label_csv.exists():
         load_label_map(str(label_csv))
+        # 打标表只有名称的记录补ID映射（Excel 转数字ID的名称也能匹配标签）
+        link_label_names_to_ids(data_dir.glob('引导加微每日数据-*.csv'))
         print(f'加载打标表: {len(_LABEL_MAP)} 条')
 
     for f in files:
