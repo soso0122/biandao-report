@@ -41,6 +41,11 @@ def get_account_id(fname):
         # 旧格式: 视频库_1869580643367964_时间 → parts[1] 是账户ID
         if len(parts) > 1 and re.fullmatch(r'\d+', parts[1]):
             return parts[1]
+        # 粘连格式: 视频库__1873204790479944-2026_... → 双下划线后紧跟账户ID（可能在 parts[1] 或 parts[2]）
+        for cand in parts[1:3]:
+            m2 = re.match(r'^(\d+)', cand)
+            if m2:
+                return m2.group(1)
         # 新格式: 视频库__时间-N户 → 取末尾 -N户 作为账户标识
         m = re.search(r'-(\d+户)$', stem)
         if m:
