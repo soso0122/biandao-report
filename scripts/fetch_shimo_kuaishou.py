@@ -355,8 +355,8 @@ def main():
             if not mt["content"]:
                 mt["content"] = str(r.get("素材内容") or "").strip()
 
-        # ---------- 分类：类型 / 编导 ----------
-        PERSONS = ["小敏", "嘉丽", "浩正", "雅迪", "婷玉", "魏怡", "瑞晨", "国星"]
+        # ---------- 分类：类型 / 编导（2026-11-02 定：只认 4 人，其余全部归「其他」） ----------
+        PERSONS = ["嘉丽", "小敏", "雅迪", "瑞晨"]
         for name, mt in materials.items():
             n = name.strip()
             if n.upper() == "AIGC":

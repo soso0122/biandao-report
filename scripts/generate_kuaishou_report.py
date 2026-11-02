@@ -66,6 +66,19 @@ color:var(--text-secondary);font-size:12px;font-weight:500;cursor:pointer}
 .date-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#EFF6FF;color:var(--primary);
 border:1px solid #BFDBFE;cursor:pointer}
 .date-chip.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+.date-dropdown{position:relative}
+.date-dropdown-btn{padding:5px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);
+color:var(--text);font-size:12px;font-weight:500;cursor:pointer}
+.date-dropdown-btn:hover{border-color:var(--primary-light);color:var(--primary)}
+.date-dropdown-panel{position:absolute;top:110%;left:0;z-index:1200;background:#fff;
+border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);
+padding:10px;width:330px}
+.dd-head{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.dd-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-height:260px;overflow-y:auto}
+.dd-item{font-size:11px;padding:4px 0;text-align:center;border-radius:8px;border:1.5px solid var(--border);
+cursor:pointer;color:var(--text-secondary);background:var(--bg)}
+.dd-item:hover{border-color:var(--primary-light)}
+.dd-item.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
 .acct-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#F0FDF4;color:#047857;
 border:1px solid #A7F3D0;cursor:pointer}
 .acct-chip.sel{background:#047857;color:#fff;border-color:#047857}
@@ -170,7 +183,7 @@ font-weight:500;cursor:pointer}
 .btn-play:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 .heat-table{width:100%;border-collapse:collapse;font-size:12px}
-.heat-table th{position:sticky;top:0;z-index:5}
+.heat-table th{position:sticky;top:0;z-index:5;text-align:center}
 .heat-table td{text-align:center;padding:6px 8px;border:1px solid #EEF2FF}
 .heat-table .hour-label{font-family:'Fira Code',monospace;font-size:11px;color:var(--text-secondary);
 background:#F8FAFC;white-space:nowrap}
@@ -180,6 +193,9 @@ background:#F8FAFC;white-space:nowrap}
 border-radius:12px;background:var(--bg);border:1.5px solid var(--border);color:#475569}
 .hour-tag.good{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
 .hour-tag.bad{background:#FEF2F2;border-color:#FECACA;color:#B91C1C}
+.hour-caliber{font-size:11px;color:#475569;background:#F8FAFC;border:1.5px solid var(--border);
+border-radius:8px;padding:8px 12px;margin-bottom:12px;line-height:1.7}
+.hour-caliber b{color:var(--primary);font-weight:600}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);display:none;
 align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
@@ -196,15 +212,24 @@ color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:cen
 .video-wrap{background:#000;display:flex;align-items:center;justify-content:center;flex:1}
 video{max-width:100%;max-height:65vh;display:block}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px}
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:4px;padding:8px 14px;
+border-top:1px solid var(--border);flex-wrap:wrap}
+.pager-info{font-size:11px;color:var(--text-muted);margin-right:8px}
+.page-btn{display:inline-block;padding:2px 9px;border:1px solid var(--border);border-radius:6px;
+background:#fff;font-size:11px;color:var(--text-secondary);cursor:pointer}
+.page-btn:hover{border-color:var(--primary-light);color:var(--primary)}
+.page-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+.page-btn:disabled{opacity:.4;cursor:default}
 @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
 """
 
 
-def caliber_html():
-    return """
-<div class="caliber-card" id="caliberCard">
-  <div class="caliber-head" onclick="document.getElementById('caliberCard').classList.toggle('collapsed')">
-    <span>📌 指标口径说明（点击收起）</span><span class="arrow">▼</span>
+def caliber_html(suffix=""):
+    cid = "caliberCard" + suffix
+    return f"""
+<div class="caliber-card collapsed" id="{cid}">
+  <div class="caliber-head" onclick="document.getElementById('{cid}').classList.toggle('collapsed')">
+    <span>📌 指标口径说明（点击展开）</span><span class="arrow">▼</span>
   </div>
   <div class="caliber-body">
     <div class="caliber-item"><b>数据源</b>：石墨文档「【快手】引流加微数据」（账户表现 + 素材表现），快手投放 2026-10-30 起。</div>
@@ -221,7 +246,6 @@ def caliber_html():
   </div>
 </div>
 """
-
 
 def build_html():
     data = json.load(open(DATA_JSON, encoding="utf-8"))
@@ -246,10 +270,18 @@ def build_html():
   </div>
   <div class="topbar-row2">
     <span class="label">日期</span>
-    <span id="dateChips" style="display:flex;gap:4px;flex-wrap:wrap"></span>
-    <span class="range-btn" id="btnLatest">最新</span>
-    <span class="range-btn" id="btnAll">全部</span>
-    <span class="range-btn" id="btn7d">近7天</span>
+    <div class="date-dropdown" id="dateDropdown">
+      <button class="date-dropdown-btn" id="dateDropdownBtn">选择日期 ▾</button>
+      <div class="date-dropdown-panel" id="dateDropdownPanel" style="display:none">
+        <div class="dd-head">
+          <button class="range-btn active" data-dd="latest">最新</button>
+          <button class="range-btn" data-dd="7d">近7天</button>
+          <button class="range-btn" data-dd="all">全部</button>
+          <button class="range-btn" data-dd="clear">清空</button>
+        </div>
+        <div class="dd-grid" id="ddGrid"></div>
+      </div>
+    </div>
     <span class="filter-sep" style="display:inline-block"></span>
     <span class="label">账户</span>
     <span id="acctChips" style="display:flex;gap:4px;flex-wrap:wrap"></span>
@@ -259,7 +291,7 @@ def build_html():
 
 <!-- ============ TAB1 投放数据表现 ============ -->
 <div id="tab1">
-  __CALIBER__
+  __CALIBER1__
   <div class="kpi-grid" id="kpiGrid1"></div>
   <div class="chart-card" style="margin-bottom:20px">
     <div class="section-title">转化漏斗（所选日期累计）</div>
@@ -273,6 +305,15 @@ def build_html():
     <div class="chart-card">
       <div class="section-title">逐日 CPA / 转化率</div>
       <div class="chart-wrap"><canvas id="chartCpa"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">⏰ 分时表现（哪个小时跑得好）<span class="table-info" id="hourlyNote"></span></div>
+    <div class="hour-caliber" id="hourCaliber"></div>
+    <div class="chart-wrap" style="height:260px"><canvas id="chartHour"></canvas></div>
+    <div class="hour-tags" id="hourTags"></div>
+    <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+      <table class="heat-table" id="heatTable"><thead></thead><tbody id="heatBody"></tbody></table>
     </div>
   </div>
   <div class="table-card" style="margin-bottom:20px" id="acctSection">
@@ -294,20 +335,13 @@ def build_html():
       <div class="table-info">共 <span id="dimCount">0</span> 条</div>
     </div>
     <div class="table-wrap"><table id="dimTable"><thead></thead><tbody id="dimBody"></tbody></table></div>
-  </div>
-  <div class="chart-card" style="margin-bottom:20px">
-    <div class="section-title">⏰ 分时表现（哪个小时跑得好）<span class="table-info" id="hourlyNote"></span></div>
-    <div class="chart-wrap" style="height:260px"><canvas id="chartHour"></canvas></div>
-    <div class="hour-tags" id="hourTags"></div>
-    <div class="table-wrap" style="max-height:420px;overflow-y:auto">
-      <table class="heat-table" id="heatTable"><thead></thead><tbody id="heatBody"></tbody></table>
-    </div>
+    <div class="pager" id="dimPager"></div>
   </div>
 </div>
 
 <!-- ============ TAB2 素材数据表现 ============ -->
 <div id="tab2" style="display:none">
-  __CALIBER__
+  __CALIBER2__
   <div class="kpi-grid" id="kpiGrid2"></div>
   <div class="chart-card" style="margin-bottom:20px">
     <div class="section-title">素材类型</div>
@@ -315,17 +349,21 @@ def build_html():
     <div class="section-title" style="margin-top:16px">编导表现（点卡片筛选明细）</div>
     <div id="personRow" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
   </div>
-  <div class="filter-bar">
-    <span class="filter-label">类型</span>
-    <button class="filter-btn active" data-t="all">全部</button>
-    <button class="filter-btn filter-btn-video" data-t="视频">视频</button>
-    <button class="filter-btn filter-btn-tuwen" data-t="图文">图文</button>
-    <button class="filter-btn filter-btn-ai" data-t="AI">平台AI</button>
-    <span class="filter-sep"></span>
-    <span class="filter-label">编导</span>
-    <span id="personBtns" style="display:flex;gap:6px;flex-wrap:wrap"></span>
-    <span class="filter-sep"></span>
-    <input class="search-box" id="searchBox" placeholder="🔍 搜索素材名称">
+  <div class="filter-bar" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="filter-label">类型</span>
+      <button class="filter-btn active" data-t="all">全部</button>
+      <button class="filter-btn filter-btn-video" data-t="视频">视频</button>
+      <button class="filter-btn filter-btn-tuwen" data-t="图文">图文</button>
+      <button class="filter-btn filter-btn-ai" data-t="AI">平台AI</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="filter-label">编导</span>
+      <span id="personBtns" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    </div>
+    <div>
+      <input class="search-box" id="searchBox" placeholder="🔍 搜索素材名称" style="width:100%">
+    </div>
   </div>
   <div class="table-card">
     <div class="table-toolbar">
@@ -333,6 +371,7 @@ def build_html():
       <div class="table-info">共 <span id="matCount">0</span> 条素材（按名称去重）</div>
     </div>
     <div class="table-wrap"><table id="matTable"><thead></thead><tbody id="matBody"></tbody></table></div>
+    <div class="pager" id="matPager"></div>
   </div>
 </div>
 
@@ -424,19 +463,20 @@ function switchTab(t) {
 
 /* ---------------- 顶部 chips（共享） ---------------- */
 function renderChips() {
-  const dw = document.getElementById('dateChips');
-  dw.innerHTML = DATA.dates.map(d =>
-    '<span class="date-chip' + (state.dates.includes(d) ? ' sel' : '') + '" data-d="' + d + '">' + d.slice(5) + '</span>').join('');
-  dw.querySelectorAll('.date-chip').forEach(el => el.addEventListener('click', () => {
+  // 日期下拉多选
+  const btn = document.getElementById('dateDropdownBtn');
+  btn.textContent = state.dates.length === DATA.dates.length ? '全部日期 ▾'
+    : '已选 ' + state.dates.length + ' 天 ▾';
+  const grid = document.getElementById('ddGrid');
+  grid.innerHTML = DATA.dates.map(d =>
+    '<div class="dd-item' + (state.dates.includes(d) ? ' sel' : '') + '" data-d="' + d + '">' + d.slice(5) + '</div>').join('');
+  grid.querySelectorAll('.dd-item').forEach(el => el.addEventListener('click', () => {
     const d = el.dataset.d;
     state.dates = state.dates.includes(d)
       ? (state.dates.length > 1 ? state.dates.filter(x => x !== d) : state.dates)
       : [...state.dates, d].sort();
     renderAll();
   }));
-  document.getElementById('btnLatest').onclick = () => { state.dates = [DATA.dates[DATA.dates.length-1]]; renderAll(); };
-  document.getElementById('btnAll').onclick = () => { state.dates = [...DATA.dates]; renderAll(); };
-  document.getElementById('btn7d').onclick = () => { state.dates = DATA.dates.slice(-7); renderAll(); };
 
   const aw = document.getElementById('acctChips');
   const accts = DATA.accounts.map(a => a.id);
@@ -444,6 +484,25 @@ function renderChips() {
     accts.map(a => '<span class="acct-chip' + (state.acct===a?' sel':'') + '" data-a="' + a + '">' + a + '</span>').join('');
   aw.querySelectorAll('.acct-chip').forEach(el => el.addEventListener('click', () => {
     state.acct = el.dataset.a;
+    renderAll();
+  }));
+}
+function initDateDropdown() {
+  const panel = document.getElementById('dateDropdownPanel');
+  document.getElementById('dateDropdownBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    panel.style.display = panel.style.display === 'none' ? '' : 'none';
+  });
+  document.addEventListener('click', () => { panel.style.display = 'none'; });
+  panel.addEventListener('click', e => e.stopPropagation());
+  panel.querySelectorAll('.range-btn[data-dd]').forEach(b => b.addEventListener('click', () => {
+    const mode = b.dataset.dd;
+    if (mode === 'latest') state.dates = [DATA.dates[DATA.dates.length-1]];
+    else if (mode === '7d') state.dates = DATA.dates.slice(-7);
+    else if (mode === 'all') state.dates = [...DATA.dates];
+    else state.dates = [];
+    panel.querySelectorAll('.range-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
     renderAll();
   }));
 }
@@ -527,11 +586,11 @@ function renderFunnel() {
     addM(tot, aggDays(a.days).m);
   }
   const stages = [
-    ['曝光', tot.im], ['行为', tot.ac], ['转化', tot.cv], ['深转', tot.dp],
+    ['转化', tot.cv], ['深转', tot.dp],
     ['有效获客', tot.va], ['开口1次', tot.o1], ['开口3次', tot.o3],
     ['开口5次', tot.o5], ['开口10次', tot.o10],
   ];
-  const colors = ['#3B82F6','#60A5FA','#8B5CF6','#A78BFA','#F59E0B','#FBBF24','#10B981','#34D399','#EC4899'];
+  const colors = ['#3B82F6','#60A5FA','#8B5CF6','#A78BFA','#F59E0B','#FBBF24','#10B981'];
   if (chartFunnel) chartFunnel.destroy();
   chartFunnel = new Chart(document.getElementById('chartFunnel'), {
     type: 'bar',
@@ -584,12 +643,16 @@ function renderTrend() {
   if (chartCpa) chartCpa.destroy();
   chartCpa = new Chart(document.getElementById('chartCpa'), {
     data: {labels: s.labels, datasets: [
-      {type:'line', label:'CPA', data:s.cpa, borderColor:'#8B5CF6', tension:.3, pointRadius:2, yAxisID:'y'},
-      {type:'line', label:'转化率%', data:s.cvr, borderColor:'#10B981', tension:.3, pointRadius:2, yAxisID:'y1'}
+      {type:'line', label:'CPA', data:s.cpa, borderColor:'#8B5CF6', tension:.3,
+       pointRadius:5, pointHoverRadius:7, yAxisID:'y'},
+      {type:'line', label:'转化率%', data:s.cvr, borderColor:'#10B981', tension:.3,
+       pointRadius:5, pointHoverRadius:7, yAxisID:'y1'}
     ]},
-    options: Object.assign({}, base, {scales: {
-      y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
-      y1: Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})}})
+    options: Object.assign({}, base, {
+      interaction: {mode: 'nearest', intersect: false},
+      scales: {
+        y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
+        y1: Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})}})
   });
 }
 
@@ -656,6 +719,38 @@ function cellHtml(c, r) {
   return '<td class="num">' + (c[2]==='fmtM'?fmtM(v):c[2]==='fmtP'?fmtP(v):fmtI(v)) + '</td>';
 }
 
+/* ---------------- 通用分页 ---------------- */
+const PAGE_SIZE = 30;
+const pageState = {dimTable: 1, matTable: 1};
+
+function renderPager(tableId, total) {
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const cur = pageState[tableId];
+  if (cur > pages) pageState[tableId] = pages;
+  const pager = document.getElementById(tableId === 'dimTable' ? 'dimPager' : 'matPager');
+  if (!pager) return;
+  const p = pageState[tableId];
+  let btns = '';
+  const start = Math.max(1, Math.min(p - 2, pages - 4));
+  const end = Math.min(pages, start + 4);
+  if (p > 1) btns += '<button class="page-btn" data-pg="' + (p-1) + '">‹</button>';
+  for (let i = start; i <= end; i++) {
+    btns += '<button class="page-btn' + (i === p ? ' active' : '') + '" data-pg="' + i + '">' + i + '</button>';
+  }
+  if (p < pages) btns += '<button class="page-btn" data-pg="' + (p+1) + '">›</button>';
+  pager.innerHTML = '<span class="pager-info">共 ' + total + ' 条 · ' + pages + ' 页</span>' + btns;
+  pager.querySelectorAll('.page-btn[data-pg]').forEach(b => b.addEventListener('click', () => {
+    pageState[tableId] = +b.dataset.pg;
+    if (tableId === 'dimTable') renderDim();
+    else renderMaterials();
+  }));
+}
+function sliceRows(rows, tableId) {
+  const p = pageState[tableId];
+  const start = (p - 1) * PAGE_SIZE;
+  return rows.slice(start, start + PAGE_SIZE);
+}
+
 function renderDim() {
   const label = {material:'素材名称', plan:'计划', group:'组'}[state.dim];
   document.getElementById('dimLabel').textContent = label;
@@ -680,9 +775,13 @@ function renderDim() {
   if (sk) rows.sort((a,b) => sk.dir === 'asc' ? (a[sk.k]||0)-(b[sk.k]||0) : (b[sk.k]||0)-(a[sk.k]||0));
   else rows.sort((a,b) => b.sp - a.sp);
   document.getElementById('dimCount').textContent = rows.length;
-  document.getElementById('dimBody').innerHTML = rows.map(r => '<tr>' +
+  const paged = sliceRows(rows, 'dimTable');
+  const thead = document.querySelector('#dimTable thead');
+  thead.innerHTML = '<tr>' + DIM_COLS.map(c => '<th data-k="' + c[1] + '">' + c[0] + '</th>').join('') + '</tr>';
+  document.getElementById('dimBody').innerHTML = paged.map(r => '<tr>' +
     DIM_COLS.map(c => cellHtml(c, r)).join('') + '</tr>').join('') ||
     '<tr><td colspan="15" class="empty-state">暂无数据</td></tr>';
+  renderPager('dimTable', rows.length);
 }
 
 /* ---------------- 分时模块 ---------------- */
@@ -723,25 +822,32 @@ function renderHourly() {
       y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
       y1: Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})}})
   });
-  // 优劣势时段：转化率高于平均 & 花费高于平均=优质；转化率低于平均=差
+  // 优劣势时段判定口径（2026-11-02 用户拍板，均以「有投放的时段」计算均值）
+  // 优质：转化率 ≥ 平均×1.15 且 花费 ≥ 平均×0.5（转化好 + 有量）
+  // 差：转化率 < 平均×0.85 且 花费 ≥ 平均×0.5（花了钱但转化差）
   const active = hours.filter(h => h.cv > 0 || h.sp > 0);
+  document.getElementById('hourCaliber').innerHTML =
+    '判定口径：先取「有投放的时段」算均值，<b>🟢 优质时段</b> = 转化率 ≥ 均值×1.15 且 花费 ≥ 均值×0.5；' +
+    '<b>🔴 差时段</b> = 转化率 < 均值×0.85 且 花费 ≥ 均值×0.5（花了钱但转化差，可考虑不投）；其余不标记。';
   if (active.length) {
     const avgCvr = active.reduce((s,h) => s + h.cvr, 0) / active.length;
     const avgSp = active.reduce((s,h) => s + h.sp, 0) / active.length;
     const good = hours.map((h,i) => [i,h]).filter(([i,h]) => h.cv > 0 && h.cvr >= avgCvr * 1.15 && h.sp >= avgSp * 0.5).map(([i]) => i);
-    const bad = hours.map((h,i) => [i,h]).filter(([i,h]) => (h.cv > 0 || h.sp > 0) && h.cvr < avgCvr * 0.85).map(([i]) => i);
+    const bad = hours.map((h,i) => [i,h]).filter(([i,h]) => (h.cv > 0 || h.sp > 0) && h.cvr < avgCvr * 0.85 && h.sp >= avgSp * 0.5).map(([i]) => i);
     document.getElementById('hourTags').innerHTML =
       (good.length ? '<span class="hour-tag good">🟢 优质时段（转化率高）: ' + good.map(h => h + '时').join('、') + '</span>' : '') +
-      (bad.length ? '<span class="hour-tag bad">🔴 差时段（转化率低，考虑不投）: ' + bad.map(h => h + '时').join('、') + '</span>' : '') +
+      (bad.length ? '<span class="hour-tag bad">🔴 差时段（考虑不投）: ' + bad.map(h => h + '时').join('、') + '</span>' : '') +
       (good.length || bad.length ? '' : '<span class="hour-tag">暂无显著优差时段</span>');
   } else {
     document.getElementById('hourTags').innerHTML = '<span class="hour-tag">所选日期无分时数据</span>';
   }
-  // 热力表
+  // 热力表（表头居中；含开口1/3/5/10）
   const maxVals = {sp: Math.max(...hours.map(h => h.sp), 1), ac: Math.max(...hours.map(h => h.ac), 1),
     cv: Math.max(...hours.map(h => h.cv), 1), cvr: Math.max(...hours.map(h => h.cvr), 1),
-    o1: Math.max(...hours.map(h => h.o1), 1)};
-  const cols = [['花费','sp','fmtM'],['行为','ac','fmtI'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],['开口1','o1','fmtI']];
+    o1: Math.max(...hours.map(h => h.o1), 1), o3: Math.max(...hours.map(h => h.o3), 1),
+    o5: Math.max(...hours.map(h => h.o5), 1), o10: Math.max(...hours.map(h => h.o10), 1)};
+  const cols = [['花费','sp','fmtM'],['行为','ac','fmtI'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],
+    ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI']];
   document.querySelector('#heatTable thead').innerHTML = '<tr><th style="cursor:default">小时</th>' +
     cols.map(c => '<th style="cursor:default">' + c[0] + '</th>').join('') + '</tr>';
   document.getElementById('heatBody').innerHTML = hours.map((h,i) => {
@@ -828,9 +934,11 @@ function renderMaterials() {
   if (sk) list.sort((a,b) => sk.dir === 'asc' ? (a[sk.k]||0)-(b[sk.k]||0) : (b[sk.k]||0)-(a[sk.k]||0));
   else list.sort((a,b) => b.sp - a.sp);
   document.getElementById('matCount').textContent = list.length;
-  document.getElementById('matBody').innerHTML = list.map(r => '<tr>' +
+  const paged = sliceRows(list, 'matTable');
+  document.getElementById('matBody').innerHTML = paged.map(r => '<tr>' +
     MAT_COLS.map(c => cellHtml(c, r)).join('') + '</tr>').join('') ||
     '<tr><td colspan="22" class="empty-state">暂无数据</td></tr>';
+  renderPager('matTable', list.length);
 }
 
 /* ---------------- 视频弹窗 ---------------- */
@@ -951,6 +1059,7 @@ document.getElementById('matBody').addEventListener('click', e => {
   if (btn) openVideo(btn.dataset.vname);
 });
 initFilters();
+initDateDropdown();
 renderAll();
 </script>
 </body>
@@ -958,7 +1067,8 @@ renderAll();
 
     html = (html.replace("__MMDD__", REPORT_MMDD)
                 .replace("__CSS__", CSS)
-                .replace("__CALIBER__", caliber_html())
+                .replace("__CALIBER1__", caliber_html("1"))
+                .replace("__CALIBER2__", caliber_html("2"))
                 .replace("__CHARTJS__", chart_js)
                 .replace("__DATA_JSON__", json.dumps(data, ensure_ascii=False))
                 .replace("__COLORS_JS__", json.dumps(PERSON_COLORS, ensure_ascii=False))
