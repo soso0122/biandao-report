@@ -1,35 +1,31 @@
 # -*- coding: utf-8 -*-
-"""快手投放数据报告（2026-10-30 接入真实数据）
+"""快手投放数据报告（2026-10-30 起，数据源=石墨文档）
 
-数据源（~/Desktop/快手/）：
-  - soso-账户 (2).csv      账户/计划/组/素材维度，转化漏斗（GBK 编码）
-  - soso-素材表现数据.csv  素材维度，曝光与播放质量（GBK 编码）
+数据源：data/kuaishou_shimo_data.json（由 fetch_shimo_kuaishou.py 从石墨拉取）。
 
-口径（与用户逐条确认过）：
-  - 主数据源=账户表；素材表现表只提供播放质量列（3秒/5秒/完播/封面点击率等）
-  - 合并主键=视频ID（同名多ID，如 AIGC 有 44 个ID，按名称会串）
-  - 行为数≈素材点击：行为率=行为÷曝光；转化率=转化÷行为；深转率=深转÷转化
-  - 素材分类：名称=AIGC→平台AI；素材内容非空(视频URL)→视频；名称含图文集合_→图文；空内容兜底图文
-  - 编导：名称匹配已知编导/剪辑，其余归「其他」
-  - 账户表为组级拆分（同素材同日多组多行），所有聚合按行加总后重算比率
+页面结构（2026-11-02 用户定稿）：
+  TAB1 投放数据表现：KPI 14卡 → 九级漏斗 → 逐日趋势 → 账户总览/筛选 →
+       聚合维度表（素材名称/计划/组三选一）→ 分时表现（24小时柱线+热力+优劣势时段）
+  TAB2 素材数据表现：KPI 8卡（素材数按名称去重）→ 类型卡+编导卡 → 素材明细
+  （含深转/有效获客，列序：名称/类型/编导/花费/转化/转化成本/开口1/3/5/10/深转/有效获客/
+   封面曝光/封面点击率/素材曝光/素材点击率/行为数/行为率/3秒/5秒/完播/播放）
+
+联动（重点，勿漏）：账户筛选、日期多选为两个 TAB 共享状态；
+类型/编导/搜索/聚合维度只作用于所属表格。分时模块随日期与账户联动。
 
 用法：python3 scripts/generate_kuaishou_report.py [MMDD]
 输出：reports/快手投放报告_MMDD.html
 """
 
-import csv
 import json
-import re
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPORTS_DIR = BASE_DIR / "reports"
+DATA_JSON = BASE_DIR / "data" / "kuaishou_shimo_data.json"
 CHART_JS_PATH = Path(__file__).parent / "chart.min.js"
-KS_DIR = Path.home() / "Desktop" / "快手"
-ACC_FILE = KS_DIR / "soso-账户 (2).csv"
-MAT_FILE = KS_DIR / "soso-素材表现数据.csv"
 
 TODAY = datetime.now()
 TARGET = sys.argv[1] if len(sys.argv) > 1 else TODAY.strftime("%m%d")
@@ -37,8 +33,6 @@ TARGET_DT = datetime(TODAY.year, int(TARGET[:2]), int(TARGET[2:]))
 if TARGET_DT > TODAY:
     TARGET_DT = TARGET_DT.replace(year=TODAY.year - 1)
 REPORT_MMDD = TARGET_DT.strftime("%m%d")
-
-PERSONS = ["小敏", "嘉丽", "浩正", "雅迪", "婷玉", "魏怡", "瑞晨", "国星"]
 
 PERSON_COLORS = {
     "小敏": "#3B82F6", "嘉丽": "#8B5CF6", "瑞晨": "#10B981",
@@ -51,169 +45,6 @@ PERSON_BG = {
     "婷玉": "#F0FDFA", "国星": "#E0F2FE", "其他": "#F8FAFC",
 }
 
-
-def _f(v):
-    try:
-        x = float(str(v).replace(",", "").replace("¥", "").replace("%", ""))
-        return x if abs(x) < 1e300 else 0.0
-    except (TypeError, ValueError):
-        return 0.0
-
-
-def read_gbk(path):
-    with open(path, encoding="gbk", errors="replace", newline="") as f:
-        return list(csv.DictReader(f))
-
-
-def classify(name, content):
-    """素材分类：AIGC=平台AI；内容非空=视频；图文集合_=图文；空内容兜底图文。"""
-    n = (name or "").strip()
-    if n.upper() == "AIGC":
-        return "AI"
-    if (content or "").strip():
-        return "视频"
-    if "图文集合" in n:
-        return "图文"
-    return "图文"
-
-
-def extract_person(name):
-    for p in PERSONS:
-        if p in (name or ""):
-            return p
-    return "其他"
-
-
-# ---------------------------------------------------------------- 数据加载
-
-METRIC_KEYS = ["spend", "imp", "act", "conv", "deep", "valid", "open1", "open3", "open5", "open10"]
-
-
-def load_data():
-    acc_rows = read_gbk(ACC_FILE)
-    mat_rows = read_gbk(MAT_FILE)
-
-    # 表2：播放质量按 (日,账户,视频ID) 聚合；率按曝光加权
-    q_map = {}
-    for r in mat_rows:
-        d = (r["分日"] or "").strip()
-        if not d:
-            continue
-        key = (d, (r["账户信息ID"] or "").strip(), (r["视频ID"] or "").strip())
-        imp = _f(r["曝光数"])
-        if key not in q_map:
-            q_map[key] = {"imp": 0.0, "cover_exp": 0.0, "cover_click": 0.0,
-                          "mat_exp": 0.0,
-                          "p3_w": 0.0, "p5_w": 0.0, "fin_w": 0.0}
-        q = q_map[key]
-        q["imp"] += imp
-        q["cover_exp"] += _f(r["封面曝光数"])
-        q["cover_click"] += _f(r["封面点击数"])
-        q["mat_exp"] += _f(r["素材曝光数"])
-        q["p3_w"] += _f(r["3秒播放率"]) * imp
-        q["p5_w"] += _f(r["5秒播放率"]) * imp
-        q["fin_w"] += _f(r["完播率"]) * imp
-
-    # 表1：按行读取，构建三类聚合（账户/计划/素材）
-    accounts, plans, materials = {}, {}, {}
-    for r in acc_rows:
-        d = (r["分日"] or "").strip()
-        if not d:
-            continue
-        vid = (r["视频ID"] or "").strip()
-        name = (r["素材名称"] or "").strip()
-        content = (r["素材内容"] or "").strip()
-        acct = (r["账户信息ID"] or "").strip() or "未知账户"
-        plan = (r["计划名称"] or "").strip() or "未命名计划"
-        typ = classify(name, content)
-        person = extract_person(name) if typ == "视频" else ("其他" if typ == "图文" else "AI")
-
-        row = {
-            "spend": _f(r["花费(元)"]), "imp": _f(r["曝光数"]), "act": _f(r["行为数"]),
-            "conv": _f(r["转化数(计费时间)"]), "deep": _f(r["深度转化数(计费时间)"]),
-            "valid": _f(r["有效获客数（计费时间）"]),
-            "open1": _f(r["企微开口1次数量"]), "open3": _f(r["企微开口3次数量"]),
-            "open5": _f(r["企微开口5次数量"]), "open10": _f(r["企微开口10次数量"]),
-        }
-
-        def add_day(target, key):
-            days = target.setdefault("days", {})
-            day = days.setdefault(d, {k: 0.0 for k in METRIC_KEYS})
-            for k in METRIC_KEYS:
-                day[k] += row[k]
-
-        if acct not in accounts:
-            accounts[acct] = {"days": {}}
-        add_day(accounts[acct], acct)
-
-        if plan not in plans:
-            plans[plan] = {"days": {}, "vids": set()}
-        add_day(plans[plan], plan)
-        if vid:
-            plans[plan]["vids"].add(vid)
-
-        if vid:
-            if vid not in materials:
-                materials[vid] = {"vid": vid, "name": name, "type": typ, "person": person,
-                                  "content": content, "days": {}}
-            m = materials[vid]
-            add_day(m, vid)
-            # 同名同类型不同ID时，名称取带名字的那个
-            if not m["name"] and name:
-                m["name"] = name
-            if not m["content"] and content:
-                m["content"] = content
-
-    # 播放质量并入素材 days（主账户与三个账户全用 vid 匹配）
-    for (d, acct, vid), q in q_map.items():
-        if vid in materials and d in materials[vid]["days"]:
-            m = materials[vid]["days"][d]
-            m["p3"] = q["p3_w"] / q["imp"] if q["imp"] else 0.0
-            m["p5"] = q["p5_w"] / q["imp"] if q["imp"] else 0.0
-            m["fin"] = q["fin_w"] / q["imp"] if q["imp"] else 0.0
-            m["cover_rate"] = q["cover_click"] / q["cover_exp"] * 100 if q["cover_exp"] else 0.0
-        # 播放质量单独存，供「只算有质量数据的账户」场景
-        if "qdays" not in materials.get(vid, {}):
-            materials.setdefault(vid, {}).setdefault("qdays", {})
-        if vid in materials:
-            qd = materials[vid].setdefault("qdays", {})
-            qd[d] = {
-                "p3": q["p3_w"] / q["imp"] if q["imp"] else 0.0,
-                "p5": q["p5_w"] / q["imp"] if q["imp"] else 0.0,
-                "fin": q["fin_w"] / q["imp"] if q["imp"] else 0.0,
-                "cover_rate": q["cover_click"] / q["cover_exp"] * 100 if q["cover_exp"] else 0.0,
-            }
-
-    dates = sorted({d for a in accounts.values() for d in a["days"]})
-
-    def summarize(target):
-        s = {k: 0.0 for k in METRIC_KEYS}
-        for day in target["days"].values():
-            for k in METRIC_KEYS:
-                s[k] += day[k]
-        s["act_rate"] = s["act"] / s["imp"] * 100 if s["imp"] else 0.0
-        s["cvr"] = s["conv"] / s["act"] * 100 if s["act"] else 0.0
-        s["deep_rate"] = s["deep"] / s["conv"] * 100 if s["conv"] else 0.0
-        s["cpa"] = s["spend"] / s["conv"] if s["conv"] else 0.0
-        return s
-
-    out = {
-        "dates": dates,
-        "accounts": [{"id": a, "days": accounts[a]["days"], **summarize(accounts[a])}
-                     for a in sorted(accounts)],
-        "plans": [{"name": p, "days": plans[p]["days"], "vid_count": len(plans[p]["vids"]),
-                   **summarize(plans[p])}
-                  for p in sorted(plans, key=lambda x: -summarize(plans[x])["spend"])],
-        "materials": [{**summarize(m), "vid": m["vid"], "name": m["name"],
-                       "type": m["type"], "person": m["person"],
-                       "content": m["content"], "days": m["days"],
-                       "qdays": m.get("qdays", {})} for m in materials.values()],
-    }
-    return out
-
-
-# ---------------------------------------------------------------- 页面
-
 CSS = """
 :root{--bg:#F8FAFC;--card:#FFFFFF;--border:#DBEAFE;--primary:#1E40AF;--primary-light:#3B82F6;
 --accent:#D97706;--accent-bg:#FFFBEB;--text:#1E3A8A;--text-secondary:#64748B;--text-muted:#94A3B8;
@@ -224,13 +55,20 @@ body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-h
 
 .topbar{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1.5px solid var(--border);
 box-shadow:0 2px 6px rgba(0,0,0,.06);padding:8px 24px 10px}
-.topbar-row1{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.topbar-row1{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
 .brand{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap}
+.nav{display:flex;gap:6px}
+.tab-btn{padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);
+color:var(--text-secondary);font-size:12px;font-weight:500;cursor:pointer}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 .topbar-row2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .topbar-row2 .label{font-size:12px;color:var(--text-secondary);font-weight:500}
 .date-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#EFF6FF;color:var(--primary);
 border:1px solid #BFDBFE;cursor:pointer}
 .date-chip.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+.acct-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#F0FDF4;color:#047857;
+border:1px solid #A7F3D0;cursor:pointer}
+.acct-chip.sel{background:#047857;color:#fff;border-color:#047857}
 .range-btn{font-size:11px;padding:3px 9px;border-radius:12px;border:1px solid var(--border);
 background:#fff;color:var(--text-secondary);cursor:pointer}
 .range-btn:hover{border-color:var(--primary-light);color:var(--primary)}
@@ -242,7 +80,6 @@ display:flex;align-items:center;gap:6px}
 .section-title::before{content:'';display:inline-block;width:3px;height:14px;
 background:var(--primary-light);border-radius:2px}
 
-/* 口径说明卡 */
 .caliber-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
 box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
 .caliber-head{display:flex;align-items:center;justify-content:space-between;
@@ -255,22 +92,21 @@ font-size:13px;font-weight:600;color:var(--primary)}
 .caliber-card.collapsed .caliber-body{display:none}
 .caliber-card.collapsed .arrow{transform:rotate(-90deg)}
 
-.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
-padding:14px 16px;box-shadow:var(--shadow);transition:box-shadow .15s}
-.kpi-card:hover{box-shadow:var(--shadow-md)}
+padding:12px 14px;box-shadow:var(--shadow)}
 .kpi-card.accent{background:var(--accent-bg);border-color:#FCD34D}
 .kpi-label{font-size:11px;color:var(--text-secondary);font-weight:500;text-transform:uppercase;
-letter-spacing:.5px;margin-bottom:6px}
-.kpi-value{font-size:22px;font-weight:700;color:var(--primary);font-family:'Fira Code',monospace;line-height:1.1}
+letter-spacing:.4px;margin-bottom:5px}
+.kpi-value{font-size:20px;font-weight:700;color:var(--primary);font-family:'Fira Code',monospace;line-height:1.1}
 .kpi-card.accent .kpi-value{color:var(--accent)}
-.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:3px}
-.tc-diff{font-weight:600;display:inline-block;font-size:10.5px}
+.kpi-sub{font-size:10.5px;color:var(--text-muted);margin-top:3px}
+.tc-diff{font-weight:600;display:inline-block;font-size:10px}
 .tc-diff.inc{color:var(--success)}
 .tc-diff.dec{color:var(--danger)}
 .help-tip{display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;
 border-radius:50%;background:#DBEAFE;color:var(--primary);font-size:9px;font-weight:700;line-height:1;
-margin-left:3px;flex-shrink:0;position:relative;vertical-align:middle;text-align:center}
+margin-left:3px;flex-shrink:0;position:relative;vertical-align:middle}
 .help-tip::before{content:'?'}
 .help-tip:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
 background:#1E3A8A;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:400;
@@ -279,7 +115,8 @@ line-height:1.5;white-space:normal;word-break:break-all;max-width:380px;box-shad
 .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
 padding:16px;box-shadow:var(--shadow)}
-.chart-wrap{position:relative;height:230px;width:100%}
+.chart-wrap{position:relative;height:240px;width:100%}
+.funnel-wrap{position:relative;height:320px;width:100%}
 
 .filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card);
 border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;
@@ -300,20 +137,20 @@ outline:none;width:180px;background:var(--bg);color:var(--text)}
 .table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
 box-shadow:var(--shadow);overflow:hidden}
 .table-toolbar{display:flex;align-items:center;justify-content:space-between;
-padding:10px 14px;border-bottom:1px solid var(--border)}
+padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
 .table-info{font-size:12px;color:var(--text-secondary)}
 .table-info span{font-weight:600;color:var(--primary)}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text-secondary);
-text-transform:uppercase;letter-spacing:.4px;background:#F1F5F9;border-bottom:1px solid var(--border);
-white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;z-index:5}
+thead th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text-secondary);
+background:#F1F5F9;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;
+user-select:none;position:sticky;top:0;z-index:5}
 thead th:hover{color:var(--primary)}
 thead th.sorted-asc::after{content:' ↑'}
 thead th.sorted-desc::after{content:' ↓'}
 tbody tr{border-bottom:1px solid #F1F5F9;transition:background .1s}
 tbody tr:hover{background:var(--bg)}
-tbody td{padding:9px 12px;vertical-align:middle}
+tbody td{padding:8px 10px;vertical-align:middle}
 tbody tr:last-child{border-bottom:none}
 
 .person-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;
@@ -321,16 +158,28 @@ font-size:11px;font-weight:600;white-space:nowrap}
 .type-video{background:#EFF6FF;color:#3B82F6}
 .type-tuwen{background:#F5F3FF;color:#8B5CF6}
 .type-ai{background:#EEF2FF;color:#6366F1}
-.mat-name{max-width:300px;white-space:normal;word-break:break-all;font-size:12px;
+.mat-name{max-width:280px;white-space:normal;word-break:break-all;font-size:12px;
 color:var(--text);line-height:1.45}
 .num{font-family:'Fira Code',monospace;font-size:12px}
 .num-zero{color:var(--text-muted)}
-.gaoquan-cell{font-family:'Fira Code',monospace;font-size:13px;font-weight:700;color:var(--accent)}
+.gaoquan-cell{font-family:'Fira Code',monospace;font-size:12.5px;font-weight:700;color:var(--accent)}
 .gaoquan-zero{color:var(--text-muted);font-weight:400}
 .btn-play{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;
 border:1.5px solid var(--border);background:var(--bg);color:var(--primary-light);font-size:11px;
-font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+font-weight:500;cursor:pointer}
 .btn-play:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.heat-table{width:100%;border-collapse:collapse;font-size:12px}
+.heat-table th{position:sticky;top:0;z-index:5}
+.heat-table td{text-align:center;padding:6px 8px;border:1px solid #EEF2FF}
+.heat-table .hour-label{font-family:'Fira Code',monospace;font-size:11px;color:var(--text-secondary);
+background:#F8FAFC;white-space:nowrap}
+.heat-cell{font-family:'Fira Code',monospace;font-size:11px}
+.hour-tags{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.hour-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;
+border-radius:12px;background:var(--bg);border:1.5px solid var(--border);color:#475569}
+.hour-tag.good{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+.hour-tag.bad{background:#FEF2F2;border-color:#FECACA;color:#B91C1C}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);display:none;
 align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
@@ -346,36 +195,37 @@ color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:cen
 .modal-close:hover{background:rgba(255,255,255,.2);color:#fff}
 .video-wrap{background:#000;display:flex;align-items:center;justify-content:center;flex:1}
 video{max-width:100%;max-height:65vh;display:block}
-.video-error{color:#94A3B8;font-size:13px;text-align:center;padding:40px 20px}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px}
 @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
 """
 
-CALIBER_HTML = """
+
+def caliber_html():
+    return """
 <div class="caliber-card" id="caliberCard">
   <div class="caliber-head" onclick="document.getElementById('caliberCard').classList.toggle('collapsed')">
     <span>📌 指标口径说明（点击收起）</span><span class="arrow">▼</span>
   </div>
   <div class="caliber-body">
-    <div class="caliber-item"><b>数据源</b>：账户维度表（快手后台「账户」导出）+ 素材表现表（补充播放质量）。两表花费一致，KPI 以账户表为准。</div>
-    <div class="caliber-item"><b>行为数</b>：快手里的「行为」约等于素材点击（行为率 = 行为数 ÷ 曝光数）。</div>
-    <div class="caliber-item"><b>转化率</b> = 转化数(计费时间) ÷ 行为数；<b>深转率</b> = 深度转化数 ÷ 转化数。</div>
-    <div class="caliber-item"><b>CPA</b> = 花费 ÷ 转化数（计费时间口径）。</div>
-    <div class="caliber-item"><b>漏斗</b>：曝光 → 行为 → 转化 → 深转 → 有效获客 → 企微开口 1 次（3/5/10 次为后续开口阶段）。</div>
-    <div class="caliber-item"><b>素材分类</b>：素材内容有视频链接 = 视频；名称 = AIGC = 平台 AI 素材；名称含「图文集合_」= 图文。</div>
-    <div class="caliber-item"><b>编导归属</b>：按素材名称匹配已知编导/剪辑（小敏、嘉丽、浩正、雅迪、婷玉、魏怡、瑞晨、国星），匹配不到归「其他」。</div>
-    <div class="caliber-item"><b>3秒/5秒/完播率、封面点击率</b>：来自素材表现表，按曝光加权；仅主账户有数据。</div>
-    <div class="caliber-item"><b>明细粒度</b>：账户表为广告组级拆分（同一素材同一天可能在多个组投放），本页所有数字都按行加总后重算比率，无重复计算。</div>
+    <div class="caliber-item"><b>数据源</b>：石墨文档「【快手】引流加微数据」（账户表现 + 素材表现），快手投放 2026-10-30 起。</div>
+    <div class="caliber-item"><b>行为数</b>：快手的「行为」约等于素材点击。行为率 = 行为数 ÷ 曝光数。</div>
+    <div class="caliber-item"><b>转化率</b> = 转化数(计费时间) ÷ 行为数；<b>深转率</b> = 深转数 ÷ 转化数。</div>
+    <div class="caliber-item"><b>CPA</b> = 花费 ÷ 转化数；<b>转化成本</b> = 花费 ÷ 转化数（素材维度）。</div>
+    <div class="caliber-item"><b>漏斗</b>：曝光 → 行为 → 转化 → 深转 → 有效获客 → 企微开口 1/3/5/10 次。</div>
+    <div class="caliber-item"><b>素材分类</b>：素材内容有视频链接=视频；名称=AIGC=平台AI；名称含图文集合_=图文。</div>
+    <div class="caliber-item"><b>编导归属</b>：名称匹配已知编导/剪辑（小敏、嘉丽、浩正、雅迪、婷玉、魏怡、瑞晨、国星），其余「其他」。</div>
+    <div class="caliber-item"><b>素材点击率</b> = 行为数 ÷ 素材曝光数；<b>封面点击率</b> = 封面点击 ÷ 封面曝光。</div>
+    <div class="caliber-item"><b>3秒/5秒/完播率</b>：按曝光数加权平均。</div>
+    <div class="caliber-item"><b>去重口径</b>：素材总数按素材名称去重；账户表为广告组级拆分，数字按行加总后重算比率。</div>
+    <div class="caliber-item"><b>分时</b>：按小时聚合；选多天时按小时跨日累计。优/差时段按该小时转化率相对全天判断。</div>
   </div>
 </div>
 """
 
 
-def build_html(data):
+def build_html():
+    data = json.load(open(DATA_JSON, encoding="utf-8"))
     chart_js = CHART_JS_PATH.read_text(encoding="utf-8") if CHART_JS_PATH.exists() else ""
-    data_json = json.dumps(data, ensure_ascii=False)
-    colors_js = json.dumps(PERSON_COLORS, ensure_ascii=False)
-    bg_js = json.dumps(PERSON_BG, ensure_ascii=False)
 
     html = """<!DOCTYPE html>
 <html lang="zh-CN">
@@ -389,6 +239,10 @@ def build_html(data):
 <div class="topbar">
   <div class="topbar-row1">
     <span class="brand">🟠 快手投放日报 · __MMDD__</span>
+    <nav class="nav">
+      <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">📊 投放数据表现</button>
+      <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">🎬 素材数据表现</button>
+    </nav>
   </div>
   <div class="topbar-row2">
     <span class="label">日期</span>
@@ -396,46 +250,71 @@ def build_html(data):
     <span class="range-btn" id="btnLatest">最新</span>
     <span class="range-btn" id="btnAll">全部</span>
     <span class="range-btn" id="btn7d">近7天</span>
+    <span class="filter-sep" style="display:inline-block"></span>
+    <span class="label">账户</span>
+    <span id="acctChips" style="display:flex;gap:4px;flex-wrap:wrap"></span>
   </div>
 </div>
 <div class="page">
 
-__CALIBER__
-
-  <div class="kpi-grid" id="kpiGrid"></div>
-
+<!-- ============ TAB1 投放数据表现 ============ -->
+<div id="tab1">
+  __CALIBER__
+  <div class="kpi-grid" id="kpiGrid1"></div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">转化漏斗（所选日期累计）</div>
+    <div class="funnel-wrap"><canvas id="chartFunnel"></canvas></div>
+  </div>
   <div class="charts-row">
     <div class="chart-card">
-      <div class="section-title">转化漏斗趋势（所选日期范围）</div>
-      <div class="chart-wrap"><canvas id="chartFunnel"></canvas></div>
+      <div class="section-title">逐日花费 / 转化 / 深转</div>
+      <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="section-title">花费与 CPA 趋势</div>
+      <div class="section-title">逐日 CPA / 转化率</div>
       <div class="chart-wrap"><canvas id="chartCpa"></canvas></div>
     </div>
   </div>
-
-  <div class="chart-card" style="margin-bottom:20px">
-    <div class="section-title">编导表现</div>
-    <div id="personRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
-  </div>
-
-  <div class="table-card" style="margin-bottom:20px">
+  <div class="table-card" style="margin-bottom:20px" id="acctSection">
     <div class="table-toolbar">
-      <div class="section-title" style="margin:0">📊 账户表现</div>
-      <div class="table-info">3 个账户 · 全漏斗对比</div>
+      <div class="section-title" style="margin:0">📊 账户总览</div>
+      <div class="table-info">点击账户名筛选全页</div>
     </div>
     <div class="table-wrap"><table id="acctTable"><thead></thead><tbody id="acctBody"></tbody></table></div>
   </div>
-
+  <div class="filter-bar">
+    <span class="filter-label">聚合维度</span>
+    <button class="filter-btn active" data-dim="material">素材名称</button>
+    <button class="filter-btn" data-dim="plan">计划</button>
+    <button class="filter-btn" data-dim="group">组</button>
+  </div>
   <div class="table-card" style="margin-bottom:20px">
     <div class="table-toolbar">
-      <div class="section-title" style="margin:0">🗂 计划表现</div>
-      <div class="table-info">按计划名称聚合</div>
+      <div class="section-title" style="margin:0">🎯 投放明细（按<span id="dimLabel">素材名称</span>聚合）</div>
+      <div class="table-info">共 <span id="dimCount">0</span> 条</div>
     </div>
-    <div class="table-wrap"><table id="planTable"><thead></thead><tbody id="planBody"></tbody></table></div>
+    <div class="table-wrap"><table id="dimTable"><thead></thead><tbody id="dimBody"></tbody></table></div>
   </div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">⏰ 分时表现（哪个小时跑得好）<span class="table-info" id="hourlyNote"></span></div>
+    <div class="chart-wrap" style="height:260px"><canvas id="chartHour"></canvas></div>
+    <div class="hour-tags" id="hourTags"></div>
+    <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+      <table class="heat-table" id="heatTable"><thead></thead><tbody id="heatBody"></tbody></table>
+    </div>
+  </div>
+</div>
 
+<!-- ============ TAB2 素材数据表现 ============ -->
+<div id="tab2" style="display:none">
+  __CALIBER__
+  <div class="kpi-grid" id="kpiGrid2"></div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">素材类型</div>
+    <div id="typeRow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"></div>
+    <div class="section-title" style="margin-top:16px">编导表现（点卡片筛选明细）</div>
+    <div id="personRow" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
+  </div>
   <div class="filter-bar">
     <span class="filter-label">类型</span>
     <button class="filter-btn active" data-t="all">全部</button>
@@ -446,16 +325,16 @@ __CALIBER__
     <span class="filter-label">编导</span>
     <span id="personBtns" style="display:flex;gap:6px;flex-wrap:wrap"></span>
     <span class="filter-sep"></span>
-    <input class="search-box" id="searchBox" placeholder="🔍 搜索素材名称 / ID">
+    <input class="search-box" id="searchBox" placeholder="🔍 搜索素材名称">
   </div>
-
   <div class="table-card">
     <div class="table-toolbar">
       <div class="section-title" style="margin:0">🎬 素材明细</div>
-      <div class="table-info">共 <span id="matCount">0</span> 条素材（所选日期累计）</div>
+      <div class="table-info">共 <span id="matCount">0</span> 条素材（按名称去重）</div>
     </div>
     <div class="table-wrap"><table id="matTable"><thead></thead><tbody id="matBody"></tbody></table></div>
   </div>
+</div>
 
 </div>
 
@@ -475,351 +354,490 @@ const DATA = __DATA_JSON__;
 const PERSON_COLORS = __COLORS_JS__;
 const PERSON_BG = __BG_JS__;
 
+const ZM = () => ({sp:0,im:0,ac:0,cv:0,dp:0,va:0,o1:0,o3:0,o5:0,o10:0});
+const ZQ = () => ({qi:0,qmi:0,cc:0,ce:0,p3:0,p5:0,fn:0});
+const MKEYS = ['sp','im','ac','cv','dp','va','o1','o3','o5','o10'];
+const QKEYS = ['qi','qmi','cc','ce','p3','p5','fn'];
+const addM = (t,s) => MKEYS.forEach(k => t[k] += (s[k]||0));
+const addQ = (t,s) => QKEYS.forEach(k => t[k] += (s[k]||0));
+
+const state = {
+  tab: 1,
+  dates: [...DATA.dates],
+  acct: 'all',
+  dim: 'material',
+  type: 'all',
+  person: 'all',
+  search: '',
+};
+const selDates = () => new Set(state.dates);
+
+/* 从嵌套 days 聚合指标+质量。支持三种结构：
+   accounts: {date: metrics}
+   plans/groups: {date: {acct: metrics}}
+   materials: {date: {acct: {m, q}}} */
+function aggDays(days) {
+  const m = ZM(), q = ZQ();
+  for (const d of selDates()) {
+    const day = days[d];
+    if (!day) continue;
+    if (day.sp !== undefined) {
+      addM(m, day);
+    } else {
+      for (const [acct, val] of Object.entries(day)) {
+        if (state.acct !== 'all' && acct !== state.acct) continue;
+        if (val && val.m) { addM(m, val.m); addQ(q, val.q || {}); }
+        else addM(m, val || {});
+      }
+    }
+  }
+  return {m, q};
+}
+function derive(m, q) {
+  const r = {...m};
+  r.act_rate = m.im ? m.ac/m.im*100 : 0;
+  r.cvr = m.ac ? m.cv/m.ac*100 : 0;
+  r.deep_rate = m.cv ? m.dp/m.cv*100 : 0;
+  r.cpa = m.cv ? m.sp/m.cv : 0;
+  r.mat_click_rate = q.qmi ? m.ac/q.qmi*100 : 0;
+  r.cover_rate = q.ce ? q.cc/q.ce*100 : 0;
+  r.p3 = q.qi ? q.p3/q.qi : 0;
+  r.p5 = q.qi ? q.p5/q.qi : 0;
+  r.fin = q.qi ? q.fn/q.qi : 0;
+  r.qmi = q.qmi; r.qi = q.qi; r.ce = q.ce; r.cc = q.cc;
+  return r;
+}
+
 const fmtM = v => '¥' + v.toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
 const fmtI = v => Math.round(v).toLocaleString('zh-CN');
 const fmtP = v => v.toFixed(2) + '%';
 const fmtP1 = v => v.toFixed(1) + '%';
 
-const state = { dates: [...DATA.dates], type: 'all', person: 'all', search: '' };
-const selDays = () => new Set(state.dates);
-
-function aggDayRows(target, sel) {
-  // target: {days:{date:{...}}} → 求和
-  const s = {spend:0,imp:0,act:0,conv:0,deep:0,valid:0,open1:0,open3:0,open5:0,open10:0};
-  for (const d of sel) {
-    const day = target.days[d];
-    if (!day) continue;
-    for (const k in s) s[k] += day[k] || 0;
-  }
-  return s;
-}
-function aggMetrics(target, sel) {
-  const s = aggDayRows(target, sel);
-  s.act_rate = s.imp ? s.act / s.imp * 100 : 0;
-  s.cvr = s.act ? s.conv / s.act * 100 : 0;
-  s.deep_rate = s.conv ? s.deep / s.conv * 100 : 0;
-  s.cpa = s.conv ? s.spend / s.conv : 0;
-  return s;
+/* ---------------- TAB 切换 ---------------- */
+function switchTab(t) {
+  state.tab = t;
+  document.getElementById('tab1').style.display = t === 1 ? '' : 'none';
+  document.getElementById('tab2').style.display = t === 2 ? '' : 'none';
+  document.getElementById('tabBtn1').classList.toggle('active', t === 1);
+  document.getElementById('tabBtn2').classList.toggle('active', t === 2);
 }
 
-/* ---------- KPI ---------- */
-const KPI_DEFS = [
-  ['总消耗', 'spend', 'fmtM', '花费（计费时间）', false],
-  ['曝光数', 'imp', 'fmtI', '素材总曝光', false],
-  ['行为数', 'act', 'fmtI', '约等于素材点击', false],
-  ['行为率', 'act_rate', 'fmtP', '行为数 ÷ 曝光数', false],
-  ['转化数', 'conv', 'fmtI', '转化数（计费时间）', false],
-  ['转化率', 'cvr', 'fmtP', '转化数 ÷ 行为数', false],
-  ['平均CPA', 'cpa', 'fmtM', '花费 ÷ 转化数', false],
-  ['深转数', 'deep', 'fmtI', '深度转化数（计费时间）', false],
-  ['深转率', 'deep_rate', 'fmtP', '深转 ÷ 转化', false],
-  ['有效获客', 'valid', 'fmtI', '有效获客数（计费时间）', false],
-  ['企微开口1次', 'open1', 'fmtI', '开口 1 次数量', true],
-  ['开口3次', 'open3', 'fmtI', '开口 3 次数量', false],
-  ['开口5次', 'open5', 'fmtI', '开口 5 次数量', false],
-  ['开口10次', 'open10', 'fmtI', '开口 10 次数量', false],
-];
-function renderKpi() {
-  const sel = selDays();
-  const acc = DATA.accounts.map(a => ({id:a.id, ...aggMetrics(a, sel)}));
-  const t = {};
-  for (const a of acc) for (const k in a) {
-    if (typeof a[k] === 'number') t[k] = (t[k] || 0) + a[k];
-  }
-  t.act_rate = t.imp ? t.act / t.imp * 100 : 0;
-  t.cvr = t.act ? t.conv / t.act * 100 : 0;
-  t.deep_rate = t.conv ? t.deep / t.conv * 100 : 0;
-  t.cpa = t.conv ? t.spend / t.conv : 0;
-  const prevD = DATA.dates[DATA.dates.indexOf(state.dates[0]) - 1];
-  const prevSel = prevD ? new Set([prevD]) : new Set();
-  const pt = {};
-  if (prevD) {
-    for (const a of DATA.accounts) {
-      const s = aggMetrics(a, prevSel);
-      for (const k in s) if (typeof s[k] === 'number') pt[k] = (pt[k] || 0) + s[k];
-    }
-  }
-  const diff = (cur, prev) => {
-    if (!prevD || Math.abs(cur - prev) < 1e-9) return '';
-    const cls = cur >= prev ? 'inc' : 'dec';
-    const sign = cur > prev ? '+' : '';
-    return '<span class="tc-diff ' + cls + '">' + sign + (cur - prev).toLocaleString('zh-CN') + '</span>';
-  };
-  const grid = document.getElementById('kpiGrid');
-  grid.innerHTML = KPI_DEFS.map(([label, key, fmt, sub, accent]) => {
-    const val = t[key] || 0;
-    const cls = accent ? 'kpi-card accent' : 'kpi-card';
-    const dhtml = ['spend','conv','deep','open1'].includes(key) ? diff(val, pt[key] || 0) : '';
-    return '<div class="' + cls + '"><div class="kpi-label">' + label +
-      '<span class="help-tip" data-tip="' + sub + '"></span></div>' +
-      '<div class="kpi-value">' + (fmt === 'fmtM' ? fmtM(val) : fmt === 'fmtP' ? fmtP(val) : fmtI(val)) + '</div>' +
-      '<div class="kpi-sub">' + dhtml + sub + '</div></div>';
-  }).join('');
-}
-
-/* ---------- 趋势图 ---------- */
-let chartFunnel = null, chartCpa = null;
-function renderCharts() {
-  const sel = selDays();
-  const ds = DATA.dates.filter(d => sel.has(d));
-  const spend = [], conv = [], deep = [], open1 = [], cpa = [];
-  for (const d of ds) {
-    let s = {spend:0,conv:0,deep:0,open1:0};
-    for (const a of DATA.accounts) {
-      const day = a.days[d];
-      if (day) { s.spend += day.spend||0; s.conv += day.conv||0; s.deep += day.deep||0; s.open1 += day.open1||0; }
-    }
-    spend.push(+s.spend.toFixed(2)); conv.push(+s.conv.toFixed(1)); deep.push(+s.deep.toFixed(1));
-    open1.push(+s.open1.toFixed(1)); cpa.push(s.conv ? +(s.spend / s.conv).toFixed(2) : 0);
-  }
-  const base = {responsive:true, maintainAspectRatio:false,
-    plugins:{legend:{labels:{boxWidth:12, font:{size:11}}}},
-    scales:{y:{beginAtZero:true, ticks:{font:{size:10}}}, x:{ticks:{font:{size:10}}}}};
-  if (chartFunnel) chartFunnel.destroy();
-  chartFunnel = new Chart(document.getElementById('chartFunnel'), {
-    type:'line', data:{labels:ds, datasets:[
-      {label:'转化', data:conv, borderColor:'#3B82F6', backgroundColor:'rgba(59,130,246,.10)', fill:true, tension:.3, pointRadius:2},
-      {label:'深转', data:deep, borderColor:'#F59E0B', backgroundColor:'rgba(245,158,11,.10)', fill:true, tension:.3, pointRadius:2},
-      {label:'企微开口1次', data:open1, borderColor:'#10B981', backgroundColor:'rgba(16,185,129,.10)', fill:true, tension:.3, pointRadius:2}
-    ]}, options:base
-  });
-  if (chartCpa) chartCpa.destroy();
-  chartCpa = new Chart(document.getElementById('chartCpa'), {
-    type:'bar', data:{labels:ds, datasets:[
-      {label:'花费', data:spend, backgroundColor:'#3B82F6', borderRadius:3, yAxisID:'y'},
-      {label:'CPA', data:cpa, borderColor:'#8B5CF6', backgroundColor:'#8B5CF6', type:'line', tension:.3, pointRadius:2, yAxisID:'y1'}
-    ]},
-    options:Object.assign({}, base, {scales:{
-      y:Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
-      y1:Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})
-    }})
-  });
-}
-
-/* ---------- 编导卡 ---------- */
-function renderPersons() {
-  const sel = selDays();
-  const map = {};
-  for (const m of DATA.materials) {
-    const s = aggMetrics(m, sel);
-    const p = m.person || '其他';
-    if (!map[p]) map[p] = {spend:0,imp:0,act:0,conv:0,deep:0,valid:0,open1:0,cnt:0};
-    for (const k of ['spend','imp','act','conv','deep','valid','open1']) map[p][k] += s[k];
-    map[p].cnt += 1;
-  }
-  const wrap = document.getElementById('personRow');
-  const list = Object.entries(map).sort((a,b) => b[1].spend - a[1].spend);
-  wrap.innerHTML = list.map(([p, m]) => {
-    const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
-    const deepRate = m.conv ? m.deep / m.conv * 100 : 0;
-    const cpa = m.conv ? m.spend / m.conv : 0;
-    return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
-      '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
-      '<div class="kpi-value" style="font-size:18px;color:' + c + '">' + fmtM(m.spend) + '</div>' +
-      '<div class="kpi-sub">素材 ' + m.cnt + ' 条 · 转化 ' + fmtI(m.conv) + ' · 深转 ' + fmtI(m.deep) + '</div>' +
-      '<div class="kpi-sub">CPA ' + fmtM(cpa) + ' · 深转率 ' + fmtP(deepRate) + ' · 开口1次 ' + fmtI(m.open1) + '</div>' +
-    '</div>';
-  }).join('') || '<div class="empty-state">暂无数据</div>';
-}
-
-/* ---------- 表格通用 ---------- */
-const ACCT_COLS = [
-  ['账户', 'id', 'txt'], ['花费', 'spend', 'fmtM'], ['曝光', 'imp', 'fmtI'],
-  ['行为数', 'act', 'fmtI'], ['行为率', 'act_rate', 'fmtP'], ['转化', 'conv', 'fmtI'],
-  ['转化率', 'cvr', 'fmtP'], ['CPA', 'cpa', 'fmtM'], ['深转', 'deep', 'fmtI'],
-  ['深转率', 'deep_rate', 'fmtP'], ['有效获客', 'valid', 'fmtI'], ['开口1次', 'open1', 'fmtI'],
-  ['开口3次', 'open3', 'fmtI'], ['开口5次', 'open5', 'fmtI'], ['开口10次', 'open10', 'fmtI'],
-];
-const PLAN_COLS = [
-  ['计划名称', 'name', 'txt'], ['素材数', 'vid_count', 'fmtI'], ['花费', 'spend', 'fmtM'],
-  ['曝光', 'imp', 'fmtI'], ['行为数', 'act', 'fmtI'], ['行为率', 'act_rate', 'fmtP'],
-  ['转化', 'conv', 'fmtI'], ['转化率', 'cvr', 'fmtP'], ['CPA', 'cpa', 'fmtM'],
-  ['深转', 'deep', 'fmtI'], ['深转率', 'deep_rate', 'fmtP'], ['有效获客', 'valid', 'fmtI'],
-  ['开口1次', 'open1', 'fmtI'], ['开口3次', 'open3', 'fmtI'], ['开口5次', 'open5', 'fmtI'], ['开口10次', 'open10', 'fmtI'],
-];
-const MAT_COLS = [
-  ['素材名称', 'name', 'name'], ['类型', 'type', 'type'], ['编导', 'person', 'person'],
-  ['花费', 'spend', 'fmtM'], ['曝光', 'imp', 'fmtI'], ['行为数', 'act', 'fmtI'],
-  ['行为率', 'act_rate', 'fmtP'], ['转化', 'conv', 'fmtI'], ['转化率', 'cvr', 'fmtP'],
-  ['CPA', 'cpa', 'fmtM'], ['深转', 'deep', 'fmtI'], ['深转率', 'deep_rate', 'fmtP'],
-  ['有效获客', 'valid', 'fmtI'], ['开口1', 'open1', 'fmtI'], ['开口3', 'open3', 'fmtI'],
-  ['开口5', 'open5', 'fmtI'], ['开口10', 'open10', 'fmtI'], ['3秒播放率', 'p3', 'fmtP'],
-  ['5秒播放率', 'p5', 'fmtP'], ['完播率', 'fin', 'fmtP'], ['封面点击率', 'cover_rate', 'fmtP'],
-  ['播放', '', 'play'],
-];
-
-function buildHead(tableId, cols) {
-  const thead = document.querySelector('#' + tableId + ' thead');
-  thead.innerHTML = '<tr>' + cols.map(([label, key]) =>
-    '<th data-k="' + key + '">' + label + '</th>').join('') + '</tr>';
-}
-
-let sortKey = {acct:null, plan:null, mat:null};
-let sortDir = {acct:-1, plan:-1, mat:-1};
-const TABLE_SHORT = {acctTable:'acct', planTable:'plan', matTable:'mat'};
-
-function fmtCell(v, kind) {
-  if (kind === 'fmtM') return fmtM(v);
-  if (kind === 'fmtP') return fmtP(v);
-  return fmtI(v);
-}
-function renderRowHtml(row, cols, tableId) {
-  return '<tr>' + cols.map(([label, key, kind]) => {
-    if (kind === 'name') return '<td class="mat-name">' + (row.name || '—') + '</td>';
-    if (kind === 'type') {
-      const t = row.type || '视频';
-      const cls = t === '图文' ? 'type-tuwen' : t === 'AI' ? 'type-ai' : 'type-video';
-      const txt = t === 'AI' ? '平台AI' : t;
-      return '<td><span class="person-badge ' + cls + '">' + txt + '</span></td>';
-    }
-    if (kind === 'person') {
-      const p = row.person || '其他';
-      const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
-      return '<td><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></td>';
-    }
-    if (kind === 'play') {
-      if (!row.content) return '<td><span class="num-zero">—</span></td>';
-      return '<td><button class="btn-play" onclick="openVideo(\\'' + row.vid + '\\')">▶ 播放</button></td>';
-    }
-    if (kind === 'txt') return '<td>' + row[key] + '</td>';
-    const v = row[key] || 0;
-    if (kind === 'fmtI' && v === 0) return '<td class="num num-zero">0</td>';
-    if (key === 'deep' && v > 0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
-    return '<td class="num">' + fmtCell(v, kind) + '</td>';
-  }).join('') + '</tr>';
-}
-
-function renderAccounts() {
-  const sel = selDays();
-  const rows = DATA.accounts.map(a => ({id:a.id, ...aggMetrics(a, sel)}));
-  const k = sortKey.acct || 'spend', dir = sortKey.acct ? sortDir.acct : -1;
-  rows.sort((a,b) => ((a[k]||0) - (b[k]||0)) * dir);
-  document.getElementById('acctBody').innerHTML =
-    rows.map(r => renderRowHtml(r, ACCT_COLS, 'acct')).join('') ||
-    '<tr><td colspan="15" class="empty-state">暂无数据</td></tr>';
-}
-function renderPlans() {
-  const sel = selDays();
-  const rows = DATA.plans.map(p => ({...p, ...aggMetrics(p, sel), vid_count: p.vid_count}));
-  const k = sortKey.plan || 'spend', dir = sortKey.plan ? sortDir.plan : -1;
-  rows.sort((a,b) => ((a[k]||0) - (b[k]||0)) * dir);
-  document.getElementById('planBody').innerHTML =
-    rows.map(r => renderRowHtml(r, PLAN_COLS, 'plan')).join('') ||
-    '<tr><td colspan="16" class="empty-state">暂无数据</td></tr>';
-}
-
-/* ---------- 素材明细 ---------- */
-function qAgg(m, sel) {
-  let p3w=0, p5w=0, finw=0, qimp=0, coverc=0, covere=0;
-  for (const d of sel) {
-    const q = (m.qdays && m.qdays[d]) ? m.qdays[d] : null;
-    if (!q) continue;
-    const day = m.days[d];
-    const imp = day ? (day.imp||0) : 0;
-    p3w += (q.p3||0) * imp; p5w += (q.p5||0) * imp; finw += (q.fin||0) * imp; qimp += imp;
-    coverc += (q.cover_rate||0); covere += 1;
-  }
-  return {
-    p3: qimp ? p3w/qimp : 0, p5: qimp ? p5w/qimp : 0, fin: qimp ? finw/qimp : 0,
-    cover_rate: covere ? coverc/covere : 0,
-  };
-}
-function renderMaterials() {
-  const sel = selDays();
-  let list = [];
-  for (const m of DATA.materials) {
-    const s = aggMetrics(m, sel);
-    if (s.spend <= 0 && s.imp <= 0 && s.act <= 0 && s.conv <= 0 && s.deep <= 0) continue;
-    if (state.type !== 'all' && m.type !== state.type) continue;
-    if (state.person !== 'all' && (m.person || '其他') !== state.person) continue;
-    if (state.search) {
-      const q = state.search.toLowerCase();
-      if (!(m.name || '').toLowerCase().includes(q) && !String(m.vid).includes(q)) continue;
-    }
-    list.push({...m, ...s, ...qAgg(m, sel)});
-  }
-  const k = sortKey.mat || 'spend', dir = sortKey.mat ? sortDir.mat : -1;
-  list.sort((a,b) => ((a[k]||0) - (b[k]||0)) * dir);
-  document.getElementById('matCount').textContent = list.length;
-  document.getElementById('matBody').innerHTML =
-    list.map(r => renderRowHtml(r, MAT_COLS, 'mat')).join('') ||
-    '<tr><td colspan="22" class="empty-state">暂无数据</td></tr>';
-}
-
-/* ---------- 日期 chips ---------- */
+/* ---------------- 顶部 chips（共享） ---------------- */
 function renderChips() {
-  const wrap = document.getElementById('dateChips');
-  wrap.innerHTML = DATA.dates.map(d =>
-    '<span class="date-chip' + (state.dates.includes(d) ? ' sel' : '') + '" data-d="' + d + '">' +
-    d.slice(5) + '</span>').join('');
-  wrap.querySelectorAll('.date-chip').forEach(el => {
-    el.addEventListener('click', () => {
-      const d = el.dataset.d;
-      state.dates = state.dates.includes(d)
-        ? (state.dates.length > 1 ? state.dates.filter(x => x !== d) : state.dates)
-        : [...state.dates, d].sort();
-      renderAll();
-    });
-  });
+  const dw = document.getElementById('dateChips');
+  dw.innerHTML = DATA.dates.map(d =>
+    '<span class="date-chip' + (state.dates.includes(d) ? ' sel' : '') + '" data-d="' + d + '">' + d.slice(5) + '</span>').join('');
+  dw.querySelectorAll('.date-chip').forEach(el => el.addEventListener('click', () => {
+    const d = el.dataset.d;
+    state.dates = state.dates.includes(d)
+      ? (state.dates.length > 1 ? state.dates.filter(x => x !== d) : state.dates)
+      : [...state.dates, d].sort();
+    renderAll();
+  }));
   document.getElementById('btnLatest').onclick = () => { state.dates = [DATA.dates[DATA.dates.length-1]]; renderAll(); };
   document.getElementById('btnAll').onclick = () => { state.dates = [...DATA.dates]; renderAll(); };
   document.getElementById('btn7d').onclick = () => { state.dates = DATA.dates.slice(-7); renderAll(); };
+
+  const aw = document.getElementById('acctChips');
+  const accts = DATA.accounts.map(a => a.id);
+  aw.innerHTML = '<span class="acct-chip' + (state.acct==='all'?' sel':'') + '" data-a="all">全部账户</span>' +
+    accts.map(a => '<span class="acct-chip' + (state.acct===a?' sel':'') + '" data-a="' + a + '">' + a + '</span>').join('');
+  aw.querySelectorAll('.acct-chip').forEach(el => el.addEventListener('click', () => {
+    state.acct = el.dataset.a;
+    renderAll();
+  }));
 }
 
-/* ---------- 筛选与搜索 ---------- */
+/* ---------------- KPI 卡片渲染 ---------------- */
+function kpiCard(label, valueHtml, sub, accent) {
+  return '<div class="kpi-card' + (accent ? ' accent' : '') + '">' +
+    '<div class="kpi-label">' + label + '</div>' +
+    '<div class="kpi-value">' + valueHtml + '</div>' +
+    '<div class="kpi-sub">' + sub + '</div></div>';
+}
+function renderKpi1() {
+  const tot = ZM(), tq = ZQ();
+  for (const a of DATA.accounts) {
+    if (state.acct !== 'all' && a.id !== state.acct) continue;
+    const {m} = aggDays(a.days);
+    addM(tot, m);
+  }
+  const t = derive(tot, tq);
+  // 环比（仅单日）
+  const prevD = DATA.dates[DATA.dates.indexOf(state.dates[0]) - 1];
+  let diff = (cur, prev) => {
+    if (!prevD || state.dates.length !== 1) return '';
+    const cls = cur >= prev ? 'inc' : 'dec';
+    return '<span class="tc-diff ' + cls + '">' + (cur >= prev ? '+' : '') + (cur - prev).toLocaleString('zh-CN') + '</span>';
+  };
+  let prevTot = ZM();
+  if (prevD) {
+    const save = state.dates; state.dates = [prevD];
+    for (const a of DATA.accounts) { if (state.acct !== 'all' && a.id !== state.acct) continue; addM(prevTot, aggDays(a.days).m); }
+    state.dates = save;
+  }
+  const g = document.getElementById('kpiGrid1');
+  const rows = [
+    ['总消耗', fmtM(t.sp), diff(t.sp, prevTot.sp) + '较昨日', false],
+    ['曝光数', fmtI(t.im), '总曝光', false],
+    ['行为数', fmtI(t.ac), '约等于点击', false],
+    ['行为率', fmtP(t.act_rate), '行为÷曝光', false],
+    ['转化数', fmtI(t.cv), diff(t.cv, prevTot.cv) + '转化(计费)', false],
+    ['转化率', fmtP(t.cvr), '转化÷行为', false],
+    ['平均CPA', fmtM(t.cpa), '花费÷转化', false],
+    ['深转数', fmtI(t.dp), '深度转化', false],
+    ['深转率', fmtP(t.deep_rate), '深转÷转化', false],
+    ['有效获客', fmtI(t.va), '有效获客数', false],
+    ['开口1次', fmtI(t.o1), '企微开口', true],
+    ['开口3次', fmtI(t.o3), '后续开口', false],
+    ['开口5次', fmtI(t.o5), '后续开口', false],
+    ['开口10次', fmtI(t.o10), '后续开口', false],
+  ];
+  g.innerHTML = rows.map(r => kpiCard(r[0], r[1], r[2], r[3])).join('');
+}
+function renderKpi2() {
+  const names = new Set();
+  let tot = ZM(), tq = ZQ();
+  for (const m of DATA.materials) {
+    names.add(m.name);
+    const {m: mm, q} = aggDays(m.days);
+    addM(tot, mm); addQ(tq, q);
+  }
+  const t = derive(tot, tq);
+  const g = document.getElementById('kpiGrid2');
+  const rows = [
+    ['素材总数', fmtI(names.size), '按名称去重', false],
+    ['花费', fmtM(t.sp), '素材花费', false],
+    ['素材曝光', fmtI(t.qmi), '素材曝光数', false],
+    ['素材点击率', fmtP(t.mat_click_rate), '行为÷素材曝光', false],
+    ['封面点击率', fmtP(t.cover_rate), '封面点击÷封面曝光', false],
+    ['3秒播放率', fmtP1(t.p3), '曝光加权', false],
+    ['5秒播放率', fmtP1(t.p5), '曝光加权', false],
+    ['完播率', fmtP1(t.fin), '曝光加权', false],
+  ];
+  g.innerHTML = rows.map((r,i) => kpiCard(r[0], r[1], r[2], i===0)).join('');
+}
+
+/* ---------------- 漏斗图 ---------------- */
+let chartFunnel = null;
+function renderFunnel() {
+  const tot = ZM();
+  for (const a of DATA.accounts) {
+    if (state.acct !== 'all' && a.id !== state.acct) continue;
+    addM(tot, aggDays(a.days).m);
+  }
+  const stages = [
+    ['曝光', tot.im], ['行为', tot.ac], ['转化', tot.cv], ['深转', tot.dp],
+    ['有效获客', tot.va], ['开口1次', tot.o1], ['开口3次', tot.o3],
+    ['开口5次', tot.o5], ['开口10次', tot.o10],
+  ];
+  const colors = ['#3B82F6','#60A5FA','#8B5CF6','#A78BFA','#F59E0B','#FBBF24','#10B981','#34D399','#EC4899'];
+  if (chartFunnel) chartFunnel.destroy();
+  chartFunnel = new Chart(document.getElementById('chartFunnel'), {
+    type: 'bar',
+    data: {labels: stages.map(s => s[0]),
+      datasets: [{data: stages.map(s => s[1]), backgroundColor: colors, borderRadius: 4}]},
+    options: {indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {display: false},
+        tooltip: {callbacks: {label: c => ' ' + fmtI(c.raw)}}},
+      scales: {x: {beginAtZero: true, ticks: {font: {size: 10}}},
+        y: {ticks: {font: {size: 11}}}}}
+  });
+}
+
+/* ---------------- 逐日趋势 ---------------- */
+let chartTrend = null, chartCpa = null;
+function dailySeries() {
+  const spend = [], conv = [], deep = [], cpa = [], cvr = [], labels = [];
+  for (const d of selDates()) {
+    const s = ZM();
+    for (const a of DATA.accounts) {
+      if (state.acct !== 'all' && a.id !== state.acct) continue;
+      const day = a.days[d];
+      if (day) addM(s, day);
+    }
+    labels.push(d.slice(5));
+    spend.push(+s.sp.toFixed(2));
+    conv.push(+s.cv.toFixed(1));
+    deep.push(+s.dp.toFixed(1));
+    cpa.push(s.cv ? +(+s.sp/s.cv).toFixed(2) : 0);
+    cvr.push(s.ac ? +(s.cv/s.ac*100).toFixed(2) : 0);
+  }
+  return {labels, spend, conv, deep, cpa, cvr};
+}
+function renderTrend() {
+  const s = dailySeries();
+  const base = {responsive: true, maintainAspectRatio: false,
+    plugins: {legend: {labels: {boxWidth: 12, font: {size: 11}}}},
+    scales: {y: {beginAtZero: true, ticks: {font: {size: 10}}}, x: {ticks: {font: {size: 10}}}}};
+  if (chartTrend) chartTrend.destroy();
+  chartTrend = new Chart(document.getElementById('chartTrend'), {
+    data: {labels: s.labels, datasets: [
+      {type:'bar', label:'花费', data:s.spend, backgroundColor:'#BFDBFE', borderRadius:3, yAxisID:'y'},
+      {type:'line', label:'转化', data:s.conv, borderColor:'#3B82F6', tension:.3, pointRadius:2, yAxisID:'y1'},
+      {type:'line', label:'深转', data:s.deep, borderColor:'#F59E0B', tension:.3, pointRadius:2, yAxisID:'y1'}
+    ]},
+    options: Object.assign({}, base, {scales: {
+      y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
+      y1: Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})}})
+  });
+  if (chartCpa) chartCpa.destroy();
+  chartCpa = new Chart(document.getElementById('chartCpa'), {
+    data: {labels: s.labels, datasets: [
+      {type:'line', label:'CPA', data:s.cpa, borderColor:'#8B5CF6', tension:.3, pointRadius:2, yAxisID:'y'},
+      {type:'line', label:'转化率%', data:s.cvr, borderColor:'#10B981', tension:.3, pointRadius:2, yAxisID:'y1'}
+    ]},
+    options: Object.assign({}, base, {scales: {
+      y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
+      y1: Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})}})
+  });
+}
+
+/* ---------------- 账户总览表 ---------------- */
+function renderAcct() {
+  const cols = [['账户','id','txt'],['花费','sp','fmtM'],['曝光','im','fmtI'],['行为数','ac','fmtI'],
+    ['行为率','act_rate','fmtP'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],['CPA','cpa','fmtM'],
+    ['深转','dp','fmtI'],['深转率','deep_rate','fmtP'],['有效获客','va','fmtI'],
+    ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI']];
+  const thead = document.querySelector('#acctTable thead');
+  thead.innerHTML = '<tr>' + cols.map(c => '<th data-k="' + c[1] + '">' + c[0] + '</th>').join('') + '</tr>';
+  const rows = DATA.accounts.map(a => {
+    const t = derive(aggDays(a.days).m, ZQ());
+    return {id: a.id, ...t, _raw: t};
+  });
+  rows.sort((a,b) => b.sp - a.sp);
+  const body = document.getElementById('acctBody');
+  body.innerHTML = rows.map(r => '<tr style="cursor:pointer" data-acct="' + r.id + '">' +
+    cols.map(c => {
+      if (c[2]==='txt') return '<td><span class="person-badge" style="background:#ECFDF5;color:#047857">' + r.id + '</span></td>';
+      const v = r[c[1]]||0;
+      if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
+      if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
+      return '<td class="num">' + (c[2]==='fmtM'?fmtM(v):c[2]==='fmtP'?fmtP(v):fmtI(v)) + '</td>';
+    }).join('') + '</tr>').join('') || '<tr><td colspan="15" class="empty-state">暂无数据</td></tr>';
+  body.querySelectorAll('tr[data-acct]').forEach(tr => tr.addEventListener('click', () => {
+    state.acct = (state.acct === tr.dataset.acct) ? 'all' : tr.dataset.acct;
+    renderAll();
+  }));
+}
+
+/* ---------------- TAB1 聚合维度表 ---------------- */
+const DIM_COLS = [['名称','name','txt'],['花费','sp','fmtM'],['曝光','im','fmtI'],['行为数','ac','fmtI'],
+  ['行为率','act_rate','fmtP'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],['CPA','cpa','fmtM'],
+  ['深转','dp','fmtI'],['深转率','deep_rate','fmtP'],['有效获客','va','fmtI'],
+  ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI']];
+const MAT_COLS = [['素材名称','name','name'],['类型','type','type'],['编导','person','person'],
+  ['花费','sp','fmtM'],['转化','cv','fmtI'],['转化成本','cpa','fmtM'],
+  ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI'],
+  ['深转','dp','fmtI'],['有效获客','va','fmtI'],
+  ['封面曝光','ce','fmtI'],['封面点击率','cover_rate','fmtP'],
+  ['素材曝光','qmi','fmtI'],['素材点击率','mat_click_rate','fmtP'],
+  ['行为数','ac','fmtI'],['行为率','act_rate','fmtP'],
+  ['3秒播放率','p3','fmtP'],['5秒播放率','p5','fmtP'],['完播率','fin','fmtP'],['播放','','play']];
+
+function cellHtml(c, r) {
+  if (c[2]==='name') return '<td class="mat-name">' + r.name + '</td>';
+  if (c[2]==='type') {
+    const t = r.type || '视频';
+    const cls = t==='图文' ? 'type-tuwen' : t==='AI' ? 'type-ai' : 'type-video';
+    return '<td><span class="person-badge ' + cls + '">' + (t==='AI'?'平台AI':t) + '</span></td>';
+  }
+  if (c[2]==='person') {
+    const p = r.person || '其他';
+    return '<td><span class="person-badge" style="background:' + (PERSON_BG[p]||'#F8FAFC') + ';color:' + (PERSON_COLORS[p]||'#64748B') + '">' + p + '</span></td>';
+  }
+  if (c[2]==='play') return r.content
+    ? '<td><button class="btn-play" data-vname="' + r.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">▶</button></td>'
+    : '<td class="num-zero">—</td>';
+  if (c[2]==='txt') return '<td>' + r[c[1]] + '</td>';
+  const v = r[c[1]]||0;
+  if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
+  if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
+  return '<td class="num">' + (c[2]==='fmtM'?fmtM(v):c[2]==='fmtP'?fmtP(v):fmtI(v)) + '</td>';
+}
+
+function renderDim() {
+  const label = {material:'素材名称', plan:'计划', group:'组'}[state.dim];
+  document.getElementById('dimLabel').textContent = label;
+  let rows = [];
+  if (state.dim === 'material') {
+    rows = DATA.materials.map(m => {
+      const t = derive(aggDays(m.days).m, aggDays(m.days).q);
+      return {name: m.name, ...t};
+    }).filter(r => r.sp > 0 || r.im > 0 || r.cv > 0 || r.ac > 0);
+  } else if (state.dim === 'plan') {
+    rows = DATA.plans.map(p => {
+      const t = derive(aggDays(p.days).m, ZQ());
+      return {name: p.name, ...t};
+    }).filter(r => r.sp > 0 || r.im > 0 || r.cv > 0 || r.ac > 0);
+  } else {
+    rows = DATA.groups.map(g => {
+      const t = derive(aggDays(g.days).m, ZQ());
+      return {name: g.name, ...t};
+    }).filter(r => r.sp > 0 || r.im > 0 || r.cv > 0 || r.ac > 0);
+  }
+  const sk = sortState['dimTable'];
+  if (sk) rows.sort((a,b) => sk.dir === 'asc' ? (a[sk.k]||0)-(b[sk.k]||0) : (b[sk.k]||0)-(a[sk.k]||0));
+  else rows.sort((a,b) => b.sp - a.sp);
+  document.getElementById('dimCount').textContent = rows.length;
+  document.getElementById('dimBody').innerHTML = rows.map(r => '<tr>' +
+    DIM_COLS.map(c => cellHtml(c, r)).join('') + '</tr>').join('') ||
+    '<tr><td colspan="15" class="empty-state">暂无数据</td></tr>';
+}
+
+/* ---------------- 分时模块 ---------------- */
+let chartHour = null;
+function hourlyAgg() {
+  // 返回 24 小时指标数组（跨日按小时累计）
+  const hours = Array.from({length: 24}, () => ZM());
+  for (const a of DATA.accounts) {
+    if (state.acct !== 'all' && a.id !== state.acct) continue;
+    const hd = DATA.hourly[a.id] || {};
+    for (const d of selDates()) {
+      const day = hd[d];
+      if (!day) continue;
+      for (const [h, m] of Object.entries(day)) {
+        addM(hours[+h], m);
+      }
+    }
+  }
+  return hours.map(m => derive(m, ZQ()));
+}
+function renderHourly() {
+  const hours = hourlyAgg();
+  const note = document.getElementById('hourlyNote');
+  note.textContent = state.dates.length > 1 ? '（按小时跨日累计）' : '（' + state.dates[0] + '）';
+  // 柱线图：柱=花费，线=转化
+  const base = {responsive: true, maintainAspectRatio: false,
+    plugins: {legend: {labels: {boxWidth: 12, font: {size: 11}}}},
+    scales: {y: {beginAtZero: true, ticks: {font: {size: 10}}}, x: {ticks: {font: {size: 10}}}}};
+  if (chartHour) chartHour.destroy();
+  chartHour = new Chart(document.getElementById('chartHour'), {
+    data: {labels: Array.from({length:24}, (_,i) => i + '时'),
+      datasets: [
+        {type:'bar', label:'花费', data: hours.map(h => +h.sp.toFixed(2)), backgroundColor:'#BFDBFE', borderRadius:2, yAxisID:'y'},
+        {type:'line', label:'转化', data: hours.map(h => +h.cv.toFixed(1)), borderColor:'#3B82F6', tension:.3, pointRadius:2, yAxisID:'y1'},
+        {type:'line', label:'开口1次', data: hours.map(h => +h.o1.toFixed(1)), borderColor:'#10B981', tension:.3, pointRadius:2, yAxisID:'y1'}
+      ]},
+    options: Object.assign({}, base, {scales: {
+      y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
+      y1: Object.assign({}, base.scales.y, {position:'right', grid:{drawOnChartArea:false}})}})
+  });
+  // 优劣势时段：转化率高于平均 & 花费高于平均=优质；转化率低于平均=差
+  const active = hours.filter(h => h.cv > 0 || h.sp > 0);
+  if (active.length) {
+    const avgCvr = active.reduce((s,h) => s + h.cvr, 0) / active.length;
+    const avgSp = active.reduce((s,h) => s + h.sp, 0) / active.length;
+    const good = hours.map((h,i) => [i,h]).filter(([i,h]) => h.cv > 0 && h.cvr >= avgCvr * 1.15 && h.sp >= avgSp * 0.5).map(([i]) => i);
+    const bad = hours.map((h,i) => [i,h]).filter(([i,h]) => (h.cv > 0 || h.sp > 0) && h.cvr < avgCvr * 0.85).map(([i]) => i);
+    document.getElementById('hourTags').innerHTML =
+      (good.length ? '<span class="hour-tag good">🟢 优质时段（转化率高）: ' + good.map(h => h + '时').join('、') + '</span>' : '') +
+      (bad.length ? '<span class="hour-tag bad">🔴 差时段（转化率低，考虑不投）: ' + bad.map(h => h + '时').join('、') + '</span>' : '') +
+      (good.length || bad.length ? '' : '<span class="hour-tag">暂无显著优差时段</span>');
+  } else {
+    document.getElementById('hourTags').innerHTML = '<span class="hour-tag">所选日期无分时数据</span>';
+  }
+  // 热力表
+  const maxVals = {sp: Math.max(...hours.map(h => h.sp), 1), ac: Math.max(...hours.map(h => h.ac), 1),
+    cv: Math.max(...hours.map(h => h.cv), 1), cvr: Math.max(...hours.map(h => h.cvr), 1),
+    o1: Math.max(...hours.map(h => h.o1), 1)};
+  const cols = [['花费','sp','fmtM'],['行为','ac','fmtI'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],['开口1','o1','fmtI']];
+  document.querySelector('#heatTable thead').innerHTML = '<tr><th style="cursor:default">小时</th>' +
+    cols.map(c => '<th style="cursor:default">' + c[0] + '</th>').join('') + '</tr>';
+  document.getElementById('heatBody').innerHTML = hours.map((h,i) => {
+    return '<tr><td class="hour-label">' + i + ':00</td>' + cols.map(c => {
+      const v = h[c[1]] || 0;
+      const ratio = v / maxVals[c[1]];
+      const bg = ratio > 0.9 ? 'rgba(30,64,175,.55)' : ratio > 0.6 ? 'rgba(59,130,246,.45)'
+        : ratio > 0.3 ? 'rgba(96,165,250,.32)' : ratio > 0 ? 'rgba(147,197,253,.18)' : '#F8FAFC';
+      const color = ratio > 0.6 ? '#fff' : '#334155';
+      return '<td class="heat-cell" style="background:' + bg + ';color:' + color + '">' +
+        (c[2]==='fmtM'?fmtM(v):c[2]==='fmtP'?fmtP(v):fmtI(v)) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+}
+
+/* ---------------- TAB2 ---------------- */
+function renderTypes() {
+  const agg = {视频: {cnt:new Set(), m:ZM(), q:ZQ()}, 图文: {cnt:new Set(), m:ZM(), q:ZQ()}, AI: {cnt:new Set(), m:ZM(), q:ZQ()}};
+  for (const m of DATA.materials) {
+    const t = m.type || '视频';
+    const a = agg[t];
+    a.cnt.add(m.name);
+    const {m: mm, q} = aggDays(m.days);
+    addM(a.m, mm); addQ(a.q, q);
+  }
+  const wrap = document.getElementById('typeRow');
+  const defs = [['视频','filter-btn-video'],['图文','filter-btn-tuwen'],['AI','filter-btn-ai']];
+  wrap.innerHTML = defs.map(([t, cls]) => {
+    const a = agg[t];
+    const d = derive(a.m, a.q);
+    return '<div class="kpi-card" style="margin:0;cursor:pointer" data-type="' + t + '">' +
+      '<div class="kpi-label"><span class="person-badge ' + cls + '">' + (t==='AI'?'平台AI':t) + '</span></div>' +
+      '<div class="kpi-value" style="font-size:18px">' + fmtM(d.sp) + '</div>' +
+      '<div class="kpi-sub">' + a.cnt.size + ' 条素材 · 转化 ' + fmtI(d.cv) + ' · 点击率 ' + fmtP(d.mat_click_rate) + '</div>' +
+    '</div>';
+  }).join('');
+}
+function renderPersons() {
+  const map = {};
+  for (const m of DATA.materials) {
+    const p = m.person || '其他';
+    if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ()};
+    map[p].cnt.add(m.name);
+    const {m: mm, q} = aggDays(m.days);
+    addM(map[p].m, mm); addQ(map[p].q, q);
+  }
+  const wrap = document.getElementById('personRow');
+  const list = Object.entries(map).sort((a,b) => b[1].m.sp - a[1].m.sp);
+  wrap.innerHTML = list.map(([p, a]) => {
+    const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
+    const d = derive(a.m, a.q);
+    return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
+      '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
+      '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
+      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 ' + fmtI(d.dp) + '</div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 深转率 ' + fmtP(d.deep_rate) + '</div>' +
+    '</div>';
+  }).join('') || '<div class="empty-state">暂无数据</div>';
+}
 function renderPersonBtns() {
   const persons = ['all', ...new Set(DATA.materials.map(m => m.person || '其他'))];
   const wrap = document.getElementById('personBtns');
   wrap.innerHTML = persons.map(p =>
     '<button class="filter-btn' + (state.person === p ? ' active' : '') + '" data-p="' + p + '">' +
     (p === 'all' ? '全部' : p) + '</button>').join('');
-  wrap.querySelectorAll('.filter-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      state.person = b.dataset.p; renderMaterials(); renderPersonBtns();
-    });
-  });
+  wrap.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', () => {
+    state.person = b.dataset.p; renderMaterials(); renderPersonBtns();
+  }));
 }
-function initFilters() {
-  document.querySelectorAll('.filter-bar .filter-btn[data-t]').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.filter-bar .filter-btn[data-t]').forEach(x => x.classList.remove('active'));
-      b.classList.add('active'); state.type = b.dataset.t; renderMaterials();
-    });
-  });
-  document.getElementById('searchBox').addEventListener('input', e => {
-    state.search = e.target.value.trim(); renderMaterials();
-  });
-}
-// 点编导卡切换筛选
-document.getElementById('personRow').addEventListener('click', e => {
-  const card = e.target.closest('[data-person]');
-  if (!card) return;
-  const p = card.dataset.person;
-  state.person = (state.person === p) ? 'all' : p;
-  renderMaterials(); renderPersonBtns();
-});
-
-/* ---------- 排序 ---------- */
-function bindSort(tableId, keyHolder, dirHolder, rerender) {
-  const short = TABLE_SHORT[tableId];
-  document.querySelectorAll('#' + tableId + ' thead th').forEach(th => {
-    th.addEventListener('click', () => {
-      const k = th.dataset.k;
-      if (!k) return;
-      if (keyHolder[short] === k) dirHolder[short] *= -1;
-      else { keyHolder[short] = k; dirHolder[short] = -1; }
-      document.querySelectorAll('#' + tableId + ' thead th').forEach(x => x.classList.remove('sorted-asc','sorted-desc'));
-      th.classList.add(dirHolder[short] === -1 ? 'sorted-desc' : 'sorted-asc');
-      rerender();
-    });
-  });
+function renderMaterials() {
+  const thead = document.querySelector('#matTable thead');
+  thead.innerHTML = '<tr>' + MAT_COLS.map(c => '<th data-k="' + c[1] + '">' + c[0] + '</th>').join('') + '</tr>';
+  const list = [];
+  for (const m of DATA.materials) {
+    if (state.type !== 'all' && m.type !== state.type) continue;
+    if (state.person !== 'all' && (m.person || '其他') !== state.person) continue;
+    if (state.search && !(m.name || '').toLowerCase().includes(state.search.toLowerCase())) continue;
+    const {m: mm, q} = aggDays(m.days);
+    if (mm.sp <= 0 && mm.im <= 0 && mm.cv <= 0 && mm.ac <= 0 && mm.dp <= 0) continue;
+    const d = derive(mm, q);
+    list.push({name: m.name, type: m.type, person: m.person, content: m.content, ...d});
+  }
+  const sk = sortState['matTable'];
+  if (sk) list.sort((a,b) => sk.dir === 'asc' ? (a[sk.k]||0)-(b[sk.k]||0) : (b[sk.k]||0)-(a[sk.k]||0));
+  else list.sort((a,b) => b.sp - a.sp);
+  document.getElementById('matCount').textContent = list.length;
+  document.getElementById('matBody').innerHTML = list.map(r => '<tr>' +
+    MAT_COLS.map(c => cellHtml(c, r)).join('') + '</tr>').join('') ||
+    '<tr><td colspan="22" class="empty-state">暂无数据</td></tr>';
 }
 
-/* ---------- 视频弹窗 ---------- */
-function openVideo(vid) {
-  const m = DATA.materials.find(x => x.vid === vid);
+/* ---------------- 视频弹窗 ---------------- */
+function openVideo(name) {
+  const m = DATA.materials.find(x => x.name === name);
   if (!m || !m.content) return;
-  document.getElementById('modalTitle').textContent = m.name || m.vid;
+  document.getElementById('modalTitle').textContent = m.name;
   document.getElementById('modalVideo').src = m.content;
   document.getElementById('videoModal').classList.add('open');
 }
@@ -832,17 +850,106 @@ document.getElementById('videoModal').addEventListener('click', e => {
   if (e.target.id === 'videoModal') closeModal();
 });
 
-function renderAll() {
-  renderKpi(); renderCharts(); renderPersons(); renderChips();
-  renderAccounts(); renderPlans(); renderMaterials(); renderPersonBtns();
+/* ---------------- 排序（事件委托，表头一次性绑定） ---------------- */
+const sortState = {};
+function bindSort(tableId) {
+  const thead = document.querySelector('#' + tableId + ' thead');
+  thead.addEventListener('click', e => {
+    const th = e.target.closest('th');
+    if (!th || !th.dataset.k) return;
+    const k = th.dataset.k;
+    const prev = sortState[tableId];
+    const dir = (prev && prev.k === k && prev.dir === 'desc') ? 'asc' : 'desc';
+    sortState[tableId] = {k, dir};
+    thead.querySelectorAll('th').forEach(x => x.classList.remove('sorted-asc','sorted-desc'));
+    th.classList.add('sorted-' + dir);
+    if (tableId === 'dimTable') renderDim();
+    else if (tableId === 'matTable') renderMaterials();
+    else if (tableId === 'acctTable') renderAcctSorted(k, dir);
+  });
+}
+function renderAcctSorted(k, dir) {
+  const rows = DATA.accounts.map(a => ({id: a.id, ...derive(aggDays(a.days).m, ZQ())}));
+  rows.sort((a,b) => dir === 'asc' ? (a[k]||0)-(b[k]||0) : (b[k]||0)-(a[k]||0));
+  const cols = [['账户','id','txt'],['花费','sp','fmtM'],['曝光','im','fmtI'],['行为数','ac','fmtI'],
+    ['行为率','act_rate','fmtP'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],['CPA','cpa','fmtM'],
+    ['深转','dp','fmtI'],['深转率','deep_rate','fmtP'],['有效获客','va','fmtI'],
+    ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI']];
+  document.getElementById('acctBody').innerHTML = rows.map(r => '<tr style="cursor:pointer" data-acct="' + r.id + '">' +
+    cols.map(c => {
+      if (c[2]==='txt') return '<td><span class="person-badge" style="background:#ECFDF5;color:#047857">' + r.id + '</span></td>';
+      const v = r[c[1]]||0;
+      if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
+      if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
+      return '<td class="num">' + (c[2]==='fmtM'?fmtM(v):c[2]==='fmtP'?fmtP(v):fmtI(v)) + '</td>';
+    }).join('') + '</tr>').join('');
+  document.querySelectorAll('#acctBody tr[data-acct]').forEach(tr => tr.addEventListener('click', () => {
+    state.acct = (state.acct === tr.dataset.acct) ? 'all' : tr.dataset.acct;
+    renderAll();
+  }));
 }
 
-buildHead('acctTable', ACCT_COLS);
-buildHead('planTable', PLAN_COLS);
-buildHead('matTable', MAT_COLS);
-bindSort('acctTable', sortKey, sortDir, renderAccounts);
-bindSort('planTable', sortKey, sortDir, renderPlans);
-bindSort('matTable', sortKey, sortDir, renderMaterials);
+/* ---------------- 初始化 ---------------- */
+function initFilters() {
+  document.querySelectorAll('.filter-btn[data-dim]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn[data-dim]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.dim = b.dataset.dim;
+    renderDim();
+  }));
+  document.querySelectorAll('.filter-btn[data-t]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn[data-t]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.type = b.dataset.t;
+    renderMaterials();
+  }));
+  document.getElementById('searchBox').addEventListener('input', e => {
+    state.search = e.target.value.trim();
+    renderMaterials();
+  });
+  document.getElementById('typeRow').addEventListener('click', e => {
+    const card = e.target.closest('[data-type]');
+    if (!card) return;
+    const t = card.dataset.type;
+    state.type = (state.type === t) ? 'all' : t;
+    document.querySelectorAll('.filter-btn[data-t]').forEach(x =>
+      x.classList.toggle('active', x.dataset.t === state.type));
+    renderMaterials();
+  });
+  document.getElementById('personRow').addEventListener('click', e => {
+    const card = e.target.closest('[data-person]');
+    if (!card) return;
+    const p = card.dataset.person;
+    state.person = (state.person === p) ? 'all' : p;
+    renderMaterials();
+    renderPersonBtns();
+  });
+}
+
+function renderAll() {
+  renderChips();
+  renderKpi1();
+  renderKpi2();
+  renderFunnel();
+  renderTrend();
+  renderAcct();
+  renderDim();
+  renderHourly();
+  renderTypes();
+  renderPersons();
+  renderPersonBtns();
+  renderMaterials();
+}
+
+// 表头一次性绑定（thead 内容重渲染不影响事件委托）
+bindSort('acctTable');
+bindSort('dimTable');
+bindSort('matTable');
+// 播放按钮事件委托
+document.getElementById('matBody').addEventListener('click', e => {
+  const btn = e.target.closest('.btn-play');
+  if (btn) openVideo(btn.dataset.vname);
+});
 initFilters();
 renderAll();
 </script>
@@ -851,18 +958,16 @@ renderAll();
 
     html = (html.replace("__MMDD__", REPORT_MMDD)
                 .replace("__CSS__", CSS)
-                .replace("__CALIBER__", CALIBER_HTML)
+                .replace("__CALIBER__", caliber_html())
                 .replace("__CHARTJS__", chart_js)
-                .replace("__DATA_JSON__", data_json)
-                .replace("__COLORS_JS__", colors_js)
-                .replace("__BG_JS__", bg_js))
+                .replace("__DATA_JSON__", json.dumps(data, ensure_ascii=False))
+                .replace("__COLORS_JS__", json.dumps(PERSON_COLORS, ensure_ascii=False))
+                .replace("__BG_JS__", json.dumps(PERSON_BG, ensure_ascii=False)))
     return html
 
 
 def main():
-    data = load_data()
-    print(f"[数据] 账户 {len(data['accounts'])} 个, 计划 {len(data['plans'])} 个, 素材 {len(data['materials'])} 条, 日期 {data['dates'][0]}~{data['dates'][-1]}")
-    html = build_html(data)
+    html = build_html()
     out = REPORTS_DIR / f"快手投放报告_{REPORT_MMDD}.html"
     out.write_text(html, encoding="utf-8")
     print(f"[OK] {out} ({out.stat().st_size/1024:.0f} KB)")

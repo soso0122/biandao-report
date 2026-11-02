@@ -76,10 +76,8 @@ cp reports/素材周期表现.html /Users/soso/Desktop/daily-guide-report/素材
 cd /Users/soso/Desktop/daily-guide-report
 git add -A && git commit -m "更新日报+分页 MMDD" && git push
 
-# 6. 截图确认（系统 Python /usr/bin/python3，Playwright 浏览器在系统环境）
-/usr/bin/python3 scripts/push_daily_report.py
-
-# 7. 只有用户明确说"推送"才加 --send 发企微
+# 注意：不发企微（2026-11-02 起从标准动作删除）；更新完只推线上 GitHub。
+# 补标提示也取消：有未打标的素材不再停下来问用户（用户自己会补，标记为「其他」或忽略直接继续）。
 ```
 
 **注意**：
