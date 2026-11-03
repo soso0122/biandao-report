@@ -402,7 +402,7 @@ const addQ = (t,s) => QKEYS.forEach(k => t[k] += (s[k]||0));
 
 const state = {
   tab: 1,
-  dates: [...DATA.dates],
+  dates: [DATA.dates[DATA.dates.length-1]],  // 默认最新一天（日报口径）
   acct: 'all',
   dim: 'material',
   type: 'all',

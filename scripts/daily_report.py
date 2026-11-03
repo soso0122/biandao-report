@@ -106,6 +106,7 @@ def load_guide(mmdd):
             'ctr': safe_float(r.get('点击率(%)')),
             'cpm': safe_float(r.get('平均千次展现费用(元)')),
             'imp': safe_float(r.get('展示数')),
+            'clicks': safe_float(r.get('点击数')),
             'video_url': r.get('视频链接', ''),
         })
     return out, None
@@ -385,7 +386,9 @@ def _guide_day(rows):
     return {
         'stats': {'spend': round(gs['total_spend'],2), 'conv': gs['total_conv'], 'gao': gs['total_gaoquan'],
                   'cpa': round(gs['avg_cpa'],2), 'deep_rate': round(gs['deep_rate'],2),
-                  'mat_count': gs['mat_count']},
+                  'mat_count': gs['mat_count'],
+                  'imp': round(sum(r['imp'] for r in rows)),
+                  'click': round(sum(r['clicks'] for r in rows))},
         'by_person': by_person,
         'top': top,
     }
@@ -471,6 +474,80 @@ def _bili_day(rows, raw):
         'top': top,
     }
 
+def _load_kuaishou_day_stats():
+    """从 data/kuaishou_shimo_data.json 提取快手渠道日级聚合（口径对齐引导加微）。
+    返回 {MMDD: {'spend','imp','click','conv','gq','materials'}}。
+    快手字段：sp 消耗 / im 展示 / ac 行为≈点击 / cv 转化 / dp 深转（对齐高潜）。"""
+    import json as _json
+    from datetime import datetime as _dt
+    path = DATA_DIR / 'kuaishou_shimo_data.json'
+    if not path.exists():
+        return {}
+    try:
+        with open(path, encoding='utf-8') as f:
+            d = _json.load(f)
+    except Exception:
+        return {}
+    out = {}
+    for acc in d.get('accounts', []):
+        for day, v in (acc.get('days') or {}).items():
+            try:
+                dt = _dt.strptime(day, '%Y-%m-%d')
+                mmdd = f"{dt.month:02d}{dt.day:02d}"
+            except Exception:
+                continue
+            s = out.setdefault(mmdd, {'spend': 0, 'imp': 0, 'click': 0, 'conv': 0, 'gq': 0, 'materials': 0})
+            s['spend'] += float(v.get('sp', 0) or 0)
+            s['imp'] += float(v.get('im', 0) or 0)
+            s['click'] += float(v.get('ac', 0) or 0)
+            s['conv'] += float(v.get('cv', 0) or 0)
+            s['gq'] += float(v.get('dp', 0) or 0)
+    names = set()
+    for m in d.get('materials', []):
+        names.add((m.get('name') or '').strip())
+    for s in out.values():
+        s['materials'] = len(names)
+    return out
+
+
+def _load_kuaishou_top_materials():
+    """快手素材明细：{MMDD: [{'name','spend','conv','click','imp'}, ...]}（按素材名称聚合）。"""
+    import json as _json
+    from datetime import datetime as _dt
+    path = DATA_DIR / 'kuaishou_shimo_data.json'
+    if not path.exists():
+        return {}
+    try:
+        with open(path, encoding='utf-8') as f:
+            d = _json.load(f)
+    except Exception:
+        return {}
+    by_day = {}
+    for m in d.get('materials', []):
+        name = (m.get('name') or '').strip()
+        if not name:
+            continue
+        for day, accs in (m.get('days') or {}).items():
+            try:
+                dt = _dt.strptime(day, '%Y-%m-%d')
+                mmdd = f"{dt.month:02d}{dt.day:02d}"
+            except Exception:
+                continue
+            agg = by_day.setdefault(mmdd, defaultdict(lambda: {'spend': 0, 'conv': 0, 'click': 0, 'imp': 0}))
+            for aid, v in (accs or {}).items():
+                mm = v.get('m', {}) if isinstance(v, dict) else {}
+                agg[name]['spend'] += float(mm.get('sp', 0) or 0)
+                agg[name]['conv'] += float(mm.get('cv', 0) or 0)
+                agg[name]['click'] += float(mm.get('ac', 0) or 0)
+                agg[name]['imp'] += float(mm.get('im', 0) or 0)
+    out = {}
+    for mmdd, agg in by_day.items():
+        mats = [{'name': n, 'spend': round(a['spend'], 2), 'conv': a['conv'],
+                 'click': a['click'], 'imp': a['imp']} for n, a in agg.items()]
+        out[mmdd] = sorted(mats, key=lambda x: -x['spend'])
+    return out
+
+
 def collect_multi_day_data(target_mmdd, days=30):
     """收集 target 往前 N 天的日级数据（有文件才收录），供前端日期多选聚合。"""
     from datetime import datetime, timedelta
@@ -536,7 +613,9 @@ def collect_multi_day_data(target_mmdd, days=30):
             prev['bili'] = day['bili']
         out_days[m] = day
     return {'dates': dates, 'default': target_mmdd, 'days': out_days,
-            'colors': PERSON_COLORS, 'bgs': PERSON_BG}
+            'colors': PERSON_COLORS, 'bgs': PERSON_BG,
+            'kuaishou': _load_kuaishou_day_stats(),
+            'kuaishou_mats': _load_kuaishou_top_materials()}
 
 
 # ──────────────────────────────────────────
@@ -604,6 +683,25 @@ body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
   border-radius:14px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;
 }
 .date-quick button:hover{border-color:var(--primary-light);color:var(--primary)}
+/* 引导加微：渠道切换 + 双渠道对比 */
+.channel-switch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.channel-switch .cs-label{font-size:12px;font-weight:700;color:var(--primary);margin-right:4px}
+.cs-btn{border:1.5px solid var(--border);background:var(--bg);color:var(--text-secondary);
+  border-radius:16px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s}
+.cs-btn:hover{border-color:var(--primary-light);color:var(--primary)}
+.cs-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.guide-cmp-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.guide-cmp-cell{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center}
+.guide-cmp-cell .cc-label{font-size:10px;color:var(--text-muted);margin-bottom:4px;white-space:nowrap}
+.guide-cmp-cell .cc-val{font-size:13px;font-weight:700;font-family:monospace;line-height:1.3}
+.guide-cmp-cell .cc-sub{font-size:9px;color:var(--text-secondary);margin-top:2px}
+.guide-cmp-cell .cc-val.jl{color:var(--primary)}
+.guide-cmp-cell .cc-val.ks{color:#F97316}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:14px 16px;margin-bottom:16px}
+.chart-card .section-title{font-size:13px;font-weight:700;color:var(--primary)}
+@media(max-width:1000px){.guide-cmp-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:640px){.guide-cmp-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){{
   .page{{flex-direction:column}}
   .date-picker{{position:static;max-height:none;flex:none;width:100%}}
@@ -773,20 +871,86 @@ function aggStat(items, keys) {
 }
 
 // ── 引导加微渲染 ──
+let GUIDE_CH = 'all'; // all / juliang / kuaishou
+
+function renderGuideCompare(dates){
+  const box = document.getElementById('guideCompare');
+  const grid = document.getElementById('guideCompareGrid');
+  if (!box || !grid) return;
+  const show = GUIDE_CH === 'all';
+  box.style.display = show ? '' : 'none';
+  if (!show) return;
+  const KS = MULTI.kuaishou || {};
+  let j = {spend:0,imp:0,click:0,conv:0,gq:0}, k = {spend:0,imp:0,click:0,conv:0,gq:0};
+  dates.forEach(function(m){
+    const jd = (MULTI.days[m] && MULTI.days[m].guide) ? MULTI.days[m].guide.data.stats : null;
+    if (jd) { j.spend += jd.spend; j.imp += jd.imp||0; j.click += jd.click||0; j.conv += jd.conv; j.gq += jd.gao; }
+    const kd = KS[m];
+    if (kd) { k.spend += kd.spend; k.imp += kd.imp; k.click += kd.click; k.conv += kd.conv; k.gq += kd.gq; }
+  });
+  const cpa = t => t.conv ? t.spend/t.conv : 0;
+  const ctr = t => t.imp ? t.click/t.imp*100 : 0;
+  const cvr = t => t.click ? t.conv/t.click*100 : 0;
+  const deep = t => t.conv ? t.gq/t.conv*100 : 0;
+  const rows = [
+    ['消耗', fMoney(j.spend), fMoney(k.spend)],
+    ['转化数', fInt(j.conv), fInt(k.conv)],
+    ['转化率', cvr(j).toFixed(2)+'%', cvr(k).toFixed(2)+'%'],
+    ['CPA', '¥'+cpa(j).toFixed(2), '¥'+cpa(k).toFixed(2)],
+    ['高潜成交', fInt(j.gq), '暂未回传'],
+    ['深转率', deep(j).toFixed(1)+'%', '暂未回传'],
+  ];
+  grid.innerHTML = rows.map(function(r){
+    return '<div class="guide-cmp-cell">'
+      + '<div class="cc-label">' + r[0] + '</div>'
+      + '<div class="cc-val jl">' + r[1] + '</div><div class="cc-sub">巨量</div>'
+      + '<div class="cc-val ks">' + r[2] + '</div><div class="cc-sub">快手</div>'
+      + '</div>';
+  }).join('');
+}
+
+function setGuideChannel(ch){
+  GUIDE_CH = ch;
+  document.querySelectorAll('#guideChannelSwitch .cs-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.ch === ch);
+  });
+  renderGuide();
+}
+
 function renderGuide() {
   const el = document.getElementById('mod-guide');
+  const KS = MULTI.kuaishou || {};
+  const selArr = Array.from(SELECTED);
   const items = [];
   SELECTED.forEach(function(m) {
     const d = MULTI.days[m];
     if (d && d.guide) items.push(d.guide.data);
   });
-  if (!items.length) { el.innerHTML = '<div class="no-data">⚠️ 所选日期无引导加微数据</div>'; return; }
-  const spend = items.reduce((s,x)=>s+x.stats.spend,0);
-  const conv  = items.reduce((s,x)=>s+x.stats.conv,0);
-  const gao   = items.reduce((s,x)=>s+x.stats.gao,0);
+  const ksItems = selArr.map(function(m){ return KS[m]; }).filter(Boolean);
+  const hasJuliang = items.length > 0;
+  const hasKuaishou = ksItems.length > 0;
+  if (!hasJuliang && !hasKuaishou) { el.innerHTML = '<div class="no-data">⚠️ 所选日期无引导加微数据</div>'; return; }
+  const chBtn = '<div class="channel-switch" id="guideChannelSwitch" style="margin-bottom:12px">'
+    + '<span class="cs-label">渠道</span>'
+    + '<button class="cs-btn' + (GUIDE_CH==='all'?' active':'') + '" data-ch="all">全部</button>'
+    + '<button class="cs-btn' + (GUIDE_CH==='juliang'?' active':'') + '" data-ch="juliang">巨量</button>'
+    + '<button class="cs-btn' + (GUIDE_CH==='kuaishou'?' active':'') + '" data-ch="kuaishou">快手</button>'
+    + '</div>';
+  const cmpBox = '<div class="chart-card" id="guideCompare" style="margin-bottom:14px">'
+    + '<div class="section-title" style="margin-bottom:10px">🆚 巨量 vs 快手（选中日期合计）</div>'
+    + '<div class="guide-cmp-grid" id="guideCompareGrid"></div></div>';
+  // 各渠道合计
+  let jl = {spend:0,imp:0,click:0,conv:0,gq:0};
+  items.forEach(function(d){ jl.spend += d.stats.spend; jl.imp += d.stats.imp||0; jl.click += d.stats.click||0; jl.conv += d.stats.conv; jl.gq += d.stats.gao; });
+  let ks = {spend:0,imp:0,click:0,conv:0,gq:0};
+  ksItems.forEach(function(s){ ks.spend += s.spend; ks.imp += s.imp; ks.click += s.click; ks.conv += s.conv; ks.gq += s.gq; });
+  let spend, conv, gao;
+  if (GUIDE_CH === 'kuaishou') { spend = ks.spend; conv = ks.conv; gao = ks.gq; }
+  else if (GUIDE_CH === 'juliang') { spend = jl.spend; conv = jl.conv; gao = jl.gq; }
+  else { spend = jl.spend + ks.spend; conv = jl.conv + ks.conv; gao = jl.gq; }
   const cpa   = conv ? spend/conv : 0;
   const deep  = conv ? gao/conv*100 : 0;
-  // 素材名×人物 聚合（多日同名素材累加）
+  // 素材名×人物 聚合（多日同名素材累加，仅巨量）
   const matMap = new Map();
   items.forEach(function(d) {
     (d.top||[]).forEach(function(r) {
@@ -798,7 +962,7 @@ function renderGuide() {
   });
   const mats = Array.from(matMap.values()).sort((a,b)=>b.spend-a.spend).slice(0,10);
   mats.forEach(function(o) { o.cpa = o.conv ? o.spend/o.conv : 0; });
-  // 人物聚合
+  // 人物聚合（仅巨量）
   const pMap = new Map();
   items.forEach(function(d) {
     Object.keys(d.by_person||{}).forEach(function(p) {
@@ -813,11 +977,21 @@ function renderGuide() {
   const single = sel.length === 1 ? MULTI.days[sel[0]] : null;
   const prevSingle = single && sel[0] !== MULTI.dates[0] ? MULTI.days[MULTI.dates[MULTI.dates.indexOf(sel[0])-1]] : null;
   const prevStats = prevSingle && prevSingle.guide ? prevSingle.guide.data.stats : null;
-  const dSpend = deltaPair(spend, prevStats ? prevStats.spend : null, 'money');
-  const dConv  = deltaPair(conv,  prevStats ? prevStats.conv  : null, 'int');
-  const dCpa   = deltaPair(cpa,   prevStats ? prevStats.cpa   : null, 'money');
-  const dGao   = deltaPair(gao,   prevStats ? prevStats.gao   : null, 'int');
-  const dDeep  = deltaPair(deep,  prevStats ? prevStats.deep_rate : null, 'pct');
+  // 单渠道环比：只用同渠道昨日
+  let pSpend = null, pConv = null, pCpa = null, pGao = null, pDeep = null;
+  if (sel.length === 1) {
+    if (GUIDE_CH === 'juliang' && prevStats) { pSpend=prevStats.spend; pConv=prevStats.conv; pCpa=prevStats.cpa; pGao=prevStats.gao; pDeep=prevStats.deep_rate; }
+    else if (GUIDE_CH === 'kuaishou') {
+      const idx = sel[0] !== undefined ? (function(){ const di = MULTI.dates.indexOf(sel[0]); return di > 0 ? MULTI.dates[di-1] : null; })() : null;
+      const pks = idx ? KS[idx] : null;
+      if (pks) { pSpend=pks.spend; pConv=pks.conv; pCpa=pks.conv?pks.spend/pks.conv:0; pGao=pks.gq; pDeep=pks.conv?pks.gq/pks.conv*100:0; }
+    }
+  }
+  const dSpend = deltaPair(spend, pSpend, 'money');
+  const dConv  = deltaPair(conv,  pConv,  'int');
+  const dCpa   = deltaPair(cpa,   pCpa,   'money');
+  const dGao   = deltaPair(gao,   pGao,   'int');
+  const dDeep  = deltaPair(deep,  pDeep,  'pct');
 
   let personRows = '';
   persons.forEach(function([p, o]) {
@@ -839,17 +1013,57 @@ function renderGuide() {
       + '<td class="num hi">' + (r.gao ? fInt(r.gao) : '—') + '</td></tr>';
   });
   const selCount = SELECTED.size;
-  const matSub = selCount === 1 ? (items[0].stats.mat_count + ' 条素材') : '';
-  el.innerHTML = '<div class="kpi-grid">'
+  let matSub = '';
+  if (selCount === 1) {
+    if (GUIDE_CH === 'kuaishou') matSub = (ksItems[0] ? ksItems[0].materials : 0) + ' 条素材';
+    else if (GUIDE_CH === 'juliang') matSub = items[0].stats.mat_count + ' 条素材';
+    else matSub = items[0].stats.mat_count + (ksItems[0] ? ksItems[0].materials : 0) + ' 条素材';
+  }
+  // 快手 Top 素材（消耗排序，多日聚合）
+  let ksMatRows = '';
+  if (GUIDE_CH === 'kuaishou') {
+    const ksm = new Map();
+    selArr.forEach(function(m){
+      (MULTI.kuaishou_mats || {})[m] && ((MULTI.kuaishou_mats || {})[m] || []).forEach(function(r){
+        const o = ksm.get(r.name) || {name:r.name, spend:0, conv:0};
+        o.spend += r.spend; o.conv += r.conv;
+        ksm.set(r.name, o);
+      });
+    });
+    const kstop = Array.from(ksm.values()).sort((a,b)=>b.spend-a.spend).slice(0,10);
+    ksMatRows = kstop.map(function(r){
+      return '<tr><td class="mat-name" title="' + esc(r.name) + '">' + esc(r.name) + '</td>'
+        + '<td class="num">' + fMoney(r.spend) + '</td>'
+        + '<td class="num">' + (r.conv ? fInt(r.conv) : '—') + '</td>'
+        + '<td class="num">' + (r.conv ? fMoney(r.spend/r.conv) : '—') + '</td></tr>';
+    }).join('');
+  }
+  const ksMatTable = GUIDE_CH === 'kuaishou'
+    ? '<div class="table-label">Top 素材（消耗排序 · 快手）</div>'
+      + '<div class="table-wrap"><table><thead><tr><th>素材名称</th><th>消耗</th><th>转化</th><th>CPA</th></tr></thead><tbody>' + ksMatRows + '</tbody></table></div>'
+    : '';
+  const jlMatTable = GUIDE_CH === 'juliang'
+    ? '<div class="table-label">Top 素材（消耗排序 · 巨量）</div>'
+      + '<div class="table-wrap"><table><thead><tr><th>人物</th><th>素材名称</th><th>消耗</th><th>转化</th><th>CPA</th><th>高潜 ★</th></tr></thead><tbody>' + matRows + '</tbody></table></div>'
+    : '';
+  el.innerHTML = chBtn + cmpBox
+    + '<div class="kpi-grid">'
     + kpiCard('总消耗', fMoney(spend), matSub, dSpend)
     + kpiCard('总转化', fInt(conv), '次', dConv)
     + kpiCard('平均 CPA', fMoney(cpa), null, dCpa)
-    + kpiCard('高潜成交', fInt(gao), '深度转化', dGao, true)
-    + kpiCard('深转率', fPct(deep), '高潜/转化', dDeep, true)
+    + (GUIDE_CH === 'kuaishou'
+        ? kpiCard('高潜成交', '—', '快手暂未回传', null, true)
+        : kpiCard('高潜成交', fInt(jl.gq), GUIDE_CH === 'all' ? '巨量口径·快手暂未回传' : '深度转化', dGao, true))
+    + (GUIDE_CH === 'kuaishou'
+        ? kpiCard('深转率', '—', '快手暂未回传', null, true)
+        : kpiCard('深转率', fPct(deep), GUIDE_CH === 'all' ? '巨量口径·快手暂未回传' : '高潜/转化', dDeep, true))
     + '</div>'
-    + '<div class="table-wrap"><table><thead><tr><th>人物</th><th>消耗</th><th>转化</th><th>高潜</th><th>CPA</th><th>在投素材</th></tr></thead><tbody>' + personRows + '</tbody></table></div>'
-    + '<div class="table-label">Top 素材（消耗排序）</div>'
-    + '<div class="table-wrap"><table><thead><tr><th>人物</th><th>素材名称</th><th>消耗</th><th>转化</th><th>CPA</th><th>高潜 ★</th></tr></thead><tbody>' + matRows + '</tbody></table></div>';
+    + jlMatTable
+    + ksMatTable;
+  renderGuideCompare(sel);
+  el.querySelectorAll('#guideChannelSwitch .cs-btn').forEach(function(b){
+    b.addEventListener('click', function(){ setGuideChannel(b.dataset.ch); });
+  });
 }
 
 function deltaPair(curr, prev, fmt, invertColor) {
