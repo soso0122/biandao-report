@@ -114,6 +114,7 @@ letter-spacing:.4px;margin-bottom:5px}
 .kpi-value{font-size:20px;font-weight:700;color:var(--primary);font-family:'Fira Code',monospace;line-height:1.1}
 .kpi-card.accent .kpi-value{color:var(--accent)}
 .kpi-sub{font-size:10.5px;color:var(--text-muted);margin-top:3px}
+.kpi-sub .open-rate{font-size:13px;font-weight:700;color:var(--success)}
 .tc-diff{font-weight:600;display:inline-block;font-size:10px}
 .tc-diff.inc{color:var(--success)}
 .tc-diff.dec{color:var(--danger)}
@@ -550,10 +551,10 @@ function renderKpi1() {
     ['深转数', DEEP_PENDING ? '未回传' : fmtI(t.dp), DEEP_PENDING ? '快手暂未回传' : '深度转化', false],
     ['深转率', DEEP_PENDING ? '未回传' : fmtP(t.deep_rate), DEEP_PENDING ? '快手暂未回传' : '深转÷转化', false],
     ['有效获客', fmtI(t.va), '有效获客数', false],
-    ['开口1次', fmtI(t.o1), '企微开口', true],
-    ['开口3次', fmtI(t.o3), '后续开口', false],
-    ['开口5次', fmtI(t.o5), '后续开口', false],
-    ['开口10次', fmtI(t.o10), '后续开口', false],
+    ['开口1次', fmtI(t.o1), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o1/t.va*100) : fmtP(0)) + '</b>（开口1次/有效获客）', true],
+    ['开口3次', fmtI(t.o3), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o3/t.va*100) : fmtP(0)) + '</b>（开口3次/有效获客）', false],
+    ['开口5次', fmtI(t.o5), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o5/t.va*100) : fmtP(0)) + '</b>（开口5次/有效获客）', false],
+    ['开口10次', fmtI(t.o10), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o10/t.va*100) : fmtP(0)) + '</b>（开口10次/有效获客）', false],
   ];
   g.innerHTML = rows.map(r => kpiCard(r[0], r[1], r[2], r[3])).join('');
 }
