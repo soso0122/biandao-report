@@ -423,6 +423,7 @@ function derive(m, q) {
   r.cvr = m.ac ? m.cv/m.ac*100 : 0;
   r.deep_rate = m.cv ? m.dp/m.cv*100 : 0;
   r.cpa = m.cv ? m.sp/m.cv : 0;
+  r.o10r = m.va ? m.o10/m.va*100 : 0;
   r.mat_click_rate = q.qmi ? m.ac/q.qmi*100 : 0;
   r.cover_rate = q.ce ? q.cc/q.ce*100 : 0;
   r.p3 = q.qi ? q.p3/q.qi : 0;
@@ -677,10 +678,12 @@ function renderAcct() {
 const DIM_COLS = [['名称','name','txt'],['花费','sp','fmtM'],['曝光','im','fmtI'],['行为数','ac','fmtI'],
   ['行为率','act_rate','fmtP'],['转化','cv','fmtI'],['转化率','cvr','fmtP'],['CPA','cpa','fmtM'],
   ['深转','dp','fmtI'],['深转率','deep_rate','fmtP'],['有效获客','va','fmtI'],
-  ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI']];
+  ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI'],
+  ['开口10率','o10r','o10rate']];
 const MAT_COLS = [['素材名称','name','name'],['类型','type','type'],['编导','person','person'],
   ['花费','sp','fmtM'],['转化','cv','fmtI'],['转化成本','cpa','fmtM'],
   ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI'],
+  ['开口10率','o10r','o10rate'],
   ['深转','dp','fmtI'],['有效获客','va','fmtI'],
   ['封面曝光','ce','fmtI'],['封面点击率','cover_rate','fmtP'],
   ['素材曝光','qmi','fmtI'],['素材点击率','mat_click_rate','fmtP'],
@@ -705,6 +708,10 @@ function cellHtml(c, r) {
   if (DEEP_PENDING && c[1]==='dp') return '<td class="num num-zero">未回传</td>';
   if (DEEP_PENDING && c[1]==='deep_rate') return '<td class="num num-zero">未回传</td>';
   const v = r[c[1]]||0;
+  if (c[2]==='o10rate') {
+    if (!v) return '<td class="num num-zero">0.00%</td>';
+    return '<td class="num" style="color:#0EA5E9;font-weight:600">' + fmtP(v) + '</td>';
+  }
   if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
   if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
   return '<td class="num">' + (c[2]==='fmtM'?fmtM(v):c[2]==='fmtP'?fmtP(v):fmtI(v)) + '</td>';
