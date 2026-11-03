@@ -562,14 +562,17 @@ function renderKpi2() {
   const names = new Set();
   let tot = ZM(), tq = ZQ();
   for (const m of DATA.materials) {
-    names.add(m.name);
     const {m: mm, q} = aggDays(m.days);
-    addM(tot, mm); addQ(tq, q);
+    // 素材总数与明细表同口径联动：所选日期内有投放数据的素材按名称去重
+    if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
+      names.add(m.name);
+      addM(tot, mm); addQ(tq, q);
+    }
   }
   const t = derive(tot, tq);
   const g = document.getElementById('kpiGrid2');
   const rows = [
-    ['素材总数', fmtI(names.size), '按名称去重', false],
+    ['素材总数', fmtI(names.size), '按名称去重 · 随日期筛选', false],
     ['花费', fmtM(t.sp), '素材花费', false],
     ['素材曝光', fmtI(t.qmi), '素材曝光数', false],
     ['素材点击率', fmtP(t.mat_click_rate), '行为÷素材曝光', false],
@@ -876,9 +879,12 @@ function renderTypes() {
   for (const m of DATA.materials) {
     const t = m.type || '视频';
     const a = agg[t];
-    a.cnt.add(m.name);
     const {m: mm, q} = aggDays(m.days);
-    addM(a.m, mm); addQ(a.q, q);
+    // 条数随日期联动：所选日期内有投放数据的素材才计数
+    if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
+      a.cnt.add(m.name);
+      addM(a.m, mm); addQ(a.q, q);
+    }
   }
   const wrap = document.getElementById('typeRow');
   const defs = [['视频','filter-btn-video'],['图文','filter-btn-tuwen'],['AI','filter-btn-ai']];
@@ -897,9 +903,12 @@ function renderPersons() {
   for (const m of DATA.materials) {
     const p = m.person || '其他';
     if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ()};
-    map[p].cnt.add(m.name);
     const {m: mm, q} = aggDays(m.days);
-    addM(map[p].m, mm); addQ(map[p].q, q);
+    // 条数随日期联动：所选日期内有投放数据的素材才计数
+    if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
+      map[p].cnt.add(m.name);
+      addM(map[p].m, mm); addQ(map[p].q, q);
+    }
   }
   const wrap = document.getElementById('personRow');
   const list = Object.entries(map).sort((a,b) => b[1].m.sp - a[1].m.sp);

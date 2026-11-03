@@ -365,10 +365,11 @@ def main():
                 mt["type"] = "视频"
             else:
                 mt["type"] = "图文"
-            if mt["type"] == "视频":
-                mt["person"] = next((p for p in PERSONS if p in n), "其他")
-            else:
+            if mt["type"] == "AI":
                 mt["person"] = "其他"
+            else:
+                # 视频与图文都按名称匹配编导（图文不能一律归其他）
+                mt["person"] = next((p for p in PERSONS if p in n), "其他")
 
         dates = sorted({d for a in accounts.values() for d in a})
 
