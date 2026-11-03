@@ -409,6 +409,9 @@ const state = {
   person: 'all',
   search: '',
 };
+// 快手深转暂未回传（导出表里深转=转化，无参考意义）：显示层统一展示「未回传」。
+// 等快手回传深转后，用户告知，将本行删掉即恢复真实值。
+const DEEP_PENDING = true;
 const selDates = () => new Set(state.dates);
 
 /* 从嵌套 days 聚合指标+质量。支持三种结构：
@@ -544,8 +547,8 @@ function renderKpi1() {
     ['转化数', fmtI(t.cv), diff(t.cv, prevTot.cv) + '转化(计费)', false],
     ['转化率', fmtP(t.cvr), '转化÷行为', false],
     ['平均CPA', fmtM(t.cpa), '花费÷转化', false],
-    ['深转数', fmtI(t.dp), '深度转化', false],
-    ['深转率', fmtP(t.deep_rate), '深转÷转化', false],
+    ['深转数', DEEP_PENDING ? '未回传' : fmtI(t.dp), DEEP_PENDING ? '快手暂未回传' : '深度转化', false],
+    ['深转率', DEEP_PENDING ? '未回传' : fmtP(t.deep_rate), DEEP_PENDING ? '快手暂未回传' : '深转÷转化', false],
     ['有效获客', fmtI(t.va), '有效获客数', false],
     ['开口1次', fmtI(t.o1), '企微开口', true],
     ['开口3次', fmtI(t.o3), '后续开口', false],
@@ -586,7 +589,7 @@ function renderFunnel() {
     addM(tot, aggDays(a.days).m);
   }
   const stages = [
-    ['转化', tot.cv], ['深转', tot.dp],
+    ['转化', tot.cv], ['深转(未回传)', DEEP_PENDING ? 0 : tot.dp],
     ['有效获客', tot.va], ['开口1次', tot.o1], ['开口3次', tot.o3],
     ['开口5次', tot.o5], ['开口10次', tot.o10],
   ];
@@ -634,7 +637,7 @@ function renderTrend() {
     data: {labels: s.labels, datasets: [
       {type:'bar', label:'花费', data:s.spend, backgroundColor:'#BFDBFE', borderRadius:3, yAxisID:'y'},
       {type:'line', label:'转化', data:s.conv, borderColor:'#3B82F6', tension:.3, pointRadius:2, yAxisID:'y1'},
-      {type:'line', label:'深转', data:s.deep, borderColor:'#F59E0B', tension:.3, pointRadius:2, yAxisID:'y1'}
+      {type:'line', label: DEEP_PENDING ? '深转(未回传)' : '深转', data: DEEP_PENDING ? s.deep.map(() => 0) : s.deep, borderColor:'#F59E0B', tension:.3, pointRadius:2, yAxisID:'y1'}
     ]},
     options: Object.assign({}, base, {scales: {
       y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
@@ -673,6 +676,7 @@ function renderAcct() {
   body.innerHTML = rows.map(r => '<tr style="cursor:pointer" data-acct="' + r.id + '">' +
     cols.map(c => {
       if (c[2]==='txt') return '<td><span class="person-badge" style="background:#ECFDF5;color:#047857">' + r.id + '</span></td>';
+      if (DEEP_PENDING && (c[1]==='dp' || c[1]==='deep_rate')) return '<td class="num num-zero">未回传</td>';
       const v = r[c[1]]||0;
       if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
       if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
@@ -713,6 +717,8 @@ function cellHtml(c, r) {
     ? '<td><button class="btn-play" data-vname="' + r.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">▶</button></td>'
     : '<td class="num-zero">—</td>';
   if (c[2]==='txt') return '<td>' + r[c[1]] + '</td>';
+  if (DEEP_PENDING && c[1]==='dp') return '<td class="num num-zero">未回传</td>';
+  if (DEEP_PENDING && c[1]==='deep_rate') return '<td class="num num-zero">未回传</td>';
   const v = r[c[1]]||0;
   if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
   if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
@@ -902,8 +908,8 @@ function renderPersons() {
     return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
-      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 ' + fmtI(d.dp) + '</div>' +
-      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 深转率 ' + fmtP(d.deep_rate) + '</div>' +
+      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 ' + (DEEP_PENDING ? '未回传' : fmtI(d.dp)) + '</div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 深转率 ' + (DEEP_PENDING ? '未回传' : fmtP(d.deep_rate)) + '</div>' +
     '</div>';
   }).join('') || '<div class="empty-state">暂无数据</div>';
 }
@@ -986,6 +992,7 @@ function renderAcctSorted(k, dir) {
   document.getElementById('acctBody').innerHTML = rows.map(r => '<tr style="cursor:pointer" data-acct="' + r.id + '">' +
     cols.map(c => {
       if (c[2]==='txt') return '<td><span class="person-badge" style="background:#ECFDF5;color:#047857">' + r.id + '</span></td>';
+      if (DEEP_PENDING && (c[1]==='dp' || c[1]==='deep_rate')) return '<td class="num num-zero">未回传</td>';
       const v = r[c[1]]||0;
       if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
       if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
