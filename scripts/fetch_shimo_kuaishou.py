@@ -69,6 +69,14 @@ def excel_dt(v):
     return None
 
 
+def hour_of(dt):
+    """四舍五入取小时：石墨时间戳经 Excel 序列浮点换算后，
+    整点值会偏差成 16:59:59.9997 之类，截断会把 X:00 归进上一小时。
+    四舍五入到最近整点（2026-11-04 修复）。"""
+    total_sec = dt.hour * 3600 + dt.minute * 60 + dt.second
+    return int(round(total_sec / 3600)) % 24
+
+
 def fnum(v):
     try:
         x = float(str(v).replace(",", "").replace("%", ""))
@@ -275,7 +283,7 @@ def main():
                 for r in h_recs:
                     dt_str = r.get("分时", "")
                     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-                    d, h = dt.strftime("%Y-%m-%d"), dt.hour
+                    d, h = dt.strftime("%Y-%m-%d"), hour_of(dt)
                     m = hourly_acc.setdefault(aid, {}).setdefault(d, {}).setdefault(h, zero_m())
                     add_m(m, r)
                 print(f"[石墨] 账户{aid} 分时: {len(h_recs)} 行")
@@ -288,7 +296,7 @@ def main():
                 for r in m_recs:
                     dt_str = r.get("分时", "")
                     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-                    d, h = dt.strftime("%Y-%m-%d"), dt.hour
+                    d, h = dt.strftime("%Y-%m-%d"), hour_of(dt)
                     q = hourly_mat.setdefault(aid, {}).setdefault(d, {}).setdefault(h, zero_q())
                     imp = fnum(r.get("曝光数"))
                     q["qi"] += imp
