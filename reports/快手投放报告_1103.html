@@ -825,7 +825,7 @@ function renderHourly() {
   // 差：转化率 < 平均×0.85 且 花费 ≥ 平均×0.5（花了钱但转化差）
   const active = hours.filter(h => h.cv > 0 || h.sp > 0);
   document.getElementById('hourCaliber').innerHTML =
-    '判定口径：先取「有投放的时段」算均值，<b>🟢 优质时段</b> = 转化率 ≥ 均值×1.15 且 花费 ≥ 均值×0.5；' +
+    '判定口径：先取「有花费的时段」算均值，<b>🟢 优质时段</b> = 转化率 ≥ 均值×1.15 且 花费 ≥ 均值×0.5；' +
     '<b>🔴 差时段</b> = 转化率 < 均值×0.85 且 花费 ≥ 均值×0.5（花了钱但转化差，可考虑不投）；其余不标记。';
   if (active.length) {
     const avgCvr = active.reduce((s,h) => s + h.cvr, 0) / active.length;
