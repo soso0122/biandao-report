@@ -39,7 +39,7 @@ def extract_text():
     """从 data/kuaishou_shimo_data.json 取最新一天全账户 KPI"""
     data = json.load(open(DATA_JSON, encoding='utf-8'))
     latest = sorted(data['dates'])[-1]
-    m = {k: 0.0 for k in ('sp', 'cv', 'o1', 'o3', 'o5', 'o10')}
+    m = {k: 0.0 for k in ('sp', 'cv', 'o1', 'o3', 'o5', 'o10', 'va')}
     for a in data['accounts']:
         day = a['days'].get(latest)
         if not day:
@@ -48,12 +48,17 @@ def extract_text():
             m[k] += day.get(k, 0.0)
     cpa = m['sp'] / m['cv'] if m['cv'] else 0.0
     date = f"{latest[5:7]}/{latest[8:10]}"
+    # 开口各级：超过有效获客的部分=回流，自动标注
+    def open_part(key):
+        n = int(m[key])
+        back = max(0, n - int(m['va']))
+        return f"{n}（含回流 {back}）" if back > 0 else str(n)
     text = (
         f"📊 {date} 快手投放日报\n\n"
         f"💰 消耗：¥{m['sp']:,.2f}\n"
         f"🎯 转化：{int(m['cv'])}\n"
         f"💵 CPA：¥{cpa:,.2f}\n"
-        f"💬 企微开口：1次 {int(m['o1'])} ｜ 3次 {int(m['o3'])} ｜ 5次 {int(m['o5'])} ｜ 10次 {int(m['o10'])}\n\n"
+        f"💬 企微开口：1次 {open_part('o1')} ｜ 3次 {open_part('o3')} ｜ 5次 {open_part('o5')} ｜ 10次 {open_part('o10')}\n\n"
         f"点开查看完整明细 👉 https://soso0122.github.io/kuaishou-report/"
     )
     return text

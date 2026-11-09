@@ -237,6 +237,8 @@ def caliber_html(suffix=""):
     <div class="caliber-item"><b>行为数</b>：快手的「行为」约等于素材点击。行为率 = 行为数 ÷ 曝光数。</div>
     <div class="caliber-item"><b>转化率</b> = 转化数(计费时间) ÷ 行为数；<b>深转率</b> = 深转数 ÷ 转化数。</div>
     <div class="caliber-item"><b>CPA</b> = 花费 ÷ 转化数；<b>转化成本</b> = 花费 ÷ 转化数（素材维度）。</div>
+    <div class="caliber-item"><b>开口率</b> = 开口N次 ÷ 有效获客（快手口径下开口含历史用户回流，可能 >100%）。</div>
+    <div class="caliber-item"><b>回流开口</b> = 当日开口1次 − 当日有效获客（历史转化用户的回访开口；素材当日无有效获客时其开口全部计为回流）。</div>
     <div class="caliber-item"><b>漏斗</b>：曝光 → 行为 → 转化 → 深转 → 有效获客 → 企微开口 1/3/5/10 次。</div>
     <div class="caliber-item"><b>素材分类</b>：素材内容有视频链接=视频；名称=AIGC=平台AI；名称含图文集合_=图文。</div>
     <div class="caliber-item"><b>编导归属</b>：名称匹配已知编导/剪辑（小敏、嘉丽、浩正、雅迪、婷玉、魏怡、瑞晨、国星），其余「其他」。</div>
@@ -443,6 +445,8 @@ function derive(m, q) {
   r.deep_rate = m.cv ? m.dp/m.cv*100 : 0;
   r.cpa = m.cv ? m.sp/m.cv : 0;
   r.o10r = m.va ? m.o10/m.va*100 : 0;
+  // 回流开口：当日开口1次超过有效获客的部分（历史用户回流/非获客开口）
+  r.back_open = Math.max(0, m.o1 - m.va);
   r.mat_click_rate = q.qmi ? m.ac/q.qmi*100 : 0;
   r.cover_rate = q.ce ? q.cc/q.ce*100 : 0;
   r.p3 = q.qi ? q.p3/q.qi : 0;
@@ -552,7 +556,7 @@ function renderKpi1() {
     ['深转数', DEEP_PENDING ? '未回传' : fmtI(t.dp), DEEP_PENDING ? '快手暂未回传' : '深度转化', false],
     ['深转率', DEEP_PENDING ? '未回传' : fmtP(t.deep_rate), DEEP_PENDING ? '快手暂未回传' : '深转÷转化', false],
     ['有效获客', fmtI(t.va), '有效获客数', false],
-    ['开口1次', fmtI(t.o1), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o1/t.va*100) : fmtP(0)) + '</b>（开口1次/有效获客）', true],
+    ['开口1次', fmtI(t.o1), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o1/t.va*100) : fmtP(0)) + '</b>（开口1次/有效获客）· 回流开口 ' + fmtI(Math.max(0, t.o1 - t.va)), true],
     ['开口3次', fmtI(t.o3), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o3/t.va*100) : fmtP(0)) + '</b>（开口3次/有效获客）', false],
     ['开口5次', fmtI(t.o5), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o5/t.va*100) : fmtP(0)) + '</b>（开口5次/有效获客）', false],
     ['开口10次', fmtI(t.o10), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o10/t.va*100) : fmtP(0)) + '</b>（开口10次/有效获客）', false],
@@ -703,6 +707,7 @@ const MAT_COLS = [['素材名称','name','name'],['类型','type','type'],['编�
   ['花费','sp','fmtM'],['转化','cv','fmtI'],['转化成本','cpa','fmtM'],
   ['开口1','o1','fmtI'],['开口3','o3','fmtI'],['开口5','o5','fmtI'],['开口10','o10','fmtI'],
   ['开口10率','o10r','o10rate'],
+  ['回流开口','back_open','back'],
   ['深转','dp','fmtI'],['有效获客','va','fmtI'],
   ['封面曝光','ce','fmtI'],['封面点击率','cover_rate','fmtP'],
   ['素材曝光','qmi','fmtI'],['素材点击率','mat_click_rate','fmtP'],
@@ -730,6 +735,10 @@ function cellHtml(c, r) {
   if (c[2]==='o10rate') {
     if (!v) return '<td class="num num-zero">0.00%</td>';
     return '<td class="num" style="color:#0EA5E9;font-weight:600">' + fmtP(v) + '</td>';
+  }
+  if (c[2]==='back') {
+    if (!v) return '<td class="num num-zero">0</td>';
+    return '<td class="num" style="color:#0EA5E9;font-weight:600">+' + fmtI(v) + '</td>';
   }
   if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
   if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
