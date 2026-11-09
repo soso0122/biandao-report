@@ -308,8 +308,11 @@ def main():
                     q["fn"] += fnum(r.get("完播率")) * imp
                 print(f"[石墨] 账户{aid} 分时素材: {len(m_recs)} 行")
 
-        # ---------- 聚合：账户 / 计划 / 组 / 素材（分日，账户表为主，按账户拆分） ----------
-        accounts, plans, groups, materials = {}, {}, {}, {}
+        # ---------- 聚合：账户 / 计划 / 组（账户表，保持原有粒度，不拆AI） ----------
+        accounts, plans, groups = {}, {}, {}
+        # 账户表组级行：只存深转/有效获客（素材表没有的两列），
+        # 后续按 (日,账户,组名称,素材名称) 映射到素材表行
+        acc_va_dp = {}
         for r in acc_recs:
             d = r.get("分日", "")[:10]
             if not d:
@@ -318,7 +321,6 @@ def main():
             plan = str(r.get("计划名称") or "").strip() or "未命名计划"
             grp = str(r.get("组名称") or "").strip() or "未命名组"
             name = str(r.get("素材名称") or "").strip()
-            content = str(r.get("素材内容") or "").strip()
             if not name:
                 continue
 
@@ -331,27 +333,48 @@ def main():
             gr = groups.setdefault(grp, {"days": {}})
             add_m(gr["days"].setdefault(d, {}).setdefault(acct, zero_m()), r)
 
-            mt = materials.setdefault(name, {"type": None, "person": None, "content": "",
-                                             "days": {}})
-            md = mt["days"].setdefault(d, {})
-            mc = md.setdefault(acct, {"m": zero_m(), "q": zero_q()})
-            add_m(mc["m"], r)
-            if content:
-                mt["content"] = content
+            key = (d, acct, grp, name)
+            va = fnum(r.get("有效获客数（计费时间）"))
+            dp = fnum(r.get("深度转化数(计费时间)"))
+            if va or dp:
+                entry = acc_va_dp.setdefault(key, {"va": 0.0, "dp": 0.0})
+                entry["va"] += va
+                entry["dp"] += dp
 
-        # 素材表：播放质量并入素材 days（按素材名+账户，与账户表对齐）
+        # ---------- 素材聚合（以素材表为准，按「创意名称」精确拆分系统自动） ----------
+        # 用户 2026-11-09 规则：创意名称含「系统自动」→ 平台AI；人工创意按原规则分析。
+        # 同名素材拆两条：正常（人工创意）+ 平台AI（系统自动创意）。
+        materials = {}
         for r in mat_recs:
             d = r.get("分日", "")[:10]
             if not d:
                 continue
             name = str(r.get("素材名称") or "").strip()
             acct = str(r.get("账户信息ID") or "").strip() or "未知账户"
+            creative = str(r.get("创意名称") or "").strip()
+            grp = str(r.get("组名称") or "").strip() or "未命名组"
             if not name:
                 continue
-            imp = fnum(r.get("曝光数"))
-            mt = materials.setdefault(name, {"type": None, "person": None, "content": "",
+            is_auto = "系统自动" in creative
+            mkey = (name, is_auto)
+            mt = materials.setdefault(mkey, {"name": name, "is_auto": is_auto,
+                                             "type": None, "person": None, "content": "",
                                              "days": {}})
             mc = mt["days"].setdefault(d, {}).setdefault(acct, {"m": zero_m(), "q": zero_q()})
+            # 素材指标（素材表含这些列，按创意名称拆分精确）
+            for col, k in (("花费(元)", "sp"), ("行为数", "ac"), ("曝光数", "im"),
+                           ("转化数(计费时间)", "cv"),
+                           ("企微开口1次数量", "o1"), ("企微开口3次数量", "o3"),
+                           ("企微开口5次数量", "o5"), ("企微开口10次数量", "o10")):
+                if col in r:
+                    mc["m"][k] += fnum(r[col])
+            # 深转/有效获客从账户表组级行映射（组名称近似，仅作开口率分母等辅助用途）
+            vd = acc_va_dp.get((d, acct, grp, name))
+            if vd:
+                mc["m"]["dp"] += vd["dp"]
+                mc["m"]["va"] += vd["va"]
+            # 播放质量
+            imp = fnum(r.get("曝光数"))
             q = mc["q"]
             q["qi"] += imp
             q["qmi"] += fnum(r.get("素材曝光数"))
@@ -363,11 +386,12 @@ def main():
             if not mt["content"]:
                 mt["content"] = str(r.get("素材内容") or "").strip()
 
-        # ---------- 分类：类型 / 编导（2026-11-02 定：只认 4 人，其余全部归「其他」） ----------
+        # ---------- 分类：类型 / 编导 ----------
+        # 系统自动创意 → 平台AI；人工创意按原规则（AIGC→AI；内容非空→视频；图文集合_→图文；否则图文）
         PERSONS = ["嘉丽", "小敏", "雅迪", "瑞晨"]
-        for name, mt in materials.items():
+        for (name, is_auto), mt in materials.items():
             n = name.strip()
-            if n.upper() == "AIGC":
+            if is_auto or n.upper() == "AIGC":
                 mt["type"] = "AI"
             elif mt["content"]:
                 mt["type"] = "视频"
@@ -390,9 +414,9 @@ def main():
             "plans": [{"name": p, "days": plans[p]["days"], "names": sorted(plans[p]["names"])}
                       for p in sorted(plans)],
             "groups": [{"name": g, "days": groups[g]["days"]} for g in sorted(groups)],
-            "materials": [{"name": n, "type": mt["type"], "person": mt["person"],
-                           "content": mt["content"], "days": mt["days"]}
-                          for n, mt in materials.items()],
+            "materials": [{"name": mt["name"], "type": mt["type"], "person": mt["person"],
+                           "is_auto": mt["is_auto"], "content": mt["content"], "days": mt["days"]}
+                          for mt in materials.values()],
             "hourly": hourly_acc,
         }
         OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")

@@ -910,7 +910,7 @@ function renderTypes() {
     return '<div class="kpi-card" style="margin:0;cursor:pointer" data-type="' + t + '">' +
       '<div class="kpi-label"><span class="person-badge ' + cls + '">' + (t==='AI'?'平台AI':t) + '</span></div>' +
       '<div class="kpi-value" style="font-size:18px">' + fmtM(d.sp) + '</div>' +
-      '<div class="kpi-sub">' + a.cnt.size + ' 条素材 · 转化 ' + fmtI(d.cv) + ' · 点击率 ' + fmtP(d.mat_click_rate) + '</div>' +
+      '<div class="kpi-sub">' + a.cnt.size + ' 条素材 · 转化 ' + fmtI(d.cv) + ' · 点击率 ' + fmtP(d.mat_click_rate) + ' · CPA ' + fmtM(d.cpa) + '</div>' +
     '</div>';
   }).join('');
 }
