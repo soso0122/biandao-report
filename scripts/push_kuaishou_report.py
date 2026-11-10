@@ -47,6 +47,8 @@ def extract_text():
         for k in m:
             m[k] += day.get(k, 0.0)
     cpa = m['sp'] / m['cv'] if m['cv'] else 0.0
+    deep = (data.get('deep_real') or {}).get(latest, 0)
+    deep_rate = deep / m['cv'] * 100 if m['cv'] else 0.0
     date = f"{latest[5:7]}/{latest[8:10]}"
     # 开口各级：超过有效获客的部分=回流，自动标注
     def open_part(key):
@@ -57,6 +59,7 @@ def extract_text():
         f"📊 {date} 快手投放日报\n\n"
         f"💰 消耗：¥{m['sp']:,.2f}\n"
         f"🎯 转化：{int(m['cv'])}\n"
+        f"🧾 深转出单：{int(deep)}（深转率 {deep_rate:.2f}%）\n"
         f"💵 CPA：¥{cpa:,.2f}\n"
         f"💬 企微开口：1次 {open_part('o1')} ｜ 3次 {open_part('o3')} ｜ 5次 {open_part('o5')} ｜ 10次 {open_part('o10')}\n\n"
         f"点开查看完整明细 👉 https://soso0122.github.io/kuaishou-report/"

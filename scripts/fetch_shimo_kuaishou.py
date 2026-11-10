@@ -34,6 +34,7 @@ SHEET_ACC_DAILY = "账户表现-分日（跨账户）"
 SHEET_MAT_DAILY = "素材表现-分日（跨账户）"
 SHEET_ACC_HOURLY = "账户表现-分时-{}"
 SHEET_MAT_HOURLY = "素材表现-分时-{}"
+SHEET_DAILY_RECORD = "当日数据记录"   # 天级汇总，含「销售反馈-出单」=深转真实回传
 
 PAGE_ROWS = 150          # 32 列 × 150 行 = 4800 单元格 < 5000 上限
 COL_END = "AF"           # 覆盖到 32 列
@@ -256,6 +257,8 @@ def main():
     try:
         header_acc, rows_acc = read_sheet(client, SHEET_ACC_DAILY)
         header_mat, rows_mat = read_sheet(client, SHEET_MAT_DAILY)
+        # 「当日数据记录」：天级汇总（用户留存），取「销售反馈-出单」=深转真实回传
+        header_rec, rows_rec = read_sheet(client, SHEET_DAILY_RECORD)
         if header_acc is None:
             raise SystemExit(f"读账户分日表失败: {rows_acc}")
         if header_mat is None:
@@ -270,6 +273,26 @@ def main():
                           {str(r["账户信息ID"]).strip()
                            for r in mat_recs if r.get("账户信息ID") not in (None, "")})
         print(f"[石墨] 账户: {acct_ids}")
+
+        # 解析「当日数据记录」：两行表头，第2行列名=日期(0)…出单(9)
+        # 出单=深转真实回传（销售反馈），天级口径
+        deep_real = {}   # {date: 出单数}
+        if header_rec is not None and rows_rec:
+            for r in rows_rec:
+                if not r or len(r) < 10:
+                    continue
+                v0 = r[0]
+                if v0 is None or isinstance(v0, str):   # 跳过「日期」「总计」行
+                    continue
+                d = excel_dt(v0)
+                if d is None:
+                    continue
+                try:
+                    n = float(r[9] or 0)
+                except (TypeError, ValueError):
+                    n = 0.0
+                deep_real[d.strftime("%Y-%m-%d")] = n
+        print(f"[石墨] 当日数据记录-出单(深转回传): {deep_real}")
 
         # 分时表：按账户读
         hourly_acc = {}   # {acct: {date: {hour: metrics}}}
@@ -418,6 +441,7 @@ def main():
                            "is_auto": mt["is_auto"], "content": mt["content"], "days": mt["days"]}
                           for mt in materials.values()],
             "hourly": hourly_acc,
+            "deep_real": deep_real,
         }
         OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         print(f"[OK] {OUT_JSON} ({OUT_JSON.stat().st_size/1024:.0f} KB): "

@@ -239,6 +239,7 @@ def caliber_html(suffix=""):
     <div class="caliber-item"><b>CPA</b> = 花费 ÷ 转化数；<b>转化成本</b> = 花费 ÷ 转化数（素材维度）。</div>
     <div class="caliber-item"><b>开口率</b> = 开口N次 ÷ 有效获客（快手口径下开口含历史用户回流，可能 >100%）。</div>
     <div class="caliber-item"><b>回流开口</b> = 当日开口1次 − 当日有效获客（历史转化用户的回访开口；素材当日无有效获客时其开口全部计为回流）。</div>
+    <div class="caliber-item"><b>深转数/深转率</b>：来自石墨「当日数据记录」的销售反馈出单（真实回传，天级）。天级聚合（KPI/漏斗/趋势）用真实出单；素材/账户/编导级明细因无法拆分显示「—」。</div>
     <div class="caliber-item"><b>漏斗</b>：曝光 → 行为 → 转化 → 深转 → 有效获客 → 企微开口 1/3/5/10 次。</div>
     <div class="caliber-item"><b>素材分类</b>：素材内容有视频链接=视频；名称=AIGC=平台AI；名称含图文集合_=图文。</div>
     <div class="caliber-item"><b>编导归属</b>：名称匹配已知编导/剪辑（小敏、嘉丽、浩正、雅迪、婷玉、魏怡、瑞晨、国星），其余「其他」。</div>
@@ -414,7 +415,15 @@ const state = {
 };
 // 快手深转暂未回传（导出表里深转=转化，无参考意义）：显示层统一展示「未回传」。
 // 等快手回传深转后，用户告知，将本行删掉即恢复真实值。
-const DEEP_PENDING = true;
+// 深转真实回传来自「当日数据记录-销售反馈出单」（天级，不分素材/账户）。
+// 天级聚合（KPI/漏斗/趋势）用 DATA.deep_real；素材级明细行无法拆分，深转列显示「—」。
+const DEEP_PENDING = false;
+function deepRealTotal() {
+  if (state.acct !== 'all') return 0;   // 深转回传不分账户，单账户视图不展示
+  let n = 0;
+  for (const d of selDates()) n += (DATA.deep_real && DATA.deep_real[d]) || 0;
+  return n;
+}
 const selDates = () => new Set(state.dates);
 
 /* 从嵌套 days 聚合指标+质量。支持三种结构：
@@ -553,8 +562,10 @@ function renderKpi1() {
     ['转化数', fmtI(t.cv), diff(t.cv, prevTot.cv) + '转化(计费)', false],
     ['转化率', fmtP(t.cvr), '转化÷行为', false],
     ['平均CPA', fmtM(t.cpa), '花费÷转化', false],
-    ['深转数', DEEP_PENDING ? '未回传' : fmtI(t.dp), DEEP_PENDING ? '快手暂未回传' : '深度转化', false],
-    ['深转率', DEEP_PENDING ? '未回传' : fmtP(t.deep_rate), DEEP_PENDING ? '快手暂未回传' : '深转÷转化', false],
+    ['深转数', state.acct === 'all' ? fmtI(deepRealTotal()) : '单账户未回传',
+     state.acct === 'all' ? '销售反馈' : '深转回传数据不分账户', false],
+    ['深转率', state.acct === 'all' ? (t.cv ? fmtP(deepRealTotal()/t.cv*100) : fmtP(0)) : '单账户未回传',
+     state.acct === 'all' ? '销售反馈' : '深转回传数据不分账户', false],
     ['有效获客', fmtI(t.va), '有效获客数', false],
     ['开口1次', fmtI(t.o1), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o1/t.va*100) : fmtP(0)) + '</b>（开口1次/有效获客）· 回流开口 ' + fmtI(Math.max(0, t.o1 - t.va)), true],
     ['开口3次', fmtI(t.o3), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o3/t.va*100) : fmtP(0)) + '</b>（开口3次/有效获客）', false],
@@ -598,7 +609,7 @@ function renderFunnel() {
     addM(tot, aggDays(a.days).m);
   }
   const stages = [
-    ['转化', tot.cv], ['深转(未回传)', DEEP_PENDING ? 0 : tot.dp],
+    ['转化', tot.cv], [state.acct === 'all' ? '深转' : '深转(单账户未回传)', state.acct === 'all' ? deepRealTotal() : 0],
     ['有效获客', tot.va], ['开口1次', tot.o1], ['开口3次', tot.o3],
     ['开口5次', tot.o5], ['开口10次', tot.o10],
   ];
@@ -619,7 +630,7 @@ function renderFunnel() {
 /* ---------------- 逐日趋势 ---------------- */
 let chartTrend = null, chartCpa = null;
 function dailySeries() {
-  const spend = [], conv = [], deep = [], cpa = [], cvr = [], labels = [];
+  const spend = [], conv = [], deepReal = [], cpa = [], cvr = [], labels = [];
   for (const d of selDates()) {
     const s = ZM();
     for (const a of DATA.accounts) {
@@ -630,11 +641,11 @@ function dailySeries() {
     labels.push(d.slice(5));
     spend.push(+s.sp.toFixed(2));
     conv.push(+s.cv.toFixed(1));
-    deep.push(+s.dp.toFixed(1));
+    deepReal.push(+(state.acct === 'all' ? ((DATA.deep_real && DATA.deep_real[d]) || 0) : 0).toFixed(1));
     cpa.push(s.cv ? +(+s.sp/s.cv).toFixed(2) : 0);
     cvr.push(s.ac ? +(s.cv/s.ac*100).toFixed(2) : 0);
   }
-  return {labels, spend, conv, deep, cpa, cvr};
+  return {labels, spend, conv, deepReal, cpa, cvr};
 }
 function renderTrend() {
   const s = dailySeries();
@@ -646,7 +657,7 @@ function renderTrend() {
     data: {labels: s.labels, datasets: [
       {type:'bar', label:'花费', data:s.spend, backgroundColor:'#BFDBFE', borderRadius:3, yAxisID:'y'},
       {type:'line', label:'转化', data:s.conv, borderColor:'#3B82F6', tension:.3, pointRadius:2, yAxisID:'y1'},
-      {type:'line', label: DEEP_PENDING ? '深转(未回传)' : '深转', data: DEEP_PENDING ? s.deep.map(() => 0) : s.deep, borderColor:'#F59E0B', tension:.3, pointRadius:2, yAxisID:'y1'}
+      {type:'line', label: state.acct === 'all' ? '深转' : '深转(单账户未回传)', data: s.deepReal, borderColor:'#F59E0B', tension:.3, pointRadius:2, yAxisID:'y1'}
     ]},
     options: Object.assign({}, base, {scales: {
       y: Object.assign({}, base.scales.y, {position:'left', grid:{drawOnChartArea:false}}),
@@ -685,7 +696,7 @@ function renderAcct() {
   body.innerHTML = rows.map(r => '<tr style="cursor:pointer" data-acct="' + r.id + '">' +
     cols.map(c => {
       if (c[2]==='txt') return '<td><span class="person-badge" style="background:#ECFDF5;color:#047857">' + r.id + '</span></td>';
-      if (DEEP_PENDING && (c[1]==='dp' || c[1]==='deep_rate')) return '<td class="num num-zero">未回传</td>';
+      if (c[1]==='dp' || c[1]==='deep_rate') return '<td class="num num-zero">—</td>';
       const v = r[c[1]]||0;
       if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
       if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
@@ -729,8 +740,8 @@ function cellHtml(c, r) {
     ? '<td><button class="btn-play" data-vname="' + r.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">▶</button></td>'
     : '<td class="num-zero">—</td>';
   if (c[2]==='txt') return '<td>' + r[c[1]] + '</td>';
-  if (DEEP_PENDING && c[1]==='dp') return '<td class="num num-zero">未回传</td>';
-  if (DEEP_PENDING && c[1]==='deep_rate') return '<td class="num num-zero">未回传</td>';
+  if (c[1]==='dp') return '<td class="num num-zero">—</td>';
+  if (c[1]==='deep_rate') return '<td class="num num-zero">—</td>';
   const v = r[c[1]]||0;
   if (c[2]==='o10rate') {
     if (!v) return '<td class="num num-zero">0.00%</td>';
@@ -934,8 +945,8 @@ function renderPersons() {
     return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
-      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 ' + (DEEP_PENDING ? '未回传' : fmtI(d.dp)) + '</div>' +
-      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 深转率 ' + (DEEP_PENDING ? '未回传' : fmtP(d.deep_rate)) + '</div>' +
+      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 —' + '</div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 深转率 —' + '</div>' +
     '</div>';
   }).join('') || '<div class="empty-state">暂无数据</div>';
 }
@@ -1018,7 +1029,7 @@ function renderAcctSorted(k, dir) {
   document.getElementById('acctBody').innerHTML = rows.map(r => '<tr style="cursor:pointer" data-acct="' + r.id + '">' +
     cols.map(c => {
       if (c[2]==='txt') return '<td><span class="person-badge" style="background:#ECFDF5;color:#047857">' + r.id + '</span></td>';
-      if (DEEP_PENDING && (c[1]==='dp' || c[1]==='deep_rate')) return '<td class="num num-zero">未回传</td>';
+      if (c[1]==='dp' || c[1]==='deep_rate') return '<td class="num num-zero">—</td>';
       const v = r[c[1]]||0;
       if (c[2]==='fmtI' && v===0) return '<td class="num num-zero">0</td>';
       if (c[1]==='dp' && v>0) return '<td class="gaoquan-cell">' + fmtI(v) + '</td>';
