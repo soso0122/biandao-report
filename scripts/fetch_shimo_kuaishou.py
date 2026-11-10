@@ -356,7 +356,7 @@ def main():
             gr = groups.setdefault(grp, {"days": {}})
             add_m(gr["days"].setdefault(d, {}).setdefault(acct, zero_m()), r)
 
-            key = (d, acct, grp, name)
+            key = (d, acct, grp, name, "系统自动" in grp)
             va = fnum(r.get("有效获客数（计费时间）"))
             dp = fnum(r.get("深度转化数(计费时间)"))
             if va or dp:
@@ -367,6 +367,8 @@ def main():
         # ---------- 素材聚合（以素材表为准，按「创意名称」精确拆分系统自动） ----------
         # 用户 2026-11-09 规则：创意名称含「系统自动」→ 平台AI；人工创意按原规则分析。
         # 同名素材拆两条：正常（人工创意）+ 平台AI（系统自动创意）。
+        # 注意：有效获客/深转从账户表映射时，素材表同日同素材多创意行会重复累加，
+        # 因此这里只加素材表指标，va/dp 在聚合完成后统一补充（按 素材+日+账户+is_auto）。
         materials = {}
         for r in mat_recs:
             d = r.get("分日", "")[:10]
@@ -375,7 +377,6 @@ def main():
             name = str(r.get("素材名称") or "").strip()
             acct = str(r.get("账户信息ID") or "").strip() or "未知账户"
             creative = str(r.get("创意名称") or "").strip()
-            grp = str(r.get("组名称") or "").strip() or "未命名组"
             if not name:
                 continue
             is_auto = "系统自动" in creative
@@ -391,11 +392,6 @@ def main():
                            ("企微开口5次数量", "o5"), ("企微开口10次数量", "o10")):
                 if col in r:
                     mc["m"][k] += fnum(r[col])
-            # 深转/有效获客从账户表组级行映射（组名称近似，仅作开口率分母等辅助用途）
-            vd = acc_va_dp.get((d, acct, grp, name))
-            if vd:
-                mc["m"]["dp"] += vd["dp"]
-                mc["m"]["va"] += vd["va"]
             # 播放质量
             imp = fnum(r.get("曝光数"))
             q = mc["q"]
@@ -408,6 +404,41 @@ def main():
             q["fn"] += fnum(r.get("完播率")) * imp
             if not mt["content"]:
                 mt["content"] = str(r.get("素材内容") or "").strip()
+
+        # 有效获客/深转补充：账户表无创意名称，按（素材名, 日, 账户）聚合 va/dp。
+        # 若同名素材同日有人工+AI两条行，按各自转化数占比拆分 va/dp（总量守恒、不重复）；
+        # 两条转化都为 0 时全给人工行。单条行则直接赋值。
+        va_dp_by_mat = {}
+        for (d, acct, grp, name, grp_auto), vd in acc_va_dp.items():
+            key = (name, d, acct)
+            e = va_dp_by_mat.setdefault(key, {"va": 0.0, "dp": 0.0})
+            e["va"] += vd["va"]
+            e["dp"] += vd["dp"]
+        # 找出同日同素材双行的情况
+        row_cv = {}
+        for (name, is_auto), mt in materials.items():
+            for d, accts in mt["days"].items():
+                for acct, mc in accts.items():
+                    row_cv[(name, d, acct, is_auto)] = mc["m"]["cv"]
+        for (name, is_auto), mt in materials.items():
+            for d, accts in mt["days"].items():
+                for acct, mc in accts.items():
+                    vd = va_dp_by_mat.get((name, d, acct))
+                    if not vd:
+                        continue
+                    cv_this = mc["m"]["cv"]
+                    cv_other = row_cv.get((name, d, acct, not is_auto), 0.0)
+                    if cv_other <= 0 and cv_this <= 0:
+                        # 都没有转化：全给人工行
+                        if is_auto:
+                            continue
+                        mc["m"]["dp"] = vd["dp"]
+                        mc["m"]["va"] = vd["va"]
+                    else:
+                        total = cv_this + cv_other
+                        share = cv_this / total if total else 0.0
+                        mc["m"]["dp"] = vd["dp"] * share
+                        mc["m"]["va"] = vd["va"] * share
 
         # ---------- 分类：类型 / 编导 ----------
         # 系统自动创意 → 平台AI；人工创意按原规则（AIGC→AI；内容非空→视频；图文集合_→图文；否则图文）
