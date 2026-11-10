@@ -38,6 +38,10 @@ def get_account_id(fname):
     stem = stem.replace('-过审', '')
     if stem.startswith(('视频库_', '图文库_')):
         parts = stem.split('_')
+        # 最新格式: 视频库__2026_11_10_...-1869499299085324 → 末尾连字符后16位账户ID（最优先）
+        m3 = re.search(r'-(\d{16,})$', stem)
+        if m3:
+            return m3.group(1)
         # 旧格式: 视频库_1869580643367964_时间 → parts[1] 是账户ID
         if len(parts) > 1 and re.fullmatch(r'\d+', parts[1]):
             return parts[1]
