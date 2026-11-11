@@ -143,6 +143,7 @@ font-weight:500;cursor:pointer;transition:all .15s;background:var(--bg);color:va
 .filter-btn-video{color:#3B82F6}
 .filter-btn-tuwen{color:#8B5CF6}
 .filter-btn-ai{color:#6366F1}
+.filter-btn-huahuo{color:#F43F5E}
 .filter-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
 .search-box{padding:5px 10px;border-radius:8px;border:1.5px solid var(--border);font-size:12px;
 outline:none;width:180px;background:var(--bg);color:var(--text)}
@@ -172,6 +173,7 @@ font-size:11px;font-weight:600;white-space:nowrap}
 .type-video{background:#EFF6FF;color:#3B82F6}
 .type-tuwen{background:#F5F3FF;color:#8B5CF6}
 .type-ai{background:#EEF2FF;color:#6366F1}
+.type-huahuo{background:#FFF1F2;color:#F43F5E}
 .mat-name{max-width:280px;white-space:normal;word-break:break-all;font-size:12px;
 color:var(--text);line-height:1.45}
 .num{font-family:'Fira Code',monospace;font-size:12px}
@@ -239,9 +241,10 @@ def caliber_html(suffix=""):
     <div class="caliber-item"><b>CPA</b> = 花费 ÷ 转化数；<b>转化成本</b> = 花费 ÷ 转化数（素材维度）。</div>
     <div class="caliber-item"><b>开口率</b> = 开口N次 ÷ 有效获客（快手口径下开口含历史用户回流，可能 >100%）。</div>
     <div class="caliber-item"><b>回流开口</b> = 当日开口1次 − 当日有效获客（历史转化用户的回访开口；素材当日无有效获客时其开口全部计为回流）。</div>
+    <div class="caliber-item"><b>⚠️ 开口与转化对不上的说明</b>：快手后台导出的「企微开口」是当天所有开口的用户数，包括数据窗口（2026-10-30）之前转化、后来才开口的用户；且部分素材会出现「转化0、开口1」的导出口径差异。因此开口数可能长期大于窗口内转化数，开口率可能超过 100%，这是后台导出数据本身的口径，非计算错误。</div>
     <div class="caliber-item"><b>深转数/深转率</b>：来自石墨「当日数据记录」的销售反馈出单（真实回传，天级）。天级聚合（KPI/漏斗/趋势）用真实出单；素材/账户/编导级明细因无法拆分显示「—」。</div>
     <div class="caliber-item"><b>漏斗</b>：曝光 → 行为 → 转化 → 深转 → 有效获客 → 企微开口 1/3/5/10 次。</div>
-    <div class="caliber-item"><b>素材分类</b>：素材内容有视频链接=视频；名称=AIGC=平台AI；名称含图文集合_=图文。</div>
+    <div class="caliber-item"><b>素材分类</b>（互斥优先级）：名称含「花火」→花火AI；创意名称含系统自动或名称=AIGC→平台AI；素材内容有视频链接→视频；名称含图文集合_→图文。</div>
     <div class="caliber-item"><b>编导归属</b>：名称匹配已知编导/剪辑（小敏、嘉丽、浩正、雅迪、婷玉、魏怡、瑞晨、国星），其余「其他」。</div>
     <div class="caliber-item"><b>素材点击率</b> = 行为数 ÷ 素材曝光数；<b>封面点击率</b> = 封面点击 ÷ 封面曝光。</div>
     <div class="caliber-item"><b>3秒/5秒/完播率</b>：按曝光数加权平均。</div>
@@ -349,7 +352,7 @@ def build_html():
   <div class="kpi-grid" id="kpiGrid2"></div>
   <div class="chart-card" style="margin-bottom:20px">
     <div class="section-title">素材类型</div>
-    <div id="typeRow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"></div>
+    <div id="typeRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
     <div class="section-title" style="margin-top:16px">编导表现（点卡片筛选明细）</div>
     <div id="personRow" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
   </div>
@@ -360,6 +363,7 @@ def build_html():
       <button class="filter-btn filter-btn-video" data-t="视频">视频</button>
       <button class="filter-btn filter-btn-tuwen" data-t="图文">图文</button>
       <button class="filter-btn filter-btn-ai" data-t="AI">平台AI</button>
+      <button class="filter-btn filter-btn-huahuo" data-t="花火AI">花火AI</button>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span class="filter-label">编导</span>
@@ -729,7 +733,7 @@ function cellHtml(c, r) {
   if (c[2]==='name') return '<td class="mat-name">' + r.name + '</td>';
   if (c[2]==='type') {
     const t = r.type || '视频';
-    const cls = t==='图文' ? 'type-tuwen' : t==='AI' ? 'type-ai' : 'type-video';
+    const cls = t==='图文' ? 'type-tuwen' : t==='AI' ? 'type-ai' : t==='花火AI' ? 'type-huahuo' : 'type-video';
     return '<td><span class="person-badge ' + cls + '">' + (t==='AI'?'平台AI':t) + '</span></td>';
   }
   if (c[2]==='person') {
@@ -902,10 +906,11 @@ function renderHourly() {
 
 /* ---------------- TAB2 ---------------- */
 function renderTypes() {
-  const agg = {视频: {cnt:new Set(), m:ZM(), q:ZQ()}, 图文: {cnt:new Set(), m:ZM(), q:ZQ()}, AI: {cnt:new Set(), m:ZM(), q:ZQ()}};
+  const agg = {视频: {cnt:new Set(), m:ZM(), q:ZQ()}, 图文: {cnt:new Set(), m:ZM(), q:ZQ()},
+               AI: {cnt:new Set(), m:ZM(), q:ZQ()}, 花火AI: {cnt:new Set(), m:ZM(), q:ZQ()}};
   for (const m of DATA.materials) {
     const t = m.type || '视频';
-    const a = agg[t];
+    const a = agg[t] || agg['视频'];
     const {m: mm, q} = aggDays(m.days);
     // 条数随日期联动：所选日期内有投放数据的素材才计数
     if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
@@ -914,7 +919,7 @@ function renderTypes() {
     }
   }
   const wrap = document.getElementById('typeRow');
-  const defs = [['视频','filter-btn-video'],['图文','filter-btn-tuwen'],['AI','filter-btn-ai']];
+  const defs = [['视频','filter-btn-video'],['图文','filter-btn-tuwen'],['AI','filter-btn-ai'],['花火AI','filter-btn-huahuo']];
   wrap.innerHTML = defs.map(([t, cls]) => {
     const a = agg[t];
     const d = derive(a.m, a.q);

@@ -441,17 +441,20 @@ def main():
                         mc["m"]["va"] = vd["va"] * share
 
         # ---------- 分类：类型 / 编导 ----------
-        # 系统自动创意 → 平台AI；人工创意按原规则（AIGC→AI；内容非空→视频；图文集合_→图文；否则图文）
+        # 类型互斥优先级（2026-11-10 定）：名称含「花火」→ 花火AI（最高）
+        # → 系统自动创意/AIGC → 平台AI → 内容非空 → 视频 → 否则图文
         PERSONS = ["嘉丽", "小敏", "雅迪", "瑞晨"]
         for (name, is_auto), mt in materials.items():
             n = name.strip()
-            if is_auto or n.upper() == "AIGC":
+            if "花火" in n:
+                mt["type"] = "花火AI"
+            elif is_auto or n.upper() == "AIGC":
                 mt["type"] = "AI"
             elif mt["content"]:
                 mt["type"] = "视频"
             else:
                 mt["type"] = "图文"
-            if mt["type"] == "AI":
+            if mt["type"] in ("AI", "花火AI"):
                 mt["person"] = "其他"
             else:
                 # 视频与图文都按名称匹配编导（图文不能一律归其他）
