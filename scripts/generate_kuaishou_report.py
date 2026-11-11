@@ -387,9 +387,12 @@ def build_html():
 <!-- ============ TAB3 近3周跑出 ============ -->
 <div id="tab3" style="display:none">
   __CALIBER3__
-  <div class="kpi-grid" id="kpiGrid3" style="grid-template-columns:repeat(6,1fr)"></div>
+  <div class="kpi-grid" id="kpiGrid3" style="grid-template-columns:repeat(7,1fr)"></div>
   <div class="chart-card" style="margin-bottom:20px">
-    <div class="section-title">编导表现（近3周窗口合计）</div>
+    <div class="section-title" style="justify-content:space-between">
+      <span>编导表现</span>
+      <span id="passWeekBtns" style="display:flex;gap:6px"></span>
+    </div>
     <div id="passPersonRow" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
   </div>
   <div class="chart-card" style="margin-bottom:20px">
@@ -1018,15 +1021,40 @@ function personOf3(name) {
   return '其他';
 }
 function produceDay3(name) {
-  // 素材名 MMDD 前缀：MMDD 后跟分隔符或非数字（兼容「0709引导-xxx」「1009-小敏-视频」，
-  // 排除 19 位纯数字ID「5218830000000000000」）
+  // 产出日期规则（2026-11-11 用户定）：
+  // 1) MMDD 前缀（MMDD 后跟分隔符或非数字，排除19位纯数字ID）
+  // 2) 中文日期「11月4日」
+  // 3) AI拒审修复_YYYYMMDD 时间戳
+  // 4) 名称含「1007」尾缀→10/07；「国庆」→10/01；「11056」→11/05
   const n = (name || '').trim();
   const m = n.match(/^(\d{2})(\d{2})(?=[-—－_]|[^\d])/);
   if (m) {
     const mm = +m[1], dd = +m[2];
     if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) return '2026-' + m[1] + '-' + m[2];
   }
+  const cn = n.match(/^(\d{1,2})月(\d{1,2})日/);
+  if (cn) {
+    const mm = +cn[1], dd = +cn[2];
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+      return '2026-' + String(mm).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+    }
+  }
+  const ai = n.match(/AI拒审修复_(\d{4})(\d{2})(\d{2})/);
+  if (ai) return ai[1] + '-' + ai[2] + '-' + ai[3];
+  if (/1007/.test(n)) return '2026-10-07';
+  if (n.includes('国庆')) return '2026-10-01';
+  if (/^11056/.test(n)) return '2026-11-05';
+  if (/^713-/.test(n)) return '2026-07-13';
   return '';
+}
+// 不计入近3周的素材（无日期且无法确认产出日：数字ID、raw哈希、图文集合、无日期名称等）
+function excludePass3w(name) {
+  const n = (name || '').trim();
+  if (/^\d{15,}$/.test(n)) return true;                        // 纯数字ID
+  if (/_raw\.mp4$/i.test(n) || /^[0-9a-f]{32}/i.test(n)) return true;   // raw哈希
+  if (n.includes('图文集合')) return true;
+  if (n.includes('高三学习上瘾')) return true;
+  return false;
 }
 function nameMatch(name, target) {
   // 台账名称 vs 报表名称：精确匹配或去后缀（改版等）
@@ -1034,6 +1062,7 @@ function nameMatch(name, target) {
   return clean(name) === clean(target);
 }
 let pass3wData = null;   // 缓存聚合结果
+let passWeekSel = 'near3';   // 编导卡周切换：near3/0/1/2
 function buildPass3w() {
   // 1. 素材池：台账 + 报表（视频/图文，排除AI花火），产出日三级兜底
   const pool = new Map();   // name -> {name, produce, audit(null=台账无记录), upload, type}
@@ -1045,6 +1074,7 @@ function buildPass3w() {
   // 先放台账素材
   for (const l of (DATA.ledger || [])) {
     if (pool.has(l.name)) continue;
+    if (excludePass3w(l.name)) continue;   // 无日期不可确认的素材不计入
     const produce = produceDay3(l.name) || l.upload || '';
     pool.set(l.name, {name: l.name, produce, audit: l.audit, upload: l.upload});
   }
@@ -1053,6 +1083,7 @@ function buildPass3w() {
   for (const m of DATA.materials) {
     if (m.type === 'AI' || m.type === '花火AI') continue;
     if (m.type !== '视频' && m.type !== '图文') continue;
+    if (excludePass3w(m.name)) continue;   // 无日期不可确认的素材不计入
     if (!firstSeen[m.name]) {
       const days = Object.keys(m.days).sort();
       firstSeen[m.name] = days[0] || '';
@@ -1149,7 +1180,7 @@ function renderPass3w() {
   let totalPool = 0, totalSubmit = 0, totalPassed = 0;
   let totM = ZM(), totQ = ZQ();
   const personAgg = {};
-  for (const p of [...CORE4, '其他']) personAgg[p] = {cnt: 0, m: ZM(), q: ZQ(), submit: 0, passed: 0};
+  for (const p of [...CORE4, '其他']) personAgg[p] = {cnt: 0, m: ZM(), q: ZQ(), submit: 0, passed: 0, cvCnt: 0};
   const seen = new Set();
   for (const wk of weeks) {
     totalPool += wk.rows.length;
@@ -1163,6 +1194,7 @@ function renderPass3w() {
       for (const qk of QKEYS) totQ[qk] += r[qk] || 0;
       const pa = personAgg[r.person] || personAgg['其他'];
       pa.cnt += 1;
+      if (r.cv > 0) pa.cvCnt += 1;
       for (const mk of MKEYS) pa.m[mk] += r[mk] || 0;
       for (const qk of QKEYS) pa.q[qk] += r[qk] || 0;
       pa.submit += (r.submitN || 0);
@@ -1179,20 +1211,51 @@ function renderPass3w() {
     ['跑出率', totalPool ? fmtP(runCnt / totalPool * 100) : fmtP(0), '跑出÷素材池', false],
     ['过审数', fmtI(totalPassed), '子账户口径', false],
     ['过审率', fmtP(passRate), '过审÷提交（子账户）', true],
+    ['开口率', totalPool ? fmtP(t.o10 / totalPool * 100) : fmtP(0), '开口10次÷产出数', true],
     ['3周消耗', fmtM(t.sp), '窗口内投放消耗', false],
   ].map((r, i) => kpiCard(r[0], r[1], r[2], r[3])).join('');
-  // 编导卡
+  // 编导卡（支持按周切换：near3=近3周合计，0/1/2=第1/2/3周）
+  if (!passWeekSel) passWeekSel = 'near3';
+  let personRows;   // 参与编导卡统计的周集合
+  if (passWeekSel === 'near3') personRows = weeks.flatMap(w => w.rows);
+  else personRows = weeks[+passWeekSel] ? weeks[+passWeekSel].rows : [];
+  const pAgg = {};
+  for (const p of [...CORE4, '其他']) pAgg[p] = {cnt: 0, m: ZM(), q: ZQ(), submit: 0, passed: 0, cvCnt: 0};
+  const pSeen = new Set();
+  for (const r of personRows) {
+    const key = r.person + '|' + r.name;
+    if (pSeen.has(key)) continue;
+    pSeen.add(key);
+    const pa = pAgg[r.person] || pAgg['其他'];
+    pa.cnt += 1;
+    if (r.cv > 0) pa.cvCnt += 1;
+    for (const mk of MKEYS) pa.m[mk] += r[mk] || 0;
+    for (const qk of QKEYS) pa.q[qk] += r[qk] || 0;
+    pa.submit += (r.submitN || 0);
+    pa.passed += (r.passedN || 0);
+  }
+  const weekBtns = document.getElementById('passWeekBtns');
+  const wkOptions = [['near3', '近3周'], ['0', '第1周'], ['1', '第2周'], ['2', '第3周']];
+  weekBtns.innerHTML = wkOptions.map(([v, label]) =>
+    '<button class="range-btn' + (passWeekSel === v ? ' active' : '') + '" data-pass-wk-sel="' + v + '">' + label + '</button>').join('');
+  weekBtns.querySelectorAll('.range-btn').forEach(b => b.addEventListener('click', () => {
+    passWeekSel = b.dataset.passWkSel;
+    renderPass3w();
+  }));
   const wrapP = document.getElementById('passPersonRow');
   wrapP.innerHTML = [...CORE4, '其他'].map(p => {
-    const pa = personAgg[p];
+    const pa = pAgg[p];
     const d = derive(pa.m, pa.q);
     const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
     const pr = pa.submit ? (pa.passed / pa.submit * 100) : 0;
+    const runRate = pa.cnt ? (pa.cvCnt / pa.cnt * 100) : 0;         // 跑出率=转化素材数÷产出素材数
+    const openRate = pa.cnt ? (d.o10 / pa.cnt * 100) : 0;            // 开口率=开口10次÷产出数
     return '<div class="kpi-card" style="margin:0">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
       '<div class="kpi-sub">' + pa.cnt + ' 条素材 · 转化 ' + fmtI(d.cv) + '</div>' +
       '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 过审率 ' + (pa.submit ? fmtP(pr) : '—') + '</div>' +
+      '<div class="kpi-sub">跑出率 <b class="open-rate">' + fmtP(runRate) + '</b> · 开口率 <b class="open-rate">' + fmtP(openRate) + '</b></div>' +
     '</div>';
   }).join('');
   // 周区块（每页10行分页）
@@ -1206,12 +1269,31 @@ function renderPass3w() {
     passPageState[wi] = curPage;
     const startIdx = (curPage - 1) * PASS_PAGE_SIZE;
     const pageRows = sorted.slice(startIdx, startIdx + PASS_PAGE_SIZE);
+    // 分周总览
+    const wkM = ZM(), wkQ = ZQ();
+    let wkRun = 0;
+    for (const r of wk.rows) {
+      for (const mk of MKEYS) wkM[mk] += r[mk] || 0;
+      for (const qk of QKEYS) wkQ[qk] += r[qk] || 0;
+      if (r.cv > 0) wkRun += 1;
+    }
+    const wkD = derive(wkM, wkQ);
+    const wkRunRate = wk.rows.length ? (wkRun / wk.rows.length * 100) : 0;
+    const wkOpenRate = wk.rows.length ? (wkD.o10 / wk.rows.length * 100) : 0;
     html += '<div class="table-card" style="margin-bottom:16px">';
     html += '<div class="table-toolbar"><div class="section-title" style="margin:0">' + wkLabel +
       '（' + wk.start.slice(5).replace('-', '/') + ' - ' + wk.end.slice(5).replace('-', '/') + '）</div>' +
       '<div class="table-info">素材池 ' + wk.rows.length + ' 条 · 过审率 ' +
       (wk.submit ? (wk.passed / wk.submit * 100).toFixed(1) + '%（子账户口径）' : '—') +
       '</div></div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)">' +
+      '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">周消耗</div><div class="kpi-value" style="font-size:15px">' + fmtM(wkD.sp) + '</div></div>' +
+      '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">周转化</div><div class="kpi-value" style="font-size:15px">' + fmtI(wkD.cv) + '</div></div>' +
+      '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">跑出素材</div><div class="kpi-value" style="font-size:15px">' + fmtI(wkRun) + '</div></div>' +
+      '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">跑出率</div><div class="kpi-value" style="font-size:15px;color:#059669">' + fmtP(wkRunRate) + '</div></div>' +
+      '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">开口率</div><div class="kpi-value" style="font-size:15px;color:#059669">' + fmtP(wkOpenRate) + '</div></div>' +
+      '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">过审率</div><div class="kpi-value" style="font-size:15px;color:#D97706">' + (wk.submit ? fmtP(wk.passed / wk.submit * 100) : '—') + '</div></div>' +
+      '</div>';
     html += '<div class="table-wrap"><table><thead><tr>' +
       '<th>编导</th><th>素材名称</th><th>产出日</th><th>有效投放天数</th><th>消耗</th><th>点击率</th>' +
       '<th>转化</th><th>CPA</th><th>深转</th><th>深转率</th><th>完播率</th><th>3秒率</th><th>5秒率</th><th>审核</th>' +
