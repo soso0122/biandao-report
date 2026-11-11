@@ -35,6 +35,7 @@ SHEET_MAT_DAILY = "素材表现-分日（跨账户）"
 SHEET_ACC_HOURLY = "账户表现-分时-{}"
 SHEET_MAT_HOURLY = "素材表现-分时-{}"
 SHEET_DAILY_RECORD = "当日数据记录"   # 天级汇总，含「销售反馈-出单」=深转真实回传
+SHEET_LEDGER = "拒审台账-子账户"       # 子账户素材台账：全量素材池+审核状态（近3周模块分母）
 
 PAGE_ROWS = 150          # 32 列 × 150 行 = 4800 单元格 < 5000 上限
 COL_END = "AF"           # 覆盖到 32 列
@@ -259,6 +260,7 @@ def main():
         header_mat, rows_mat = read_sheet(client, SHEET_MAT_DAILY)
         # 「当日数据记录」：天级汇总（用户留存），取「销售反馈-出单」=深转真实回传
         header_rec, rows_rec = read_sheet(client, SHEET_DAILY_RECORD)
+        header_ledger, rows_ledger = read_sheet(client, SHEET_LEDGER)
         if header_acc is None:
             raise SystemExit(f"读账户分日表失败: {rows_acc}")
         if header_mat is None:
@@ -293,6 +295,37 @@ def main():
                     n = 0.0
                 deep_real[d.strftime("%Y-%m-%d")] = n
         print(f"[石墨] 当日数据记录-出单(深转回传): {deep_real}")
+
+        # 解析「拒审台账-子账户」：全量素材池 + 审核状态（近3周模块分母/过审率）
+        # 列：0上传日期 1视频名称 2审核状态 3创建时间 4时长 5视频来源 6视频素材评价
+        #     7关联创意 8上传卡审 9投放卡审 10卡审详情 11视频ID 12视频标识 13视频名称
+        # 三分类（用户 2026-11-11 定，与台账 I/J 列一致）：
+        #   上传卡审=审核状态「审核未通过」；投放卡审=关联创意含「未通过」且状态非未通过；其余=过审
+        ledger = []   # [{name, upload, audit(过审/上传卡审/投放卡审), status, creative}]
+        if header_ledger is not None and rows_ledger:
+            for r in rows_ledger:
+                if not r:
+                    continue
+                name = str(r[13] or r[1] or "").strip()
+                if not name:
+                    continue
+                d0 = excel_dt(r[0])
+                upload = d0.strftime("%Y-%m-%d") if d0 else ""
+                status = str(r[2] or "").strip()
+                creative = str(r[7] or "").strip()
+                if status == "审核未通过":
+                    audit = "上传卡审"
+                elif "未通过" in creative:
+                    audit = "投放卡审"
+                else:
+                    audit = "过审"
+                ledger.append({"name": name, "upload": upload,
+                               "audit": audit, "status": status,
+                               "creative": creative})
+        print(f"[石墨] 拒审台账: {len(ledger)} 行, "
+              f"过审 {sum(1 for x in ledger if x['audit'] == '过审')}, "
+              f"上传卡审 {sum(1 for x in ledger if x['audit'] == '上传卡审')}, "
+              f"投放卡审 {sum(1 for x in ledger if x['audit'] == '投放卡审')}")
 
         # 分时表：按账户读
         hourly_acc = {}   # {acct: {date: {hour: metrics}}}
@@ -476,6 +509,7 @@ def main():
                           for mt in materials.values()],
             "hourly": hourly_acc,
             "deep_real": deep_real,
+            "ledger": ledger,
         }
         OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         print(f"[OK] {OUT_JSON} ({OUT_JSON.stat().st_size/1024:.0f} KB): "

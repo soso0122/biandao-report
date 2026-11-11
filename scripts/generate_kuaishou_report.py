@@ -273,6 +273,7 @@ def build_html():
     <nav class="nav">
       <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">📊 投放数据表现</button>
       <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">🎬 素材数据表现</button>
+      <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">📅 近3周跑出</button>
     </nav>
   </div>
   <div class="topbar-row2">
@@ -383,6 +384,23 @@ def build_html():
   </div>
 </div>
 
+<!-- ============ TAB3 近3周跑出 ============ -->
+<div id="tab3" style="display:none">
+  __CALIBER3__
+  <div class="kpi-grid" id="kpiGrid3" style="grid-template-columns:repeat(6,1fr)"></div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">编导表现（近3周窗口合计）</div>
+    <div id="passPersonRow" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">📅 近3周跑出表现（自然周 · 按产出日期归周）</div>
+    <div class="table-info" style="margin-bottom:10px">
+      素材池 = 拒审台账 ∪ 报表（含未过审/0数据素材）；仅视频+图文（排除平台AI/花火AI）；过审率为<b>子账户口径</b>（拒审台账-子账户）。
+    </div>
+    <div id="pass3wWrap"></div>
+  </div>
+</div>
+
 </div>
 
 <div class="modal-overlay" id="videoModal">
@@ -479,8 +497,10 @@ function switchTab(t) {
   state.tab = t;
   document.getElementById('tab1').style.display = t === 1 ? '' : 'none';
   document.getElementById('tab2').style.display = t === 2 ? '' : 'none';
+  document.getElementById('tab3').style.display = t === 3 ? '' : 'none';
   document.getElementById('tabBtn1').classList.toggle('active', t === 1);
   document.getElementById('tabBtn2').classList.toggle('active', t === 2);
+  document.getElementById('tabBtn3').classList.toggle('active', t === 3);
 }
 
 /* ---------------- 顶部 chips（共享） ---------------- */
@@ -762,7 +782,9 @@ function cellHtml(c, r) {
 
 /* ---------------- 通用分页 ---------------- */
 const PAGE_SIZE = 30;
+const PASS_PAGE_SIZE = 10;
 const pageState = {dimTable: 1, matTable: 1};
+const passPageState = {0: 1, 1: 1, 2: 1};
 
 function renderPager(tableId, total) {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -989,6 +1011,259 @@ function renderMaterials() {
   renderPager('matTable', list.length);
 }
 
+/* ---------------- TAB3 近3周跑出 ---------------- */
+const CORE4 = ['嘉丽', '小敏', '雅迪', '瑞晨'];
+function personOf3(name) {
+  for (const p of CORE4) if (name.includes(p)) return p;
+  return '其他';
+}
+function produceDay3(name) {
+  // 素材名 MMDD 前缀：MMDD 后跟分隔符或非数字（兼容「0709引导-xxx」「1009-小敏-视频」，
+  // 排除 19 位纯数字ID「5218830000000000000」）
+  const n = (name || '').trim();
+  const m = n.match(/^(\d{2})(\d{2})(?=[-—－_]|[^\d])/);
+  if (m) {
+    const mm = +m[1], dd = +m[2];
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) return '2026-' + m[1] + '-' + m[2];
+  }
+  return '';
+}
+function nameMatch(name, target) {
+  // 台账名称 vs 报表名称：精确匹配或去后缀（改版等）
+  const clean = s => (s || '').replace(/\.mp4$/i, '').replace(/\((\d+)\)$/, '').trim();
+  return clean(name) === clean(target);
+}
+let pass3wData = null;   // 缓存聚合结果
+function buildPass3w() {
+  // 1. 素材池：台账 + 报表（视频/图文，排除AI花火），产出日三级兜底
+  const pool = new Map();   // name -> {name, produce, audit(null=台账无记录), upload, type}
+  const ledgerByName = new Map();
+  for (const l of (DATA.ledger || [])) {
+    if (!ledgerByName.has(l.name)) ledgerByName.set(l.name, []);
+    ledgerByName.get(l.name).push(l);
+  }
+  // 先放台账素材
+  for (const l of (DATA.ledger || [])) {
+    if (pool.has(l.name)) continue;
+    const produce = produceDay3(l.name) || l.upload || '';
+    pool.set(l.name, {name: l.name, produce, audit: l.audit, upload: l.upload});
+  }
+  // 报表素材：首现日
+  const firstSeen = {};
+  for (const m of DATA.materials) {
+    if (m.type === 'AI' || m.type === '花火AI') continue;
+    if (m.type !== '视频' && m.type !== '图文') continue;
+    if (!firstSeen[m.name]) {
+      const days = Object.keys(m.days).sort();
+      firstSeen[m.name] = days[0] || '';
+    }
+    // 台账匹配（同名或清理后同名）
+    let ledgerRec = null;
+    for (const [ln, recs] of ledgerByName) {
+      if (nameMatch(ln, m.name)) { ledgerRec = recs[0]; break; }
+    }
+    if (pool.has(m.name)) {
+      const e = pool.get(m.name);
+      if (!e.produce) e.produce = produceDay3(m.name) || e.upload || firstSeen[m.name] || '';
+      if (ledgerRec) { e.audit = ledgerRec.audit; e.upload = ledgerRec.upload; }
+      if (!e.produce) e.produce = firstSeen[m.name] || '';
+    } else {
+      const produce = produceDay3(m.name) || (ledgerRec ? ledgerRec.upload : '') || firstSeen[m.name] || '';
+      pool.set(m.name, {name: m.name, produce,
+        audit: ledgerRec ? ledgerRec.audit : null, upload: ledgerRec ? ledgerRec.upload : ''});
+    }
+  }
+  // 2. 自然周窗口：锚定最新数据日，最多取3个完整自然周
+  const latestDate = DATA.dates[DATA.dates.length - 1];
+  const latest = new Date(latestDate + 'T00:00:00');
+  // 锚点所在周的周日（自然周周一开始）
+  const dow = (latest.getDay() + 6) % 7;   // 周一=0
+  const anchorSunday = new Date(latest);
+  anchorSunday.setDate(latest.getDate() + (6 - dow));
+  const weekStarts = [];   // 最近的3个周一的日期
+  for (let w = 0; w < 3; w++) {
+    const monday = new Date(anchorSunday);
+    monday.setDate(anchorSunday.getDate() - 6 - (2 - w) * 7);
+    weekStarts.push(monday);
+  }
+  const fmtD = d => {
+    const y = d.getFullYear(), mo = String(d.getMonth() + 1).padStart(2, '0'), da = String(d.getDate()).padStart(2, '0');
+    return y + '-' + mo + '-' + da;
+  };
+  // 3. 每个素材归周 + 指标聚合
+  const matByIdx = new Map();
+  DATA.materials.forEach(m => { if (m.type === '视频' || m.type === '图文') matByIdx.set(m.name, m); });
+  const weeks = weekStarts.map((monday, wi) => {
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const rows = new Map();   // key=(person,name) -> row
+    let submit = 0, passed = 0;
+    const auditCnt = {过审: 0, 上传卡审: 0, 投放卡审: 0};
+    for (const [name, e] of pool) {
+      if (!e.produce) continue;
+      const pd = new Date(e.produce + 'T00:00:00');
+      if (pd >= monday && pd <= sunday) {
+        // 提交/过审（台账口径，三分类）
+        const recs = ledgerByName.get(name) || [];
+        const submitN = recs.length;   // 同名多行算多次提交
+        const passedN = recs.filter(l => l.audit === '过审').length;
+        submit += submitN;
+        passed += passedN;
+        // 跑出指标（报表数据，窗口内投放日聚合）
+        const m = matByIdx.get(name);
+        const person = personOf3(name);
+        const key = person + '|' + name;
+        if (!rows.has(key)) rows.set(key, {
+          person, name, produce: e.produce, audit: e.audit, hasLedger: recs.length > 0,
+          submitN: submitN, passedN: passedN,
+          sp: 0, im: 0, ac: 0, cv: 0, dp: 0, va: 0, o1: 0, o3: 0, o5: 0, o10: 0,
+          qi: 0, qmi: 0, cc: 0, ce: 0, p3: 0, p5: 0, fn: 0, days: new Set(),
+        });
+        const row = rows.get(key);
+        if (m) {
+          for (const [d, accts] of Object.entries(m.days)) {
+            const dd = new Date(d + 'T00:00:00');
+            if (dd >= monday && dd <= sunday) {
+              // 有效投放天数 = 当天有花费的天数
+              let dsp = 0;
+              for (const [acct, mc] of Object.entries(accts)) dsp += (mc.m && mc.m.sp) || 0;
+              if (dsp > 0) row.days.add(d);
+              for (const [acct, mc] of Object.entries(accts)) {
+                for (const k of MKEYS) row[k] += mc.m[k] || 0;
+                for (const k of QKEYS) row[k] += mc.q[k] || 0;
+              }
+            }
+          }
+        }
+      }
+    }
+    return {start: fmtD(monday), end: fmtD(sunday), rows: [...rows.values()], submit, passed};
+  });
+  pass3wData = {weeks, poolSize: pool.size};
+  return pass3wData;
+}
+function renderPass3w() {
+  if (!pass3wData) buildPass3w();
+  const {weeks} = pass3wData;
+  // 顶部 KPI：3周窗口合计（素材池按产出日归周后去重；跑出=窗口内有投放数据）
+  let totalPool = 0, totalSubmit = 0, totalPassed = 0;
+  let totM = ZM(), totQ = ZQ();
+  const personAgg = {};
+  for (const p of [...CORE4, '其他']) personAgg[p] = {cnt: 0, m: ZM(), q: ZQ(), submit: 0, passed: 0};
+  const seen = new Set();
+  for (const wk of weeks) {
+    totalPool += wk.rows.length;
+    totalSubmit += wk.submit;
+    totalPassed += wk.passed;
+    for (const r of wk.rows) {
+      const k = r.person + '|' + r.name;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      for (const mk of MKEYS) totM[mk] += r[mk] || 0;
+      for (const qk of QKEYS) totQ[qk] += r[qk] || 0;
+      const pa = personAgg[r.person] || personAgg['其他'];
+      pa.cnt += 1;
+      for (const mk of MKEYS) pa.m[mk] += r[mk] || 0;
+      for (const qk of QKEYS) pa.q[qk] += r[qk] || 0;
+      pa.submit += (r.submitN || 0);
+      pa.passed += (r.passedN || 0);
+    }
+  }
+  const t = derive(totM, totQ);
+  const runCnt = [...seen].filter(k => { const row = weeks.flatMap(w => w.rows).find(r => r.person + '|' + r.name === k); return row && row.cv > 0; }).length;
+  const g = document.getElementById('kpiGrid3');
+  const passRate = totalSubmit ? (totalPassed / totalSubmit * 100) : 0;
+  g.innerHTML = [
+    ['素材池', fmtI(totalPool), '台账∪报表（3周产出）', false],
+    ['跑出素材', fmtI(runCnt), '有转化', false],
+    ['跑出率', totalPool ? fmtP(runCnt / totalPool * 100) : fmtP(0), '跑出÷素材池', false],
+    ['过审数', fmtI(totalPassed), '子账户口径', false],
+    ['过审率', fmtP(passRate), '过审÷提交（子账户）', true],
+    ['3周消耗', fmtM(t.sp), '窗口内投放消耗', false],
+  ].map((r, i) => kpiCard(r[0], r[1], r[2], r[3])).join('');
+  // 编导卡
+  const wrapP = document.getElementById('passPersonRow');
+  wrapP.innerHTML = [...CORE4, '其他'].map(p => {
+    const pa = personAgg[p];
+    const d = derive(pa.m, pa.q);
+    const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
+    const pr = pa.submit ? (pa.passed / pa.submit * 100) : 0;
+    return '<div class="kpi-card" style="margin:0">' +
+      '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
+      '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
+      '<div class="kpi-sub">' + pa.cnt + ' 条素材 · 转化 ' + fmtI(d.cv) + '</div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 过审率 ' + (pa.submit ? fmtP(pr) : '—') + '</div>' +
+    '</div>';
+  }).join('');
+  // 周区块（每页10行分页）
+  const wrap = document.getElementById('pass3wWrap');
+  let html = '';
+  weeks.forEach((wk, wi) => {
+    const wkLabel = '第' + (wi + 1) + '周';
+    const sorted = [...wk.rows].sort((a, b) => b.sp - a.sp);
+    const pages = Math.max(1, Math.ceil(sorted.length / PASS_PAGE_SIZE));
+    const curPage = Math.min(passPageState[wi] || 1, pages);
+    passPageState[wi] = curPage;
+    const startIdx = (curPage - 1) * PASS_PAGE_SIZE;
+    const pageRows = sorted.slice(startIdx, startIdx + PASS_PAGE_SIZE);
+    html += '<div class="table-card" style="margin-bottom:16px">';
+    html += '<div class="table-toolbar"><div class="section-title" style="margin:0">' + wkLabel +
+      '（' + wk.start.slice(5).replace('-', '/') + ' - ' + wk.end.slice(5).replace('-', '/') + '）</div>' +
+      '<div class="table-info">素材池 ' + wk.rows.length + ' 条 · 过审率 ' +
+      (wk.submit ? (wk.passed / wk.submit * 100).toFixed(1) + '%（子账户口径）' : '—') +
+      '</div></div>';
+    html += '<div class="table-wrap"><table><thead><tr>' +
+      '<th>编导</th><th>素材名称</th><th>产出日</th><th>有效投放天数</th><th>消耗</th><th>点击率</th>' +
+      '<th>转化</th><th>CPA</th><th>深转</th><th>深转率</th><th>完播率</th><th>3秒率</th><th>5秒率</th><th>审核</th>' +
+      '</tr></thead><tbody>';
+    for (const r of pageRows) {
+      const d = derive(r, r);
+      const c = PERSON_COLORS[r.person] || '#64748B';
+      const bg = PERSON_BG[r.person] || '#F8FAFC';
+      const auditTxt = r.hasLedger
+        ? (r.audit === '过审' ? '<span style="color:#059669;font-weight:600">过审</span>'
+          : r.audit === '上传卡审' ? '<span style="color:#D97706;font-weight:600">上传卡审</span>'
+          : '<span style="color:#DC2626;font-weight:600">投放卡审</span>')
+        : '<span style="color:#94A3B8">—</span>';
+      html += '<tr>' +
+        '<td><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + r.person + '</span></td>' +
+        '<td class="mat-name">' + r.name + '</td>' +
+        '<td class="num">' + (r.produce || '—').slice(5).replace('-', '/') + '</td>' +
+        '<td class="num">' + r.days.size + '</td>' +
+        '<td class="num">' + fmtM(d.sp) + '</td>' +
+        '<td class="num">' + fmtP(d.act_rate) + '</td>' +
+        '<td class="num">' + fmtI(d.cv) + '</td>' +
+        '<td class="num">' + fmtM(d.cpa) + '</td>' +
+        '<td class="num">—</td>' +
+        '<td class="num">—</td>' +
+        '<td class="num">' + fmtP(d.fin) + '</td>' +
+        '<td class="num">' + fmtP(d.p3) + '</td>' +
+        '<td class="num">' + fmtP(d.p5) + '</td>' +
+        '<td>' + auditTxt + '</td>' +
+        '</tr>';
+    }
+    html += '</tbody></table></div>';
+    if (pages > 1) {
+      html += '<div class="pager" id="passPager' + wi + '"><span class="pager-info">共 ' +
+        sorted.length + ' 条 · ' + pages + ' 页</span>';
+      for (let p2 = 1; p2 <= pages; p2++) {
+        html += '<button class="page-btn' + (p2 === curPage ? ' active' : '') +
+          '" data-pass-wk="' + wi + '" data-pass-pg="' + p2 + '">' + p2 + '</button>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+  // 分页事件（事件委托）
+  wrap.querySelectorAll('.page-btn[data-pass-wk]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      passPageState[+btn.dataset.passWk] = +btn.dataset.passPg;
+      renderPass3w();
+    });
+  });
+}
+
 /* ---------------- 视频弹窗 ---------------- */
 function openVideo(name) {
   const m = DATA.materials.find(x => x.name === name);
@@ -1096,6 +1371,7 @@ function renderAll() {
   renderPersons();
   renderPersonBtns();
   renderMaterials();
+  renderPass3w();
 }
 
 // 表头一次性绑定（thead 内容重渲染不影响事件委托）
@@ -1118,6 +1394,7 @@ renderAll();
                 .replace("__CSS__", CSS)
                 .replace("__CALIBER1__", caliber_html("1"))
                 .replace("__CALIBER2__", caliber_html("2"))
+                .replace("__CALIBER3__", caliber_html("3"))
                 .replace("__CHARTJS__", chart_js)
                 .replace("__DATA_JSON__", json.dumps(data, ensure_ascii=False))
                 .replace("__COLORS_JS__", json.dumps(PERSON_COLORS, ensure_ascii=False))
