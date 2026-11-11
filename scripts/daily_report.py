@@ -478,7 +478,8 @@ def _bili_day(rows, raw):
 def _load_kuaishou_day_stats():
     """从 data/kuaishou_shimo_data.json 提取快手渠道日级聚合（口径对齐引导加微）。
     返回 {MMDD: {'spend','imp','click','conv','gq','materials'}}。
-    快手字段：sp 消耗 / im 展示 / ac 行为≈点击 / cv 转化 / dp 深转（对齐高潜）。"""
+    快手字段：sp 消耗 / im 展示 / ac 行为≈点击 / cv 转化；
+    gq（高潜成交）用「销售反馈-出单」deep_real（深转真实回传），逐日取。"""
     import json as _json
     from datetime import datetime as _dt
     path = DATA_DIR / 'kuaishou_shimo_data.json'
@@ -502,7 +503,16 @@ def _load_kuaishou_day_stats():
             s['imp'] += float(v.get('im', 0) or 0)
             s['click'] += float(v.get('ac', 0) or 0)
             s['conv'] += float(v.get('cv', 0) or 0)
-            s['gq'] += float(v.get('dp', 0) or 0)
+    # 深转真实回传（销售反馈-出单）按天填充 gq
+    deep_real = d.get('deep_real') or {}
+    for day, n in deep_real.items():
+        try:
+            dt = _dt.strptime(day, '%Y-%m-%d')
+            mmdd = f"{dt.month:02d}{dt.day:02d}"
+        except Exception:
+            continue
+        if mmdd in out:
+            out[mmdd]['gq'] = float(n or 0)
     names = set()
     for m in d.get('materials', []):
         names.add((m.get('name') or '').strip())
@@ -898,8 +908,8 @@ function renderGuideCompare(dates){
     ['转化数', fInt(j.conv), fInt(k.conv)],
     ['转化率', cvr(j).toFixed(2)+'%', cvr(k).toFixed(2)+'%'],
     ['CPA', '¥'+cpa(j).toFixed(2), '¥'+cpa(k).toFixed(2)],
-    ['高潜成交', fInt(j.gq), '暂未回传'],
-    ['深转率', deep(j).toFixed(1)+'%', '暂未回传'],
+    ['高潜成交', fInt(j.gq), fInt(k.gq)],
+    ['深转率', deep(j).toFixed(1)+'%', deep(k).toFixed(1)+'%'],
   ];
   grid.innerHTML = rows.map(function(r){
     return '<div class="guide-cmp-cell">'
@@ -948,7 +958,7 @@ function renderGuide() {
   let spend, conv, gao;
   if (GUIDE_CH === 'kuaishou') { spend = ks.spend; conv = ks.conv; gao = ks.gq; }
   else if (GUIDE_CH === 'juliang') { spend = jl.spend; conv = jl.conv; gao = jl.gq; }
-  else { spend = jl.spend + ks.spend; conv = jl.conv + ks.conv; gao = jl.gq; }
+  else { spend = jl.spend + ks.spend; conv = jl.conv + ks.conv; gao = jl.gq + ks.gq; }
   const cpa   = conv ? spend/conv : 0;
   const deep  = conv ? gao/conv*100 : 0;
   // 素材名×人物 聚合（多日同名素材累加，仅巨量）
@@ -981,11 +991,19 @@ function renderGuide() {
   // 单渠道环比：只用同渠道昨日
   let pSpend = null, pConv = null, pCpa = null, pGao = null, pDeep = null;
   if (sel.length === 1) {
+    const pidx = MULTI.dates.indexOf(sel[0]) > 0 ? MULTI.dates[MULTI.dates.indexOf(sel[0])-1] : null;
     if (GUIDE_CH === 'juliang' && prevStats) { pSpend=prevStats.spend; pConv=prevStats.conv; pCpa=prevStats.cpa; pGao=prevStats.gao; pDeep=prevStats.deep_rate; }
     else if (GUIDE_CH === 'kuaishou') {
-      const idx = sel[0] !== undefined ? (function(){ const di = MULTI.dates.indexOf(sel[0]); return di > 0 ? MULTI.dates[di-1] : null; })() : null;
-      const pks = idx ? KS[idx] : null;
+      const pks = pidx ? KS[pidx] : null;
       if (pks) { pSpend=pks.spend; pConv=pks.conv; pCpa=pks.conv?pks.spend/pks.conv:0; pGao=pks.gq; pDeep=pks.conv?pks.gq/pks.conv*100:0; }
+    } else if (GUIDE_CH === 'all') {
+      // 全部模式：昨日 = 巨量昨日 + 快手昨日
+      const pjl = pidx && MULTI.days[pidx] && MULTI.days[pidx].guide ? MULTI.days[pidx].guide.data.stats : null;
+      const pks = pidx ? KS[pidx] : null;
+      const s = (pjl ? pjl.spend : 0) + (pks ? pks.spend : 0);
+      const c = (pjl ? pjl.conv : 0) + (pks ? pks.conv : 0);
+      const g = (pjl ? pjl.gao : 0) + (pks ? pks.gq : 0);
+      if (pjl || pks) { pSpend=s; pConv=c; pCpa=c? s/c : 0; pGao=g; pDeep=c? g/c*100 : 0; }
     }
   }
   const dSpend = deltaPair(spend, pSpend, 'money');
@@ -1053,11 +1071,11 @@ function renderGuide() {
     + kpiCard('总转化', fInt(conv), '次', dConv)
     + kpiCard('平均 CPA', fMoney(cpa), null, dCpa)
     + (GUIDE_CH === 'kuaishou'
-        ? kpiCard('高潜成交', '—', '快手暂未回传', null, true)
-        : kpiCard('高潜成交', fInt(jl.gq), GUIDE_CH === 'all' ? '巨量口径·快手暂未回传' : '深度转化', dGao, true))
+        ? kpiCard('高潜成交', fInt(gao), '深转回传', dGao, true)
+        : kpiCard('高潜成交', fInt(gao), GUIDE_CH === 'all' ? '巨量+快手回传合计' : '深度转化', dGao, true))
     + (GUIDE_CH === 'kuaishou'
-        ? kpiCard('深转率', '—', '快手暂未回传', null, true)
-        : kpiCard('深转率', fPct(deep), GUIDE_CH === 'all' ? '巨量口径·快手暂未回传' : '高潜/转化', dDeep, true))
+        ? kpiCard('深转率', fPct(deep), '高潜/转化', dDeep, true)
+        : kpiCard('深转率', fPct(deep), GUIDE_CH === 'all' ? '巨量+快手回传合计' : '高潜/转化', dDeep, true))
     + '</div>'
     + jlMatTable
     + ksMatTable;
