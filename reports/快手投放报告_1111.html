@@ -445,7 +445,7 @@ background:#fff;font-size:11px;color:var(--text-secondary);cursor:pointer}
   </div>
 </div>
 
-  <div class="kpi-grid" id="kpiGrid4" style="grid-template-columns:repeat(4,1fr)"></div>
+  <div class="kpi-grid" id="kpiGrid4" style="grid-template-columns:repeat(6,1fr)"></div>
   <div class="charts-row">
     <div class="chart-card">
       <div class="section-title">逐日上传与过审趋势（按上传日期）</div>
@@ -1726,6 +1726,7 @@ function buildAuditData() {
   const selSet = selDates();
   const daily = new Map();   // date -> {upload, pass, up, cast}
   const byAudit = {过审: 0, 上传卡审: 0, 投放卡审: 0};
+  const byType = {视频: {pass: 0, total: 0}, 图文: {pass: 0, total: 0}};
   const byPerson = {};
   // 报表素材归属账户（供单选过滤）
   const matAccts = new Map();
@@ -1746,9 +1747,15 @@ function buildAuditData() {
       if (!hasLedger && !inMat) continue;
     }
     const audit = currentAuditOf(e);
-    // 台账整理（byAudit/趋势/清单）= 当日上传口径
+    // 台账整理（byAudit/趋势/清单/类型）= 当日上传口径
     if (e.upload && selSet.has(e.upload)) {
       if (audit) byAudit[audit] += 1;
+      // 类型判定：优先报表 type；无报表记录时按名称（含图文=图文，其余视频）
+      const mat = DATA.materials.find(m => m.name === name && (m.type === '视频' || m.type === '图文'));
+      const isTuwen = mat ? mat.type === '图文' : name.includes('图文');
+      const tp = isTuwen ? '图文' : '视频';
+      byType[tp].total += 1;
+      if (audit === '过审') byType[tp].pass += 1;
       if (e.upload) {
         const d = daily.get(e.upload) || {upload: 0, pass: 0, up: 0, cast: 0};
         d.upload += 1;
@@ -1785,19 +1792,23 @@ function buildAuditData() {
     }
   }
   fails.sort((a, b) => (b.upload || '').localeCompare(a.upload || ''));
-  return {daily, byAudit, byPerson, fails, total: pool.size};
+  return {daily, byAudit, byType, byPerson, fails, total: pool.size};
 }
 function renderAudit() {
-  const {daily, byAudit, byPerson, fails, total} = buildAuditData();
-  // KPI 4卡
+  const {daily, byAudit, byType, byPerson, fails, total} = buildAuditData();
+  // KPI 6卡
   const g = document.getElementById('kpiGrid4');
   const totalN = byAudit['过审'] + byAudit['上传卡审'] + byAudit['投放卡审'];
+  const vRate = byType['视频'].total ? (byType['视频'].pass / byType['视频'].total * 100) : 0;
+  const tRate = byType['图文'].total ? (byType['图文'].pass / byType['图文'].total * 100) : 0;
   g.innerHTML = [
-    ['台账素材', fmtI(totalN), '主+子合并去重', false],
+    ['台账素材', fmtI(totalN), '主+子合并去重（上传口径）', false],
     ['过审', fmtI(byAudit['过审']), fmtP(totalN ? byAudit['过审'] / totalN * 100 : 0), false],
+    ['视频过审率', fmtP(vRate), '视频过审 ' + byType['视频'].pass + '/' + byType['视频'].total, true],
+    ['图文过审率', fmtP(tRate), '图文过审 ' + byType['图文'].pass + '/' + byType['图文'].total, true],
     ['上传卡审', fmtI(byAudit['上传卡审']), '审核状态=未通过', false],
     ['投放卡审', fmtI(byAudit['投放卡审']), '关联创意含未通过', false],
-  ].map((r, i) => kpiCard(r[0], r[1], r[2], i === 1)).join('');
+  ].map((r, i) => kpiCard(r[0], r[1], r[2], i === 1 || i === 2 || i === 3)).join('');
   // 趋势图
   const dates = Object.keys(daily).sort();
   const labels = dates.map(d => d.slice(5));
