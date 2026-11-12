@@ -74,6 +74,16 @@ letter-spacing:.4px;margin-bottom:5px}
 .kpi-card.accent .kpi-value{color:var(--accent)}
 .kpi-sub{font-size:10.5px;color:var(--text-muted);margin-top:3px}
 .kpi-sub .open-rate{font-size:13px;font-weight:700;color:var(--success)}
+.cell-tip{position:relative;display:inline-block;font-size:10.5px;color:var(--primary-light);cursor:help}
+.cell-tip:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
+background:#1E3A8A;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:400;
+line-height:1.5;white-space:normal;word-break:break-all;max-width:420px;
+box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.tip-cell{position:relative}
+.tip-cell:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
+background:#1E3A8A;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:400;
+line-height:1.5;white-space:normal;word-break:break-all;max-width:420px;
+box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .tc-diff{font-weight:600;display:inline-block;font-size:10px}
 .tc-diff.inc{color:var(--success)}
 .tc-diff.dec{color:var(--danger)}
@@ -237,6 +247,7 @@ background:#fff;font-size:11px;color:var(--text-secondary);cursor:pointer}
     <div class="caliber-item"><b>素材去重</b>：素材总数按素材名称去重；同名素材在台账/报表只算 1 条；账户表为广告组级拆分，数字按行加总后重算比率。</div>
     <div class="caliber-item"><b>分时</b>：按小时聚合，选多天按小时跨日累计；优差时段 = 先取「有花费的时段」算均值，🟢优质=转化率≥均值×1.15 且花费≥均值×0.5，🔴差=转化率<均值×0.85 且花费≥均值×0.5，其余不标。</div>
     <div class="caliber-item"><b>近3周跑出 · 素材池</b>：台账（主+子）∪ 报表，按产出日归近3个自然周（周一起）；仅视频+图文（排除AI/花火AI）；随账户筛选变化（全选=双台账并集，单选=该账户台账∪该账户报表素材）。</div>
+    <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
     <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 上传卡审（状态=审核未通过）/ 投放卡审（关联创意含「未通过」且状态非未通过）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：上传卡审&gt;投放卡审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
     <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷产出数；有效投放天数=当天花费>0的天数。</div>
@@ -311,6 +322,7 @@ background:#fff;font-size:11px;color:var(--text-secondary);cursor:pointer}
     <div class="caliber-item"><b>素材去重</b>：素材总数按素材名称去重；同名素材在台账/报表只算 1 条；账户表为广告组级拆分，数字按行加总后重算比率。</div>
     <div class="caliber-item"><b>分时</b>：按小时聚合，选多天按小时跨日累计；优差时段 = 先取「有花费的时段」算均值，🟢优质=转化率≥均值×1.15 且花费≥均值×0.5，🔴差=转化率<均值×0.85 且花费≥均值×0.5，其余不标。</div>
     <div class="caliber-item"><b>近3周跑出 · 素材池</b>：台账（主+子）∪ 报表，按产出日归近3个自然周（周一起）；仅视频+图文（排除AI/花火AI）；随账户筛选变化（全选=双台账并集，单选=该账户台账∪该账户报表素材）。</div>
+    <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
     <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 上传卡审（状态=审核未通过）/ 投放卡审（关联创意含「未通过」且状态非未通过）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：上传卡审&gt;投放卡审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
     <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷产出数；有效投放天数=当天花费>0的天数。</div>
@@ -372,6 +384,7 @@ background:#fff;font-size:11px;color:var(--text-secondary);cursor:pointer}
     <div class="caliber-item"><b>素材去重</b>：素材总数按素材名称去重；同名素材在台账/报表只算 1 条；账户表为广告组级拆分，数字按行加总后重算比率。</div>
     <div class="caliber-item"><b>分时</b>：按小时聚合，选多天按小时跨日累计；优差时段 = 先取「有花费的时段」算均值，🟢优质=转化率≥均值×1.15 且花费≥均值×0.5，🔴差=转化率<均值×0.85 且花费≥均值×0.5，其余不标。</div>
     <div class="caliber-item"><b>近3周跑出 · 素材池</b>：台账（主+子）∪ 报表，按产出日归近3个自然周（周一起）；仅视频+图文（排除AI/花火AI）；随账户筛选变化（全选=双台账并集，单选=该账户台账∪该账户报表素材）。</div>
+    <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
     <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 上传卡审（状态=审核未通过）/ 投放卡审（关联创意含「未通过」且状态非未通过）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：上传卡审&gt;投放卡审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
     <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷产出数；有效投放天数=当天花费>0的天数。</div>
@@ -416,6 +429,7 @@ background:#fff;font-size:11px;color:var(--text-secondary);cursor:pointer}
     <div class="caliber-item"><b>素材去重</b>：素材总数按素材名称去重；同名素材在台账/报表只算 1 条；账户表为广告组级拆分，数字按行加总后重算比率。</div>
     <div class="caliber-item"><b>分时</b>：按小时聚合，选多天按小时跨日累计；优差时段 = 先取「有花费的时段」算均值，🟢优质=转化率≥均值×1.15 且花费≥均值×0.5，🔴差=转化率<均值×0.85 且花费≥均值×0.5，其余不标。</div>
     <div class="caliber-item"><b>近3周跑出 · 素材池</b>：台账（主+子）∪ 报表，按产出日归近3个自然周（周一起）；仅视频+图文（排除AI/花火AI）；随账户筛选变化（全选=双台账并集，单选=该账户台账∪该账户报表素材）。</div>
+    <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
     <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 上传卡审（状态=审核未通过）/ 投放卡审（关联创意含「未通过」且状态非未通过）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：上传卡审&gt;投放卡审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
     <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷产出数；有效投放天数=当天花费>0的天数。</div>
@@ -705,9 +719,6 @@ function renderKpi1() {
     state.dates = save;
   }
   const g = document.getElementById('kpiGrid1');
-  const todayS = buildTodayStats();
-  const todayRunRate = todayS.total ? (todayS.run / todayS.total * 100) : 0;
-  const todayPassRate = todayS.submit ? (todayS.passed / todayS.submit * 100) : 0;
   const rows = [
     ['总消耗', fmtM(t.sp), diff(t.sp, prevTot.sp) + '较昨日', false],
     ['曝光数', fmtI(t.im), '总曝光', false],
@@ -725,8 +736,6 @@ function renderKpi1() {
     ['开口3次', fmtI(t.o3), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o3/t.va*100) : fmtP(0)) + '</b>（开口3次/有效获客）', false],
     ['开口5次', fmtI(t.o5), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o5/t.va*100) : fmtP(0)) + '</b>（开口5次/有效获客）', false],
     ['开口10次', fmtI(t.o10), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o10/t.va*100) : fmtP(0)) + '</b>（开口10次/有效获客）', false],
-    ['当日跑出率', fmtP(todayRunRate), '当日上传素材中有转化占比（' + todayS.run + '/' + todayS.total + '）', true],
-    ['当日过审率', fmtP(todayPassRate), '当日上传素材过审占比（主+子合并去重，严格合并）', true],
   ];
   g.innerHTML = rows.map(r => kpiCard(r[0], r[1], r[2], r[3])).join('');
 }
@@ -827,11 +836,12 @@ function renderFunnel() {
     addM(tot, aggDays(a.days).m);
   }
   const stages = [
-    ['转化', tot.cv], [state.acct === 'all' ? '深转' : '深转(单账户未回传)', state.acct === 'all' ? deepRealTotal() : 0],
+    ['转化', tot.cv],
     ['有效获客', tot.va], ['开口1次', tot.o1], ['开口3次', tot.o3],
     ['开口5次', tot.o5], ['开口10次', tot.o10],
+    [state.acct === 'all' ? '深转' : '深转(单账户未回传)', state.acct === 'all' ? deepRealTotal() : 0],
   ];
-  const colors = ['#3B82F6','#60A5FA','#8B5CF6','#A78BFA','#F59E0B','#FBBF24','#10B981'];
+  const colors = ['#3B82F6','#8B5CF6','#A78BFA','#F59E0B','#FBBF24','#10B981','#60A5FA'];
   if (chartFunnel) chartFunnel.destroy();
   chartFunnel = new Chart(document.getElementById('chartFunnel'), {
     type: 'bar',
@@ -1150,16 +1160,16 @@ function renderPersons() {
   const map = {};
   for (const m of DATA.materials) {
     const p = m.person || '其他';
-    if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ(), runCnt: 0, passN: 0, submitN: 0};
+    if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ(), runCnt: 0, passN: 0, submitN: 0, runNames: [], passNames: [], failNames: []};
     const {m: mm, q} = aggDays(m.days);
     // 条数随日期联动：所选日期内有投放数据的素材才计数
     if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
       map[p].cnt.add(m.name);
       addM(map[p].m, mm); addQ(map[p].q, q);
-      if (mm.cv > 0) map[p].runCnt += 1;
+      if (mm.cv > 0) { map[p].runCnt += 1; map[p].runNames.push(m.name); }
     }
   }
-  // 每个编导的过审统计：台账池按编导归集
+  // 每个编导的过审统计：台账池按编导归集（同名合并去重，严格合并状态）
   const subByName = new Map(), mainByName = new Map();
   for (const l of (DATA.ledger_sub || [])) {
     if (!subByName.has(l.name)) subByName.set(l.name, []);
@@ -1169,40 +1179,48 @@ function renderPersons() {
     if (!mainByName.has(l.name)) mainByName.set(l.name, []);
     mainByName.get(l.name).push(l);
   }
-  const personLedger = {};
-  for (const p of Object.keys(map)) personLedger[p] = {passN: 0, submitN: 0};
-  const handled = new Set();
+  const merged = new Map();   // name -> {subAudit, mainAudit}
   for (const [ln, recs] of subByName) {
-    const p = personOf3(ln);
-    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0};
-    personLedger[p].submitN += 1;
-    if (recs[0].audit === '过审') personLedger[p].passN += 1;
-    handled.add(ln);
+    const e = merged.get(ln) || {subAudit: null, mainAudit: null};
+    e.subAudit = recs[0].audit;
+    merged.set(ln, e);
   }
   for (const [ln, recs] of mainByName) {
-    const p = personOf3(ln);
-    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0};
-    // 同名素材不重复计提交（视频共享，同名只算1次提交）
-    if (!handled.has(ln)) {
-      personLedger[p].submitN += 1;
-      if (recs[0].audit === '过审') personLedger[p].passN += 1;
-    }
+    const e = merged.get(ln) || {subAudit: null, mainAudit: null};
+    e.mainAudit = recs[0].audit;
+    merged.set(ln, e);
+  }
+  const personLedger = {};
+  for (const p of Object.keys(map)) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: []};
+  for (const [name, e] of merged) {
+    if (excludePass3w(name)) continue;
+    const p = personOf3(name);
+    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: []};
+    personLedger[p].submitN += 1;
+    const audit = currentAuditOf(e);
+    if (audit === '过审') { personLedger[p].passN += 1; personLedger[p].passNames.push(name); }
+    else if (audit) personLedger[p].failNames.push(name);
   }
   const wrap = document.getElementById('personRow');
   const list = Object.entries(map).sort((a,b) => b[1].m.sp - a[1].m.sp);
   wrap.innerHTML = list.map(([p, a]) => {
     const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
     const d = derive(a.m, a.q);
-    const pl = personLedger[p] || {passN: 0, submitN: 0};
+    const pl = personLedger[p] || {passN: 0, submitN: 0, passNames: [], failNames: []};
     const runRate = a.cnt.size ? (a.runCnt / a.cnt.size * 100) : 0;
     const open10Rate = a.cnt.size ? (d.o10 / a.cnt.size * 100) : 0;
     const passRate = pl.submitN ? (pl.passN / pl.submitN * 100) : 0;
+    const passTip = '过审素材：' + (pl.passNames.slice(0, 15).join('、') || '无') +
+      (pl.passNames.length > 15 ? ' 等' + pl.passNames.length + '条' : '');
+    const failTip = '卡审素材：' + (pl.failNames.slice(0, 15).join('、') || '无') +
+      (pl.failNames.length > 15 ? ' 等' + pl.failNames.length + '条' : '');
     return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
       '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 —' + '</div>' +
-      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 过审率 ' + (pl.submitN ? fmtP(passRate) : '—') + '</div>' +
-      '<div class="kpi-sub">跑出率 <b class="open-rate">' + fmtP(runRate) + '</b> · 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 过审率 <b class="open-rate">' + (pl.submitN ? fmtP(passRate) : '—') + '</b></div>' +
+      '<div class="kpi-sub">跑出率 <b class="open-rate tip-cell" data-tip="' + (a.runNames.slice(0, 15).join('、') || '无') + '">' + fmtP(runRate) + '</b> · 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
+      '<div class="kpi-sub"><span class="cell-tip" data-tip="' + passTip + '｜' + failTip + '">🔎 悬停看过审明细</span></div>' +
     '</div>';
   }).join('') || '<div class="empty-state">暂无数据</div>';
 }
