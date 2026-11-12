@@ -1687,11 +1687,30 @@ function buildAuditData() {
     pool.set(ln, e);
   }
   // 逐日上传趋势 + 三分类 + 编导
+  const selSet = selDates();
   const daily = new Map();   // date -> {upload, pass, up, cast}
   const byAudit = {过审: 0, 上传卡审: 0, 投放卡审: 0};
   const byPerson = {};
+  // 报表素材归属账户（供单选过滤）
+  const matAccts = new Map();
+  for (const m of DATA.materials) {
+    if (!matAccts.has(m.name)) matAccts.set(m.name, new Set());
+    for (const d of Object.keys(m.days)) {
+      for (const acct of Object.keys(m.days[d])) matAccts.get(m.name).add(acct);
+    }
+  }
   for (const [name, e] of pool) {
     if (excludePass3w(name)) continue;
+    // 日期筛选：上传日期在所选窗口内
+    if (e.upload && !selSet.has(e.upload)) continue;
+    // 账户筛选：单选时只留该账户台账或该账户报表素材
+    if (state.acct !== 'all') {
+      const hasLedger = state.acct === '125240890'
+        ? (e.subAudit !== null && e.subAudit !== undefined)
+        : (e.mainAudit !== null && e.mainAudit !== undefined);
+      const inMat = matAccts.has(name) && matAccts.get(name).has(state.acct);
+      if (!hasLedger && !inMat) continue;
+    }
     const audit = currentAuditOf(e);
     if (audit) byAudit[audit] += 1;
     const p = personOf3(name);
@@ -1707,10 +1726,18 @@ function buildAuditData() {
       daily.set(e.upload, d);
     }
   }
-  // 卡审清单
+  // 卡审清单（同样日期+账户过滤）
   const fails = [];
   for (const [name, e] of pool) {
     if (excludePass3w(name)) continue;
+    if (e.upload && !selSet.has(e.upload)) continue;
+    if (state.acct !== 'all') {
+      const hasLedger = state.acct === '125240890'
+        ? (e.subAudit !== null && e.subAudit !== undefined)
+        : (e.mainAudit !== null && e.mainAudit !== undefined);
+      const inMat = matAccts.has(name) && matAccts.get(name).has(state.acct);
+      if (!hasLedger && !inMat) continue;
+    }
     const audit = currentAuditOf(e);
     if (audit === '上传卡审' || audit === '投放卡审') {
       fails.push({name, audit, upload: e.upload, person: personOf3(name)});
