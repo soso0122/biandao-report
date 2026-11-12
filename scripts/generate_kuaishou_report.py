@@ -1155,7 +1155,15 @@ function buildPass3w() {
         const curAudit = currentAuditOf(e);
         const hasLedger = (e.subAudit !== null && e.subAudit !== undefined) ||
                           (e.mainAudit !== null && e.mainAudit !== undefined);
-        const submitN = hasLedger ? 1 : 0;
+        // 单选账户时，只有该账户台账有记录才算提交；全选时任一有记录算提交
+        let submitN = 0;
+        if (state.acct === 'all') {
+          submitN = hasLedger ? 1 : 0;
+        } else if (state.acct === '125240890') {
+          submitN = (e.subAudit !== null && e.subAudit !== undefined) ? 1 : 0;
+        } else if (state.acct === '125110802') {
+          submitN = (e.mainAudit !== null && e.mainAudit !== undefined) ? 1 : 0;
+        }
         const passedN = (curAudit === '过审') ? 1 : 0;
         submit += submitN;
         passed += passedN;
