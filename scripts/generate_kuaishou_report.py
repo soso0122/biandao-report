@@ -275,6 +275,7 @@ def build_html():
       <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">📊 投放数据表现</button>
       <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">🎬 素材数据表现</button>
       <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">📅 近3周跑出</button>
+      <button class="tab-btn" id="tabBtn4" onclick="switchTab(4)">🚦 过审数据</button>
     </nav>
   </div>
   <div class="topbar-row2">
@@ -351,7 +352,7 @@ def build_html():
 <!-- ============ TAB2 素材数据表现 ============ -->
 <div id="tab2" style="display:none">
   __CALIBER2__
-  <div class="kpi-grid" id="kpiGrid2"></div>
+  <div class="kpi-grid" id="kpiGrid2" style="grid-template-columns:repeat(5,1fr)"></div>
   <div class="chart-card" style="margin-bottom:20px">
     <div class="section-title">素材类型</div>
     <div id="typeRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
@@ -405,6 +406,34 @@ def build_html():
   </div>
 </div>
 
+<!-- ============ TAB4 过审数据 ============ -->
+<div id="tab4" style="display:none">
+  __CALIBER4__
+  <div class="kpi-grid" id="kpiGrid4" style="grid-template-columns:repeat(4,1fr)"></div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="section-title">逐日上传与过审趋势（按上传日期）</div>
+      <div class="chart-wrap"><canvas id="chartAuditTrend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">审核三分类占比（主账户+子账户合并去重）</div>
+      <div class="chart-wrap"><canvas id="chartAuditPie"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="section-title">编导过审率对比</div>
+    <div class="chart-wrap" style="height:260px"><canvas id="chartAuditPerson"></canvas></div>
+  </div>
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div class="section-title" style="margin:0">⚠️ 卡审素材清单（上传卡审 + 投放卡审）</div>
+      <div class="table-info">共 <span id="auditFailCount">0</span> 条（随账户筛选）</div>
+    </div>
+    <div class="table-wrap"><table id="auditTable"><thead></thead><tbody id="auditBody"></tbody></table></div>
+    <div class="pager" id="auditPager"></div>
+  </div>
+</div>
+
 </div>
 
 <div class="modal-overlay" id="videoModal">
@@ -449,6 +478,64 @@ function deepRealTotal() {
   let n = 0;
   for (const d of selDates()) n += (DATA.deep_real && DATA.deep_real[d]) || 0;
   return n;
+}
+// 当日（所选日期中最新一天）产出素材的跑出率/过审率（台账∪报表口径，随账户筛选）
+let todayStatsCache = null;
+function buildTodayStats() {
+  const sel = [...state.dates].sort();
+  if (!sel.length) return {total: 0, run: 0, passed: 0, submit: 0};
+  const today = sel[sel.length - 1];
+  // 当日素材池 = 当天上传（台账上传日期=today）的素材，主+子合并去重
+  const pool = new Map();   // name -> {subAudit, mainAudit}
+  for (const l of (DATA.ledger_sub || [])) {
+    if (l.upload !== today) continue;
+    const e = pool.get(l.name) || {name: l.name, subAudit: null, mainAudit: null};
+    e.subAudit = l.audit;
+    pool.set(l.name, e);
+  }
+  for (const l of (DATA.ledger_main || [])) {
+    if (l.upload !== today) continue;
+    const e = pool.get(l.name) || {name: l.name, subAudit: null, mainAudit: null};
+    e.mainAudit = l.audit;
+    pool.set(l.name, e);
+  }
+  // 报表首现日=today 的素材也进池（台账漏记的兜底）
+  for (const m of DATA.materials) {
+    if (m.type === 'AI' || m.type === '花火AI') continue;
+    if (m.type !== '视频' && m.type !== '图文') continue;
+    if (excludePass3w(m.name)) continue;
+    const days = Object.keys(m.days).sort();
+    if (days[0] !== today) continue;
+    if (!pool.has(m.name)) {
+      pool.set(m.name, {name: m.name, subAudit: null, mainAudit: null});
+    }
+  }
+  // 跑出判定：素材全期累计转化 > 0
+  const cvByName = new Map();
+  for (const m of DATA.materials) {
+    if (m.type === 'AI' || m.type === '花火AI') continue;
+    let cv = 0;
+    for (const [d, accts] of Object.entries(m.days)) {
+      for (const [acct, mc] of Object.entries(accts)) {
+        if (state.acct !== 'all' && acct !== state.acct) continue;
+        cv += (mc.m && mc.m.cv) || 0;
+      }
+    }
+    if (cv > 0) cvByName.set(m.name, cv);
+  }
+  // 统计（分母=合并去重后的素材数）
+  let total = 0, run = 0, passed = 0, submit = 0;
+  for (const [name, e] of pool) {
+    total += 1;
+    if (cvByName.has(name)) run += 1;
+    const audit = currentAuditOf(e);
+    if (audit !== null && audit !== undefined) {
+      submit += 1;
+      if (audit === '过审') passed += 1;
+    }
+  }
+  todayStatsCache = {total, run, passed, submit, today};
+  return todayStatsCache;
 }
 const selDates = () => new Set(state.dates);
 
@@ -502,9 +589,11 @@ function switchTab(t) {
   document.getElementById('tab1').style.display = t === 1 ? '' : 'none';
   document.getElementById('tab2').style.display = t === 2 ? '' : 'none';
   document.getElementById('tab3').style.display = t === 3 ? '' : 'none';
+  document.getElementById('tab4').style.display = t === 4 ? '' : 'none';
   document.getElementById('tabBtn1').classList.toggle('active', t === 1);
   document.getElementById('tabBtn2').classList.toggle('active', t === 2);
   document.getElementById('tabBtn3').classList.toggle('active', t === 3);
+  document.getElementById('tabBtn4').classList.toggle('active', t === 4);
 }
 
 /* ---------------- 顶部 chips（共享） ---------------- */
@@ -582,6 +671,9 @@ function renderKpi1() {
     state.dates = save;
   }
   const g = document.getElementById('kpiGrid1');
+  const todayS = buildTodayStats();
+  const todayRunRate = todayS.total ? (todayS.run / todayS.total * 100) : 0;
+  const todayPassRate = todayS.submit ? (todayS.passed / todayS.submit * 100) : 0;
   const rows = [
     ['总消耗', fmtM(t.sp), diff(t.sp, prevTot.sp) + '较昨日', false],
     ['曝光数', fmtI(t.im), '总曝光', false],
@@ -599,6 +691,8 @@ function renderKpi1() {
     ['开口3次', fmtI(t.o3), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o3/t.va*100) : fmtP(0)) + '</b>（开口3次/有效获客）', false],
     ['开口5次', fmtI(t.o5), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o5/t.va*100) : fmtP(0)) + '</b>（开口5次/有效获客）', false],
     ['开口10次', fmtI(t.o10), '开口率 <b class="open-rate">' + (t.va ? fmtP(t.o10/t.va*100) : fmtP(0)) + '</b>（开口10次/有效获客）', false],
+    ['当日跑出率', fmtP(todayRunRate), '当日上传素材中有转化占比（' + todayS.run + '/' + todayS.total + '）', true],
+    ['当日过审率', fmtP(todayPassRate), '当日上传素材过审占比（主+子合并去重，严格合并）', true],
   ];
   g.innerHTML = rows.map(r => kpiCard(r[0], r[1], r[2], r[3])).join('');
 }
@@ -614,6 +708,66 @@ function renderKpi2() {
     }
   }
   const t = derive(tot, tq);
+  // 素材页过审率/跑出率：素材池=台账∪报表（产出日在所选日期窗口内，排除AI/花火/无日期）
+  const subByName = new Map(), mainByName = new Map();
+  for (const l of (DATA.ledger_sub || [])) {
+    if (!subByName.has(l.name)) subByName.set(l.name, []);
+    subByName.get(l.name).push(l);
+  }
+  for (const l of (DATA.ledger_main || [])) {
+    if (!mainByName.has(l.name)) mainByName.set(l.name, []);
+    mainByName.get(l.name).push(l);
+  }
+  const selSet = selDates();
+  const pool2 = new Map();
+  const addLedger2 = (map, src) => {
+    for (const [ln, recs] of map) {
+      if (excludePass3w(ln)) continue;
+      // 素材池按「上传日期」落在所选日期窗口
+      if (!recs[0].upload || !selSet.has(recs[0].upload)) continue;
+      const e = pool2.get(ln) || {name: ln, subAudit: null, mainAudit: null};
+      if (src === 'sub') e.subAudit = recs[0].audit;
+      else e.mainAudit = recs[0].audit;
+      pool2.set(ln, e);
+    }
+  };
+  addLedger2(subByName, 'sub');
+  addLedger2(mainByName, 'main');
+  for (const m of DATA.materials) {
+    if (m.type === 'AI' || m.type === '花火AI') continue;
+    if (m.type !== '视频' && m.type !== '图文') continue;
+    if (excludePass3w(m.name)) continue;
+    // 报表首现日落在窗口的素材进池（台账漏记兜底）
+    const days = Object.keys(m.days).sort();
+    if (!days.length || !selSet.has(days[0])) continue;
+    const e = pool2.get(m.name) || {name: m.name, subAudit: null, mainAudit: null};
+    e.cv = 0;
+    for (const [d, accts] of Object.entries(m.days)) {
+      if (!selSet.has(d)) continue;
+      for (const [acct, mc] of Object.entries(accts)) {
+        if (state.acct !== 'all' && acct !== state.acct) continue;
+        e.cv += (mc.m && mc.m.cv) || 0;
+      }
+    }
+    pool2.set(m.name, e);
+  }
+  // 随账户筛选
+  let poolN = 0, passN = 0, submitN = 0, runN = 0;
+  for (const [name, e] of pool2) {
+    if (state.acct !== 'all') {
+      const hasLedger = state.acct === '125240890'
+        ? (e.subAudit !== null && e.subAudit !== undefined)
+        : (e.mainAudit !== null && e.mainAudit !== undefined);
+      if (!hasLedger && e.cv === undefined) continue;
+    }
+    poolN += 1;
+    if (e.cv > 0) runN += 1;
+    const audit = currentAuditOf(e);
+    if (audit !== null && audit !== undefined) {
+      submitN += 1;
+      if (audit === '过审') passN += 1;
+    }
+  }
   const g = document.getElementById('kpiGrid2');
   const rows = [
     ['素材总数', fmtI(names.size), '按名称去重 · 随日期筛选', false],
@@ -624,8 +778,10 @@ function renderKpi2() {
     ['3秒播放率', fmtP1(t.p3), '曝光加权', false],
     ['5秒播放率', fmtP1(t.p5), '曝光加权', false],
     ['完播率', fmtP1(t.fin), '曝光加权', false],
+    ['过审率', submitN ? fmtP(passN / submitN * 100) : fmtP(0), '过审÷提交（' + passN + '/' + submitN + '）· 随账户筛选', true],
+    ['跑出率', poolN ? fmtP(runN / poolN * 100) : fmtP(0), '有转化÷素材池（' + runN + '/' + poolN + '）', true],
   ];
-  g.innerHTML = rows.map((r,i) => kpiCard(r[0], r[1], r[2], i===0)).join('');
+  g.innerHTML = rows.map((r,i) => kpiCard(r[0], r[1], r[2], i===0 || i>=8)).join('');
 }
 
 /* ---------------- 漏斗图 ---------------- */
@@ -960,12 +1116,42 @@ function renderPersons() {
   const map = {};
   for (const m of DATA.materials) {
     const p = m.person || '其他';
-    if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ()};
+    if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ(), runCnt: 0, passN: 0, submitN: 0};
     const {m: mm, q} = aggDays(m.days);
     // 条数随日期联动：所选日期内有投放数据的素材才计数
     if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
       map[p].cnt.add(m.name);
       addM(map[p].m, mm); addQ(map[p].q, q);
+      if (mm.cv > 0) map[p].runCnt += 1;
+    }
+  }
+  // 每个编导的过审统计：台账池按编导归集
+  const subByName = new Map(), mainByName = new Map();
+  for (const l of (DATA.ledger_sub || [])) {
+    if (!subByName.has(l.name)) subByName.set(l.name, []);
+    subByName.get(l.name).push(l);
+  }
+  for (const l of (DATA.ledger_main || [])) {
+    if (!mainByName.has(l.name)) mainByName.set(l.name, []);
+    mainByName.get(l.name).push(l);
+  }
+  const personLedger = {};
+  for (const p of Object.keys(map)) personLedger[p] = {passN: 0, submitN: 0};
+  const handled = new Set();
+  for (const [ln, recs] of subByName) {
+    const p = personOf3(ln);
+    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0};
+    personLedger[p].submitN += 1;
+    if (recs[0].audit === '过审') personLedger[p].passN += 1;
+    handled.add(ln);
+  }
+  for (const [ln, recs] of mainByName) {
+    const p = personOf3(ln);
+    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0};
+    // 同名素材不重复计提交（视频共享，同名只算1次提交）
+    if (!handled.has(ln)) {
+      personLedger[p].submitN += 1;
+      if (recs[0].audit === '过审') personLedger[p].passN += 1;
     }
   }
   const wrap = document.getElementById('personRow');
@@ -973,11 +1159,16 @@ function renderPersons() {
   wrap.innerHTML = list.map(([p, a]) => {
     const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
     const d = derive(a.m, a.q);
+    const pl = personLedger[p] || {passN: 0, submitN: 0};
+    const runRate = a.cnt.size ? (a.runCnt / a.cnt.size * 100) : 0;
+    const open10Rate = a.cnt.size ? (d.o10 / a.cnt.size * 100) : 0;
+    const passRate = pl.submitN ? (pl.passN / pl.submitN * 100) : 0;
     return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
       '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 —' + '</div>' +
-      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 深转率 —' + '</div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 过审率 ' + (pl.submitN ? fmtP(passRate) : '—') + '</div>' +
+      '<div class="kpi-sub">跑出率 <b class="open-rate">' + fmtP(runRate) + '</b> · 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
     '</div>';
   }).join('') || '<div class="empty-state">暂无数据</div>';
 }
@@ -1416,6 +1607,148 @@ function renderPass3w() {
   });
 }
 
+/* ---------------- TAB4 过审数据 ---------------- */
+let auditCharts = {};
+function buildAuditData() {
+  // 合并台账：主+子，同名去重（严格合并状态）
+  const subByName = new Map(), mainByName = new Map();
+  for (const l of (DATA.ledger_sub || [])) {
+    if (!subByName.has(l.name)) subByName.set(l.name, []);
+    subByName.get(l.name).push(l);
+  }
+  for (const l of (DATA.ledger_main || [])) {
+    if (!mainByName.has(l.name)) mainByName.set(l.name, []);
+    mainByName.get(l.name).push(l);
+  }
+  // 合并去重素材：name -> {upload(最早), subAudit, mainAudit}
+  const pool = new Map();
+  for (const [ln, recs] of subByName) {
+    const e = pool.get(ln) || {name: ln, upload: recs[0].upload, subAudit: null, mainAudit: null};
+    e.subAudit = recs[0].audit;
+    if (recs[0].upload < e.upload) e.upload = recs[0].upload;
+    pool.set(ln, e);
+  }
+  for (const [ln, recs] of mainByName) {
+    const e = pool.get(ln) || {name: ln, upload: recs[0].upload, subAudit: null, mainAudit: null};
+    e.mainAudit = recs[0].audit;
+    if (recs[0].upload < e.upload) e.upload = recs[0].upload;
+    pool.set(ln, e);
+  }
+  // 逐日上传趋势 + 三分类 + 编导
+  const daily = new Map();   // date -> {upload, pass, up, cast}
+  const byAudit = {过审: 0, 上传卡审: 0, 投放卡审: 0};
+  const byPerson = {};
+  for (const [name, e] of pool) {
+    if (excludePass3w(name)) continue;
+    const audit = currentAuditOf(e);
+    if (audit) byAudit[audit] += 1;
+    const p = personOf3(name);
+    if (!byPerson[p]) byPerson[p] = {pass: 0, total: 0};
+    byPerson[p].total += 1;
+    if (audit === '过审') byPerson[p].pass += 1;
+    if (e.upload) {
+      const d = daily.get(e.upload) || {upload: 0, pass: 0, up: 0, cast: 0};
+      d.upload += 1;
+      if (audit === '过审') d.pass += 1;
+      else if (audit === '上传卡审') d.up += 1;
+      else if (audit === '投放卡审') d.cast += 1;
+      daily.set(e.upload, d);
+    }
+  }
+  // 卡审清单
+  const fails = [];
+  for (const [name, e] of pool) {
+    if (excludePass3w(name)) continue;
+    const audit = currentAuditOf(e);
+    if (audit === '上传卡审' || audit === '投放卡审') {
+      fails.push({name, audit, upload: e.upload, person: personOf3(name)});
+    }
+  }
+  fails.sort((a, b) => (b.upload || '').localeCompare(a.upload || ''));
+  return {daily, byAudit, byPerson, fails, total: pool.size};
+}
+function renderAudit() {
+  const {daily, byAudit, byPerson, fails, total} = buildAuditData();
+  // KPI 4卡
+  const g = document.getElementById('kpiGrid4');
+  const totalN = byAudit['过审'] + byAudit['上传卡审'] + byAudit['投放卡审'];
+  g.innerHTML = [
+    ['台账素材', fmtI(totalN), '主+子合并去重', false],
+    ['过审', fmtI(byAudit['过审']), fmtP(totalN ? byAudit['过审'] / totalN * 100 : 0), false],
+    ['上传卡审', fmtI(byAudit['上传卡审']), '审核状态=未通过', false],
+    ['投放卡审', fmtI(byAudit['投放卡审']), '关联创意含未通过', false],
+  ].map((r, i) => kpiCard(r[0], r[1], r[2], i === 1)).join('');
+  // 趋势图
+  const dates = Object.keys(daily).sort();
+  const labels = dates.map(d => d.slice(5));
+  if (auditCharts.trend) auditCharts.trend.destroy();
+  auditCharts.trend = new Chart(document.getElementById('chartAuditTrend'), {
+    type: 'bar',
+    data: {labels, datasets: [
+      {label: '上传', data: dates.map(d => daily[d].upload), backgroundColor: '#BFDBFE', borderRadius: 3},
+      {label: '过审', data: dates.map(d => daily[d].pass), backgroundColor: '#34D399', borderRadius: 3},
+      {label: '上传卡审', data: dates.map(d => daily[d].up), backgroundColor: '#FBBF24', borderRadius: 3},
+      {label: '投放卡审', data: dates.map(d => daily[d].cast), backgroundColor: '#F87171', borderRadius: 3},
+    ]},
+    options: {responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {labels: {boxWidth: 12, font: {size: 11}}}},
+      scales: {y: {beginAtZero: true, ticks: {font: {size: 10}}}, x: {ticks: {font: {size: 10}}}}}
+  });
+  // 三分类饼图
+  if (auditCharts.pie) auditCharts.pie.destroy();
+  auditCharts.pie = new Chart(document.getElementById('chartAuditPie'), {
+    type: 'doughnut',
+    data: {labels: ['过审', '上传卡审', '投放卡审'],
+      datasets: [{data: [byAudit['过审'], byAudit['上传卡审'], byAudit['投放卡审']],
+        backgroundColor: ['#34D399', '#FBBF24', '#F87171']}]},
+    options: {responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {position: 'right', labels: {boxWidth: 12, font: {size: 11}}}}}
+  });
+  // 编导过审率
+  const persons = [...CORE4, '其他'];
+  if (auditCharts.person) auditCharts.person.destroy();
+  auditCharts.person = new Chart(document.getElementById('chartAuditPerson'), {
+    type: 'bar',
+    data: {labels: persons, datasets: [{
+      label: '过审率%',
+      data: persons.map(p => {
+        const bp = byPerson[p];
+        return bp && bp.total ? +(bp.pass / bp.total * 100).toFixed(1) : 0;
+      }),
+      backgroundColor: persons.map(p => PERSON_COLORS[p] || '#94A3B8'), borderRadius: 4,
+    }]},
+    options: {responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {legend: {display: false},
+        tooltip: {callbacks: {label: c => {
+          const p = persons[c.dataIndex]; const bp = byPerson[p];
+          return ' 过审率 ' + c.raw + '%（' + (bp ? bp.pass : 0) + '/' + (bp ? bp.total : 0) + '）';
+        }}}},
+      scales: {x: {beginAtZero: true, max: 100, ticks: {font: {size: 10}, callback: v => v + '%'}},
+        y: {ticks: {font: {size: 11}}}}}
+  });
+  // 卡审清单
+  document.getElementById('auditFailCount').textContent = fails.length;
+  const thead = document.querySelector('#auditTable thead');
+  thead.innerHTML = '<tr><th>素材名称</th><th>编导</th><th>卡审类型</th><th>上传日期</th></tr>';
+  const pageRows = fails.slice(0, 30);
+  document.getElementById('auditBody').innerHTML = pageRows.map(f => {
+    const c = PERSON_COLORS[f.person] || '#64748B', bg = PERSON_BG[f.person] || '#F8FAFC';
+    const typeTxt = f.audit === '上传卡审'
+      ? '<span style="color:#D97706;font-weight:600">上传卡审</span>'
+      : '<span style="color:#DC2626;font-weight:600">投放卡审</span>';
+    return '<tr><td class="mat-name">' + f.name + '</td>' +
+      '<td><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + f.person + '</span></td>' +
+      '<td>' + typeTxt + '</td>' +
+      '<td class="num">' + (f.upload || '—').slice(5).replace('-', '/') + '</td></tr>';
+  }).join('') || '<tr><td colspan="4" class="empty-state">暂无卡审素材</td></tr>';
+  const pager = document.getElementById('auditPager');
+  if (fails.length > 30) {
+    pager.innerHTML = '<span class="pager-info">共 ' + fails.length + ' 条 · 显示前 30 条</span>';
+  } else {
+    pager.innerHTML = '<span class="pager-info">共 ' + fails.length + ' 条</span>';
+  }
+}
+
 /* ---------------- 视频弹窗 ---------------- */
 function openVideo(name) {
   const m = DATA.materials.find(x => x.name === name);
@@ -1526,6 +1859,7 @@ function renderAll() {
   // 账户筛选变化时重建近3周缓存
   if (pass3wData && pass3wData.acct !== state.acct) pass3wData = null;
   renderPass3w();
+  renderAudit();
 }
 
 // 表头一次性绑定（thead 内容重渲染不影响事件委托）
@@ -1549,6 +1883,7 @@ renderAll();
                 .replace("__CALIBER1__", caliber_html("1"))
                 .replace("__CALIBER2__", caliber_html("2"))
                 .replace("__CALIBER3__", caliber_html("3"))
+                .replace("__CALIBER4__", caliber_html("4"))
                 .replace("__CHARTJS__", chart_js)
                 .replace("__DATA_JSON__", json.dumps(data, ensure_ascii=False))
                 .replace("__COLORS_JS__", json.dumps(PERSON_COLORS, ensure_ascii=False))
