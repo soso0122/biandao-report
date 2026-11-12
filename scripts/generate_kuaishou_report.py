@@ -398,7 +398,7 @@ def build_html():
   <div class="chart-card" style="margin-bottom:20px">
     <div class="section-title">📅 近3周跑出表现（自然周 · 按产出日期归周）</div>
     <div class="table-info" style="margin-bottom:10px">
-      素材池 = 拒审台账 ∪ 报表（含未过审/0数据素材）；仅视频+图文（排除平台AI/花火AI）；过审率为<b>子账户口径</b>（拒审台账-子账户）。
+      素材池 = 拒审台账 ∪ 报表（含未过审/0数据素材）；仅视频+图文（排除平台AI/花火AI）；过审率为<b>按账户筛选（全选=双台账严格合并）</b>（拒审台账-子账户）。
     </div>
     <div id="pass3wWrap"></div>
   </div>
@@ -1064,19 +1064,35 @@ function nameMatch(name, target) {
 let pass3wData = null;   // 缓存聚合结果
 let passWeekSel = 'near3';   // 编导卡周切换：near3/0/1/2
 function buildPass3w() {
-  // 1. 素材池：台账 + 报表（视频/图文，排除AI花火），产出日三级兜底
-  const pool = new Map();   // name -> {name, produce, audit(null=台账无记录), upload, type}
-  const ledgerByName = new Map();
-  for (const l of (DATA.ledger || [])) {
-    if (!ledgerByName.has(l.name)) ledgerByName.set(l.name, []);
-    ledgerByName.get(l.name).push(l);
+  // 1. 素材池：双台账 + 报表（视频/图文，排除AI花火），产出日三级兜底
+  const pool = new Map();   // name -> {name, produce, subAudit, mainAudit, upload}
+  const subByName = new Map(), mainByName = new Map();
+  for (const l of (DATA.ledger_sub || [])) {
+    if (!subByName.has(l.name)) subByName.set(l.name, []);
+    subByName.get(l.name).push(l);
   }
-  // 先放台账素材
-  for (const l of (DATA.ledger || [])) {
-    if (pool.has(l.name)) continue;
-    if (excludePass3w(l.name)) continue;   // 无日期不可确认的素材不计入
-    const produce = produceDay3(l.name) || l.upload || '';
-    pool.set(l.name, {name: l.name, produce, audit: l.audit, upload: l.upload});
+  for (const l of (DATA.ledger_main || [])) {
+    if (!mainByName.has(l.name)) mainByName.set(l.name, []);
+    mainByName.get(l.name).push(l);
+  }
+  // 先放台账素材（子账户+主账户）
+  for (const [srcMap, src] of [[subByName, 'sub'], [mainByName, 'main']]) {
+    for (const [ln, recs] of srcMap) {
+      if (excludePass3w(ln)) continue;
+      const rec = recs[0];
+      if (pool.has(ln)) {
+        const e = pool.get(ln);
+        if (src === 'sub') { e.subAudit = rec.audit; if (!e.upload) e.upload = rec.upload; }
+        else { e.mainAudit = rec.audit; if (!e.upload) e.upload = rec.upload; }
+        if (!e.produce) e.produce = produceDay3(ln) || rec.upload || '';
+        continue;
+      }
+      const e = {name: ln, produce: produceDay3(ln) || rec.upload || '',
+                 subAudit: src === 'sub' ? rec.audit : null,
+                 mainAudit: src === 'main' ? rec.audit : null,
+                 upload: rec.upload};
+      pool.set(ln, e);
+    }
   }
   // 报表素材：首现日
   const firstSeen = {};
@@ -1089,19 +1105,20 @@ function buildPass3w() {
       firstSeen[m.name] = days[0] || '';
     }
     // 台账匹配（同名或清理后同名）
-    let ledgerRec = null;
-    for (const [ln, recs] of ledgerByName) {
-      if (nameMatch(ln, m.name)) { ledgerRec = recs[0]; break; }
-    }
+    let subRec = null, mainRec = null;
+    for (const [ln, recs] of subByName) { if (nameMatch(ln, m.name)) { subRec = recs[0]; break; } }
+    for (const [ln, recs] of mainByName) { if (nameMatch(ln, m.name)) { mainRec = recs[0]; break; } }
     if (pool.has(m.name)) {
       const e = pool.get(m.name);
       if (!e.produce) e.produce = produceDay3(m.name) || e.upload || firstSeen[m.name] || '';
-      if (ledgerRec) { e.audit = ledgerRec.audit; e.upload = ledgerRec.upload; }
-      if (!e.produce) e.produce = firstSeen[m.name] || '';
+      if (subRec && !e.subAudit) e.subAudit = subRec.audit;
+      if (mainRec && !e.mainAudit) e.mainAudit = mainRec.audit;
     } else {
-      const produce = produceDay3(m.name) || (ledgerRec ? ledgerRec.upload : '') || firstSeen[m.name] || '';
+      const produce = produceDay3(m.name) || (subRec ? subRec.upload : '') || (mainRec ? mainRec.upload : '') || firstSeen[m.name] || '';
       pool.set(m.name, {name: m.name, produce,
-        audit: ledgerRec ? ledgerRec.audit : null, upload: ledgerRec ? ledgerRec.upload : ''});
+        subAudit: subRec ? subRec.audit : null,
+        mainAudit: mainRec ? mainRec.audit : null,
+        upload: (subRec ? subRec.upload : '') || (mainRec ? mainRec.upload : '')});
     }
   }
   // 2. 自然周窗口：锚定最新数据日，最多取3个完整自然周
@@ -1134,10 +1151,12 @@ function buildPass3w() {
       if (!e.produce) continue;
       const pd = new Date(e.produce + 'T00:00:00');
       if (pd >= monday && pd <= sunday) {
-        // 提交/过审（台账口径，三分类）
-        const recs = ledgerByName.get(name) || [];
-        const submitN = recs.length;   // 同名多行算多次提交
-        const passedN = recs.filter(l => l.audit === '过审').length;
+        // 提交/过审（按当前账户筛选取台账口径）
+        const curAudit = currentAuditOf(e);
+        const hasLedger = (e.subAudit !== null && e.subAudit !== undefined) ||
+                          (e.mainAudit !== null && e.mainAudit !== undefined);
+        const submitN = hasLedger ? 1 : 0;
+        const passedN = (curAudit === '过审') ? 1 : 0;
         submit += submitN;
         passed += passedN;
         // 跑出指标（报表数据，窗口内投放日聚合）
@@ -1145,7 +1164,7 @@ function buildPass3w() {
         const person = personOf3(name);
         const key = person + '|' + name;
         if (!rows.has(key)) rows.set(key, {
-          person, name, produce: e.produce, audit: e.audit, hasLedger: recs.length > 0,
+          person, name, produce: e.produce, subAudit: e.subAudit, mainAudit: e.mainAudit,
           submitN: submitN, passedN: passedN,
           sp: 0, im: 0, ac: 0, cv: 0, dp: 0, va: 0, o1: 0, o3: 0, o5: 0, o10: 0,
           qi: 0, qmi: 0, cc: 0, ce: 0, p3: 0, p5: 0, fn: 0, days: new Set(),
@@ -1170,8 +1189,23 @@ function buildPass3w() {
     }
     return {start: fmtD(monday), end: fmtD(sunday), rows: [...rows.values()], submit, passed};
   });
-  pass3wData = {weeks, poolSize: pool.size};
+  pass3wData = {weeks, poolSize: pool.size, acct: state.acct};
   return pass3wData;
+}
+// 当前账户筛选下的审核状态（全选=合并严格口径；单选=对应台账）
+function currentAuditOf(e) {
+  const sub = e.subAudit, main = e.mainAudit;
+  if (state.acct === 'all') {
+    // 两边都过审才过审；卡审从严：上传卡审 > 投放卡审 > 过审
+    if (sub === '过审' && main === '过审') return '过审';
+    if (sub === '上传卡审' || main === '上传卡审') return '上传卡审';
+    if (sub === '投放卡审' || main === '投放卡审') return '投放卡审';
+    if (sub === '过审' || main === '过审') return '过审';   // 一边过审一边无记录 → 过审
+    return null;   // 都没记录
+  }
+  if (state.acct === '125240890') return sub;
+  if (state.acct === '125110802') return main;
+  return null;
 }
 function renderPass3w() {
   if (!pass3wData) buildPass3w();
@@ -1209,7 +1243,7 @@ function renderPass3w() {
     ['素材池', fmtI(totalPool), '台账∪报表（3周产出）', false],
     ['跑出素材', fmtI(runCnt), '有转化', false],
     ['跑出率', totalPool ? fmtP(runCnt / totalPool * 100) : fmtP(0), '跑出÷素材池', false],
-    ['过审数', fmtI(totalPassed), '子账户口径', false],
+    ['过审数', fmtI(totalPassed), '按账户筛选（全选=双台账严格合并）', false],
     ['过审率', fmtP(passRate), '过审÷提交（子账户）', true],
     ['开口率', totalPool ? fmtP(t.o10 / totalPool * 100) : fmtP(0), '开口10次÷产出数', true],
     ['3周消耗', fmtM(t.sp), '窗口内投放消耗', false],
@@ -1284,7 +1318,7 @@ function renderPass3w() {
     html += '<div class="table-toolbar"><div class="section-title" style="margin:0">' + wkLabel +
       '（' + wk.start.slice(5).replace('-', '/') + ' - ' + wk.end.slice(5).replace('-', '/') + '）</div>' +
       '<div class="table-info">素材池 ' + wk.rows.length + ' 条 · 过审率 ' +
-      (wk.submit ? (wk.passed / wk.submit * 100).toFixed(1) + '%（子账户口径）' : '—') +
+      (wk.submit ? (wk.passed / wk.submit * 100).toFixed(1) + '%（按账户筛选（全选=双台账严格合并））' : '—') +
       '</div></div>';
     html += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)">' +
       '<div class="kpi-card" style="margin:0;padding:8px 10px"><div class="kpi-label">周消耗</div><div class="kpi-value" style="font-size:15px">' + fmtM(wkD.sp) + '</div></div>' +
@@ -1302,9 +1336,10 @@ function renderPass3w() {
       const d = derive(r, r);
       const c = PERSON_COLORS[r.person] || '#64748B';
       const bg = PERSON_BG[r.person] || '#F8FAFC';
-      const auditTxt = r.hasLedger
-        ? (r.audit === '过审' ? '<span style="color:#059669;font-weight:600">过审</span>'
-          : r.audit === '上传卡审' ? '<span style="color:#D97706;font-weight:600">上传卡审</span>'
+      const auditVal = currentAuditOf(r);
+      const auditTxt = auditVal
+        ? (auditVal === '过审' ? '<span style="color:#059669;font-weight:600">过审</span>'
+          : auditVal === '上传卡审' ? '<span style="color:#D97706;font-weight:600">上传卡审</span>'
           : '<span style="color:#DC2626;font-weight:600">投放卡审</span>')
         : '<span style="color:#94A3B8">—</span>';
       html += '<tr>' +
@@ -1453,6 +1488,8 @@ function renderAll() {
   renderPersons();
   renderPersonBtns();
   renderMaterials();
+  // 账户筛选变化时重建近3周缓存
+  if (pass3wData && pass3wData.acct !== state.acct) pass3wData = null;
   renderPass3w();
 }
 
