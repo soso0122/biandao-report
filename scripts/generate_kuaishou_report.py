@@ -123,7 +123,15 @@ box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .tip-cell{position:relative}
 .tip-cell:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
 background:#1E3A8A;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:400;
-line-height:1.5;white-space:normal;word-break:break-all;max-width:420px;
+line-height:1.5;white-space:pre-wrap;word-break:break-all;max-width:420px;
+box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.audit-cell{background:#F8FAFC;border-radius:6px;padding:6px 8px;text-align:center;position:relative;cursor:help}
+.audit-cell .audit-label{font-size:10px;color:#94A3B8}
+.audit-cell .audit-val{font-size:13px;font-weight:700;color:#059669;font-family:monospace}
+.audit-cell .audit-frac{font-size:9px;color:#64748B;font-family:monospace}
+.audit-cell:hover::after{content:attr(data-tip);position:fixed;z-index:99999;pointer-events:none;
+background:#1E3A8A;color:#fff;border-radius:8px;padding:10px 12px;font-size:11px;font-weight:400;
+line-height:1.7;white-space:pre-wrap;word-break:break-all;max-width:480px;
 box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .tc-diff{font-weight:600;display:inline-block;font-size:10px}
 .tc-diff.inc{color:var(--success)}
@@ -1173,17 +1181,22 @@ function renderPersons() {
     const runRate = a.cnt.size ? (a.runCnt / a.cnt.size * 100) : 0;
     const open10Rate = a.cnt.size ? (d.o10 / a.cnt.size * 100) : 0;
     const passRate = pl.submitN ? (pl.passN / pl.submitN * 100) : 0;
-    const passTip = '过审素材：' + (pl.passNames.slice(0, 15).join('、') || '无') +
-      (pl.passNames.length > 15 ? ' 等' + pl.passNames.length + '条' : '');
-    const failTip = '卡审素材：' + (pl.failNames.slice(0, 15).join('、') || '无') +
-      (pl.failNames.length > 15 ? ' 等' + pl.failNames.length + '条' : '');
+    // 悬停明细：过审名单与卡审名单换行显示
+    const passList = pl.passNames.length ? pl.passNames.join('&#10;') : '无';
+    const failList = pl.failNames.length ? pl.failNames.join('&#10;') : '无';
+    const auditTip = '【过审 ' + pl.passN + '/' + pl.submitN + '】&#10;' + passList +
+      '&#10;&#10;【卡审】&#10;' + failList;
     return '<div class="kpi-card" style="margin:0;cursor:pointer" data-person="' + p + '">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
-      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 —' + '</div>' +
-      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + ' · 过审率 <b class="open-rate">' + (pl.submitN ? fmtP(passRate) : '—') + '</b></div>' +
-      '<div class="kpi-sub">跑出率 <b class="open-rate tip-cell" data-tip="' + (a.runNames.slice(0, 15).join('、') || '无') + '">' + fmtP(runRate) + '</b> · 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
-      '<div class="kpi-sub"><span class="cell-tip" data-tip="' + passTip + '｜' + failTip + '">🔎 悬停看过审明细</span></div>' +
+      '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 —</div>' +
+      '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + '</div>' +
+      '<div class="kpi-sub">跑出率 <b class="open-rate">' + fmtP(runRate) + '</b> · 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
+      '<div class="audit-cell" data-tip="' + auditTip.replace(/"/g, '&quot;').replace(/</g, '&lt;') + '">' +
+        '<div class="audit-label">过审率</div>' +
+        '<div class="audit-val">' + (pl.submitN ? fmtP(passRate) : '—') + '</div>' +
+        '<div class="audit-frac">' + pl.passN + '/' + pl.submitN + ' 条</div>' +
+      '</div>' +
     '</div>';
   }).join('') || '<div class="empty-state">暂无数据</div>';
 }
