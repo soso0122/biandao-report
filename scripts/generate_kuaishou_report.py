@@ -192,7 +192,7 @@ font-size:11px;font-weight:600;white-space:nowrap}
 .type-tuwen{background:#F5F3FF;color:#8B5CF6}
 .type-ai{background:#EEF2FF;color:#6366F1}
 .type-huahuo{background:#FFF1F2;color:#F43F5E}
-.mat-name{max-width:280px;white-space:normal;word-break:break-all;font-size:12px;
+.mat-name{min-width:320px;max-width:420px;white-space:normal;word-break:break-all;font-size:12px;
 color:var(--text);line-height:1.45}
 .num{font-family:'Fira Code',monospace;font-size:12px}
 .num-zero{color:var(--text-muted)}
@@ -1150,21 +1150,26 @@ function renderPersons() {
     if (!mainByName.has(l.name)) mainByName.set(l.name, []);
     mainByName.get(l.name).push(l);
   }
-  const merged = new Map();   // name -> {subAudit, mainAudit}
+  const merged = new Map();   // name -> {subAudit, mainAudit, upload}
   for (const [ln, recs] of subByName) {
-    const e = merged.get(ln) || {subAudit: null, mainAudit: null};
+    const e = merged.get(ln) || {subAudit: null, mainAudit: null, upload: recs[0].upload};
     e.subAudit = recs[0].audit;
+    if (recs[0].upload < e.upload) e.upload = recs[0].upload;
     merged.set(ln, e);
   }
   for (const [ln, recs] of mainByName) {
-    const e = merged.get(ln) || {subAudit: null, mainAudit: null};
+    const e = merged.get(ln) || {subAudit: null, mainAudit: null, upload: recs[0].upload};
     e.mainAudit = recs[0].audit;
+    if (recs[0].upload < e.upload) e.upload = recs[0].upload;
     merged.set(ln, e);
   }
   const personLedger = {};
   for (const p of Object.keys(map)) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: []};
+  const selSet = selDates();
   for (const [name, e] of merged) {
     if (excludePass3w(name)) continue;
+    // 当日过审率：只算所选日期内上传的素材（随日期联动）
+    if (!e.upload || !selSet.has(e.upload)) continue;
     const p = personOf3(name);
     if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: []};
     personLedger[p].submitN += 1;
