@@ -267,7 +267,7 @@ def caliber_html(suffix=""):
     <div class="caliber-item"><b>近3周跑出 · 素材池</b>：台账（主+子）∪ 报表，按产出日归近3个自然周（周一起）；仅视频+图文（排除AI/花火AI）；随账户筛选变化（全选=双台账并集，单选=该账户台账∪该账户报表素材）。</div>
     <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
-    <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 上传卡审（状态=审核未通过）/ 投放卡审（关联创意含「未通过」且状态非未通过）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：上传卡审&gt;投放卡审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
+    <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 素材拒审·不可用（素材本身未过审，不能再搭计划）/ 广告组拒审·可重搭（广告组被拒，可重新搭建）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：素材拒审&gt;广告组拒审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
     <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷产出数；有效投放天数=当天花费>0的天数。</div>
     <div class="caliber-item"><b>漏斗</b>：转化 → 深转 → 有效获客 → 企微开口 1/3/5/10 次（逐级递减）。</div>
   </div>
@@ -445,7 +445,7 @@ def build_html():
   </div>
   <div class="table-card">
     <div class="table-toolbar">
-      <div class="section-title" style="margin:0">⚠️ 卡审素材清单（上传卡审 + 投放卡审）</div>
+      <div class="section-title" style="margin:0">⚠️ 卡审素材清单（素材拒审 + 广告组拒审）</div>
       <div class="table-info">共 <span id="auditFailCount">0</span> 条（随账户筛选）</div>
     </div>
     <div class="table-wrap"><table id="auditTable"><thead></thead><tbody id="auditBody"></tbody></table></div>
@@ -603,6 +603,10 @@ const fmtM = v => '¥' + v.toLocaleString('zh-CN', {minimumFractionDigits:2, max
 const fmtI = v => Math.round(v).toLocaleString('zh-CN');
 const fmtP = v => v.toFixed(2) + '%';
 const fmtP1 = v => v.toFixed(1) + '%';
+
+// 审核状态显示名（内部键不变，仅显示层映射；2026-11-16 用户改名）
+const AUDIT_LABELS = {过审: '过审', 上传卡审: '素材拒审·不可用', 投放卡审: '广告组拒审·可重搭'};
+const auditLabel = x => AUDIT_LABELS[x] || x;
 
 /* ---------------- TAB 切换 ---------------- */
 function switchTab(t) {
@@ -1616,8 +1620,8 @@ function renderPass3w() {
       const auditVal = currentAuditOf(r);
       const auditTxt = auditVal
         ? (auditVal === '过审' ? '<span style="color:#059669;font-weight:600">过审</span>'
-          : auditVal === '上传卡审' ? '<span style="color:#D97706;font-weight:600">上传卡审</span>'
-          : '<span style="color:#DC2626;font-weight:600">投放卡审</span>')
+          : auditVal === '上传卡审' ? '<span style="color:#D97706;font-weight:600">素材拒审·不可用</span>'
+          : '<span style="color:#DC2626;font-weight:600">广告组拒审·可重搭</span>')
         : '<span style="color:#94A3B8">—</span>';
       html += '<tr>' +
         '<td><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + r.person + '</span></td>' +
@@ -1769,8 +1773,8 @@ function renderAudit() {
     ['过审', fmtI(byAudit['过审']), fmtP(totalN ? byAudit['过审'] / totalN * 100 : 0), false],
     ['视频过审率', fmtP(vRate), '视频过审 ' + byType['视频'].pass + '/' + byType['视频'].total, true],
     ['图文过审率', fmtP(tRate), '图文过审 ' + byType['图文'].pass + '/' + byType['图文'].total, true],
-    ['上传卡审', fmtI(byAudit['上传卡审']), '审核状态=未通过', false],
-    ['投放卡审', fmtI(byAudit['投放卡审']), '关联创意含未通过', false],
+    ['素材拒审·不可用', fmtI(byAudit['上传卡审']), '素材本身未过审，不能再搭计划', false],
+    ['广告组拒审·可重搭', fmtI(byAudit['投放卡审']), '广告组被拒，可重新搭建', false],
   ].map((r, i) => kpiCard(r[0], r[1], r[2], i === 1 || i === 2 || i === 3)).join('');
   // 趋势图
   const dates = Object.keys(daily).sort();
@@ -1781,8 +1785,8 @@ function renderAudit() {
     data: {labels, datasets: [
       {label: '上传', data: dates.map(d => daily[d].upload), backgroundColor: '#BFDBFE', borderRadius: 3},
       {label: '过审', data: dates.map(d => daily[d].pass), backgroundColor: '#34D399', borderRadius: 3},
-      {label: '上传卡审', data: dates.map(d => daily[d].up), backgroundColor: '#FBBF24', borderRadius: 3},
-      {label: '投放卡审', data: dates.map(d => daily[d].cast), backgroundColor: '#F87171', borderRadius: 3},
+      {label: '素材拒审·不可用', data: dates.map(d => daily[d].up), backgroundColor: '#FBBF24', borderRadius: 3},
+      {label: '广告组拒审·可重搭', data: dates.map(d => daily[d].cast), backgroundColor: '#F87171', borderRadius: 3},
     ]},
     options: {responsive: true, maintainAspectRatio: false,
       plugins: {legend: {labels: {boxWidth: 12, font: {size: 11}}}},
@@ -1792,7 +1796,7 @@ function renderAudit() {
   if (auditCharts.pie) auditCharts.pie.destroy();
   auditCharts.pie = new Chart(document.getElementById('chartAuditPie'), {
     type: 'doughnut',
-    data: {labels: ['过审', '上传卡审', '投放卡审'],
+    data: {labels: ['过审', '素材拒审·不可用', '广告组拒审·可重搭'],
       datasets: [{data: [byAudit['过审'], byAudit['上传卡审'], byAudit['投放卡审']],
         backgroundColor: ['#34D399', '#FBBF24', '#F87171']}]},
     options: {responsive: true, maintainAspectRatio: false,
@@ -1828,8 +1832,8 @@ function renderAudit() {
   document.getElementById('auditBody').innerHTML = pageRows.map(f => {
     const c = PERSON_COLORS[f.person] || '#64748B', bg = PERSON_BG[f.person] || '#F8FAFC';
     const typeTxt = f.audit === '上传卡审'
-      ? '<span style="color:#D97706;font-weight:600">上传卡审</span>'
-      : '<span style="color:#DC2626;font-weight:600">投放卡审</span>';
+      ? '<span style="color:#D97706;font-weight:600">素材拒审·不可用</span>'
+      : '<span style="color:#DC2626;font-weight:600">广告组拒审·可重搭</span>';
     return '<tr><td class="mat-name">' + f.name + '</td>' +
       '<td><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + f.person + '</span></td>' +
       '<td>' + typeTxt + '</td>' +
