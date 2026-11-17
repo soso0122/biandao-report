@@ -1035,8 +1035,8 @@ function renderGuide() {
   let matSub = '';
   if (selCount === 1) {
     if (GUIDE_CH === 'kuaishou') matSub = (ksItems[0] ? ksItems[0].materials : 0) + ' 条素材';
-    else if (GUIDE_CH === 'juliang') matSub = items[0].stats.mat_count + ' 条素材';
-    else matSub = items[0].stats.mat_count + (ksItems[0] ? ksItems[0].materials : 0) + ' 条素材';
+    else if (GUIDE_CH === 'juliang') matSub = (items[0] ? items[0].stats.mat_count : 0) + ' 条素材';
+    else matSub = (items[0] ? items[0].stats.mat_count : 0) + (ksItems[0] ? ksItems[0].materials : 0) + ' 条素材';
   }
   // 快手 Top 素材（消耗排序，多日聚合）
   let ksMatRows = '';
@@ -1072,10 +1072,10 @@ function renderGuide() {
     + kpiCard('平均 CPA', fMoney(cpa), null, dCpa)
     + (GUIDE_CH === 'kuaishou'
         ? kpiCard('高潜成交', fInt(gao), '深转回传', dGao, true)
-        : kpiCard('高潜成交', fInt(gao), GUIDE_CH === 'all' ? '巨量+快手回传合计' : '深度转化', dGao, true))
+        : kpiCard('高潜成交', fInt(gao), GUIDE_CH === 'all' ? (hasJuliang ? '巨量+快手回传合计' : '快手回传') : '深度转化', dGao, true))
     + (GUIDE_CH === 'kuaishou'
         ? kpiCard('深转率', fPct(deep), '高潜/转化', dDeep, true)
-        : kpiCard('深转率', fPct(deep), GUIDE_CH === 'all' ? '巨量+快手回传合计' : '高潜/转化', dDeep, true))
+        : kpiCard('深转率', fPct(deep), GUIDE_CH === 'all' ? (hasJuliang ? '巨量+快手回传合计' : '快手回传') : '高潜/转化', dDeep, true))
     + '</div>'
     + jlMatTable
     + ksMatTable;
