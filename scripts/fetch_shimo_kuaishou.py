@@ -342,6 +342,7 @@ def main():
         # 分时表：按账户读
         hourly_acc = {}   # {acct: {date: {hour: metrics}}}
         hourly_mat = {}   # {acct: {date: {hour: quality sums}}}（暂存）
+        mat_hourly_metrics = {}  # {acct: {date: {hour: {素材名称: metrics}}}}（2026-11-18 新增）
         for aid in acct_ids:
             h_header, h_rows = read_sheet(client, SHEET_ACC_HOURLY.format(aid))
             if h_header is None:
@@ -374,6 +375,13 @@ def main():
                     q["p3"] += fnum(r.get("3秒播放率")) * imp
                     q["p5"] += fnum(r.get("5秒播放率")) * imp
                     q["fn"] += fnum(r.get("完播率")) * imp
+                    # 素材×小时的花费/行为/转化（按素材名称归并，2026-11-18 新增，
+                    # 用于「22点复开实验」等素材级分时归因）
+                    mname = str(r.get("素材名称") or "").strip()
+                    if mname:
+                        tgt = mat_hourly_metrics.setdefault(aid, {}).setdefault(d, {}) \
+                            .setdefault(h, {}).setdefault(mname, zero_m())
+                        add_m(tgt, r)
                 print(f"[石墨] 账户{aid} 分时素材: {len(m_recs)} 行")
 
         # ---------- 聚合：账户 / 计划 / 组（账户表，保持原有粒度，不拆AI） ----------
@@ -520,6 +528,7 @@ def main():
                            "is_auto": mt["is_auto"], "content": mt["content"], "days": mt["days"]}
                           for mt in materials.values()],
             "hourly": hourly_acc,
+            "hourly_mat": mat_hourly_metrics,
             "deep_real": deep_real,
             "ledger_sub": ledger_sub,
             "ledger_main": ledger_main,
