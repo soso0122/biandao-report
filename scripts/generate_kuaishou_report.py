@@ -268,7 +268,7 @@ def caliber_html(suffix=""):
     <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
     <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 素材拒审·不可用（素材本身未过审，不能再搭计划）/ 广告组拒审·可重搭（广告组被拒，可重新搭建）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：素材拒审&gt;广告组拒审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
-    <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷产出数；有效投放天数=当天花费>0的天数。</div>
+    <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷转化数；有效投放天数=当天花费>0的天数。</div>
     <div class="caliber-item"><b>漏斗</b>：转化 → 深转 → 有效获客 → 企微开口 1/3/5/10 次（逐级递减）。</div>
   </div>
 </div>
@@ -1191,7 +1191,7 @@ function renderPersons() {
     const d = derive(a.m, a.q);
     const pl = personLedger[p] || {passN: 0, submitN: 0, passNames: [], failNames: []};
     const runRate = a.cnt.size ? (a.runCnt / a.cnt.size * 100) : 0;
-    const open10Rate = a.cnt.size ? (d.o10 / a.cnt.size * 100) : 0;
+    const open10Rate = d.cv ? (d.o10 / d.cv * 100) : 0;   // 开口10率 = 开口10次 ÷ 转化数
     const passRate = pl.submitN ? (pl.passN / pl.submitN * 100) : 0;
     // 悬停明细：过审名单与卡审名单换行显示
     const passList = pl.passNames.length ? pl.passNames.join('&#10;') : '无';
@@ -1526,7 +1526,7 @@ function renderPass3w() {
     ['跑出率', totalPool ? fmtP(runCnt / totalPool * 100) : fmtP(0), '跑出÷素材池', false],
     ['过审数', fmtI(totalPassed), '按账户筛选（全选=双台账严格合并）', false],
     ['过审率', fmtP(passRate), '过审÷提交（子账户）', true],
-    ['开口率', totalPool ? fmtP(t.o10 / totalPool * 100) : fmtP(0), '开口10次÷产出数', true],
+    ['开口率', t.cv ? fmtP(t.o10 / t.cv * 100) : fmtP(0), '开口10次÷转化数', true],
     ['3周消耗', fmtM(t.sp), '窗口内投放消耗', false],
   ].map((r, i) => kpiCard(r[0], r[1], r[2], r[3])).join('');
   // 编导卡（支持按周切换：near3=近3周合计，0/1/2=第1/2/3周）
@@ -1564,7 +1564,7 @@ function renderPass3w() {
     const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
     const pr = pa.submit ? (pa.passed / pa.submit * 100) : 0;
     const runRate = pa.cnt ? (pa.cvCnt / pa.cnt * 100) : 0;         // 跑出率=转化素材数÷产出素材数
-    const openRate = pa.cnt ? (d.o10 / pa.cnt * 100) : 0;            // 开口率=开口10次÷产出数
+    const openRate = d.cv ? (d.o10 / d.cv * 100) : 0;            // 开口率=开口10次÷转化数
     return '<div class="kpi-card" style="margin:0">' +
       '<div class="kpi-label"><span class="person-badge" style="background:' + bg + ';color:' + c + '">' + p + '</span></div>' +
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
@@ -1594,7 +1594,7 @@ function renderPass3w() {
     }
     const wkD = derive(wkM, wkQ);
     const wkRunRate = wk.rows.length ? (wkRun / wk.rows.length * 100) : 0;
-    const wkOpenRate = wk.rows.length ? (wkD.o10 / wk.rows.length * 100) : 0;
+    const wkOpenRate = wkD.cv ? (wkD.o10 / wkD.cv * 100) : 0;
     html += '<div class="table-card" style="margin-bottom:16px">';
     html += '<div class="table-toolbar"><div class="section-title" style="margin:0">' + wkLabel +
       '（' + wk.start.slice(5).replace('-', '/') + ' - ' + wk.end.slice(5).replace('-', '/') + '）</div>' +
