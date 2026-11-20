@@ -265,7 +265,7 @@ def caliber_html(suffix=""):
     <div class="caliber-item"><b>素材去重</b>：素材总数按素材名称去重；同名素材在台账/报表只算 1 条；账户表为广告组级拆分，数字按行加总后重算比率。</div>
     <div class="caliber-item"><b>分时</b>：按小时聚合，选多天按小时跨日累计；优差时段 = 先取「有花费的时段」算均值，🟢优质=转化率≥均值×1.15 且花费≥均值×0.5，🔴差=转化率<均值×0.85 且花费≥均值×0.5，其余不标。</div>
     <div class="caliber-item"><b>近3周跑出 · 素材池</b>：台账（主+子）∪ 报表，按产出日归近3个自然周（周一起）；仅视频+图文（排除AI/花火AI）；随账户筛选变化（全选=双台账并集，单选=该账户台账∪该账户报表素材）。</div>
-    <div class="caliber-item"><b>过审率（素材页/编导卡）</b>：分母=素材池合并去重（同名只算1条）；过审状态=严格合并（全选时两边都过审才算过审，单选按对应台账）。编导卡悬停可看过审/卡审素材名单。</div>
+    <div class="caliber-item"><b>编导跑出率</b> = 有转化素材数 ÷ 全量产出素材数（台账∪报表、按名称去重、只计过审素材、排除AI/花火/无日期素材，产出日在所选日期窗口内）；开口10率 = 开口10次 ÷ 转化数。</div>
     <div class="caliber-item"><b>近3周跑出 · 产出日期</b>：素材名 MMDD 前缀 → 中文日期（如「11月4日」）→ AI拒审修复时间戳 → 特例（1007→10/07、国庆→10/01、中秋→09/25、11056→11/05、713→07/13）→ 台账上传日期 → 报表首现日。数字ID、raw哈希、图文集合、无日期名称不计入。</div>
     <div class="caliber-item"><b>近3周跑出 · 过审</b>：三分类 = 过审（审核状态是「审核通过」或「-」，且关联创意无「未通过」字眼）/ 素材拒审·不可用（素材本身未过审，不能再搭计划）/ 广告组拒审·可重搭（广告组被拒，可重新搭建）。全选账户=双台账严格合并（两边都过审才算过审；卡审从严：素材拒审&gt;广告组拒审；一边过审一边无记录=过审）；单选=对应账户台账。</div>
     <div class="caliber-item"><b>近3周跑出 · 指标</b>：素材按产出日归周，但周内指标=产出日→数据最新日的全期累计（不按周窗口截断）；跑出素材=窗口内产出且有转化的素材；跑出率=跑出素材÷素材池；开口率=开口10次÷转化数；有效投放天数=当天花费>0的天数。</div>
@@ -1135,15 +1135,16 @@ function renderTypes() {
 }
 function renderPersons() {
   const map = {};
+  const matIdx = new Map();   // name -> material（全量台账∪报表池用）
+  for (const m of DATA.materials) matIdx.set(m.name, m);
   for (const m of DATA.materials) {
     const p = m.person || '其他';
     if (!map[p]) map[p] = {cnt: new Set(), m: ZM(), q: ZQ(), runCnt: 0, passN: 0, submitN: 0, runNames: [], passNames: [], failNames: []};
     const {m: mm, q} = aggDays(m.days);
-    // 条数随日期联动：所选日期内有投放数据的素材才计数
+    // 有投放数据才计入指标聚合
     if (mm.sp > 0 || mm.im > 0 || mm.cv > 0 || mm.ac > 0 || mm.dp > 0) {
       map[p].cnt.add(m.name);
       addM(map[p].m, mm); addQ(map[p].q, q);
-      if (mm.cv > 0) { map[p].runCnt += 1; map[p].runNames.push(m.name); }
     }
   }
   // 每个编导的过审统计：台账池按编导归集（同名合并去重，严格合并状态）
@@ -1170,15 +1171,57 @@ function renderPersons() {
     merged.set(ln, e);
   }
   const personLedger = {};
-  for (const p of Object.keys(map)) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: []};
+  for (const p of Object.keys(map)) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: [], poolNames: [], runNames: []};
+  // 确保台账里有、但报表没数据的编导也初始化
   const selSet = selDates();
+  // 跑出率分母：台账∪报表全量产出素材（产出日在窗口内、过审、非AI/花火/排除项）
+  const poolMap = new Map();   // name -> {produce, audit}
+  const addPool = (name, audit) => {
+    if (excludePass3w(name)) return;
+    const pd = produceDay3(name);
+    if (!pd || !selSet.has(pd)) return;
+    if (poolMap.has(name)) {
+      const e = poolMap.get(name);
+      if (e.audit === null) e.audit = audit;
+      return;
+    }
+    poolMap.set(name, {produce: pd, audit});
+  };
+  for (const [name, e] of merged) {
+    addPool(name, currentAuditOf(e));
+  }
+  for (const [name, m] of matIdx) {
+    if (m.type === 'AI' || m.type === '花火AI') continue;
+    if (!poolMap.has(name)) addPool(name, currentAuditOf(merged.get(name) || {subAudit: null, mainAudit: null}));
+  }
+  // 按编导归集：过审素材才进分母；分子=该素材有转化
+  for (const [name, e] of poolMap) {
+    const p = personOf3(name);
+    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: [], poolNames: [], runNames: []};
+    // 未过审（卡审）不计算入分母
+    if (e.audit === '过审') {
+      personLedger[p].poolNames.push(name);
+      const m = matIdx.get(name);
+      let hasCv = false;
+      if (m) {
+        for (const [d, accts] of Object.entries(m.days)) {
+          if (!selSet.has(d)) continue;
+          for (const [acct, mc] of Object.entries(accts)) {
+            if ((mc.m && mc.m.cv) > 0) { hasCv = true; break; }
+          }
+          if (hasCv) break;
+        }
+      }
+      if (hasCv) personLedger[p].runNames.push(name);
+    }
+  }
   for (const [name, e] of merged) {
     if (excludePass3w(name)) continue;
     // 编导过审率 = 当日「产出」口径（产出日=所选日期窗口），随日期联动
     const pd = produceDay3(name);
     if (!pd || !selSet.has(pd)) continue;
     const p = personOf3(name);
-    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: []};
+    if (!personLedger[p]) personLedger[p] = {passN: 0, submitN: 0, passNames: [], failNames: [], poolNames: [], runNames: []};
     personLedger[p].submitN += 1;
     const audit = currentAuditOf(e);
     if (audit === '过审') { personLedger[p].passN += 1; personLedger[p].passNames.push(name); }
@@ -1189,8 +1232,11 @@ function renderPersons() {
   wrap.innerHTML = list.map(([p, a]) => {
     const c = PERSON_COLORS[p] || '#64748B', bg = PERSON_BG[p] || '#F8FAFC';
     const d = derive(a.m, a.q);
-    const pl = personLedger[p] || {passN: 0, submitN: 0, passNames: [], failNames: []};
-    const runRate = a.cnt.size ? (a.runCnt / a.cnt.size * 100) : 0;
+    const pl = personLedger[p] || {passN: 0, submitN: 0, passNames: [], failNames: [], poolNames: [], runNames: []};
+    // 跑出率 = 有转化素材 ÷ 全量产出素材（台账∪报表、过审、按名称去重）
+    const poolSize = pl.poolNames.length;
+    const runN = pl.runNames.length;
+    const runRate = poolSize ? (runN / poolSize * 100) : 0;
     const open10Rate = d.cv ? (d.o10 / d.cv * 100) : 0;   // 开口10率 = 开口10次 ÷ 转化数
     const passRate = pl.submitN ? (pl.passN / pl.submitN * 100) : 0;
     // 悬停明细：过审名单与卡审名单换行显示
@@ -1203,7 +1249,7 @@ function renderPersons() {
       '<div class="kpi-value" style="font-size:17px;color:' + c + '">' + fmtM(d.sp) + '</div>' +
       '<div class="kpi-sub">' + a.cnt.size + ' 条 · 转化 ' + fmtI(d.cv) + ' · 深转 —</div>' +
       '<div class="kpi-sub">CPA ' + fmtM(d.cpa) + '</div>' +
-      '<div class="kpi-sub">跑出率 <b class="open-rate">' + fmtP(runRate) + '</b> · 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
+      '<div class="kpi-sub">跑出率 <b class="open-rate">' + fmtP(runRate) + '</b>（' + runN + '/' + poolSize + '）· 开口10率 <b class="open-rate">' + fmtP(open10Rate) + '</b></div>' +
       '<div class="audit-cell" data-audit-tip="' + auditTip.replace(/"/g, '&quot;').replace(/</g, '&lt;') + '">' +
         '<div class="audit-label">过审率</div>' +
         '<div class="audit-val">' + (pl.submitN ? fmtP(passRate) : '—') + '</div>' +
