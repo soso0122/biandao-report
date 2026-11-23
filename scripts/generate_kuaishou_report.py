@@ -296,6 +296,10 @@ def build_html():
       <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">📅 近3周跑出</button>
       <button class="tab-btn" id="tabBtn4" onclick="switchTab(4)">🚦 过审数据</button>
     </nav>
+    <span style="display:flex;gap:6px;margin-left:auto">
+      <button class="tab-btn active" id="projBtnStudent" onclick="switchProject('student')">快手19元</button>
+      <button class="tab-btn" id="projBtnParent" onclick="switchProject('parent')">快手0元</button>
+    </span>
   </div>
   <div class="topbar-row2">
     <span class="label">日期</span>
@@ -469,7 +473,8 @@ def build_html():
 
 <script>__CHARTJS__</script>
 <script>
-const DATA = __DATA_JSON__;
+const DATA_RAW = __DATA_JSON__;   // {student: {...}, parent: {...}}
+let DATA = DATA_RAW.student;
 const PERSON_COLORS = __COLORS_JS__;
 const PERSON_BG = __BG_JS__;
 
@@ -482,6 +487,7 @@ const addQ = (t,s) => QKEYS.forEach(k => t[k] += (s[k]||0));
 
 const state = {
   tab: 1,
+  project: 'student',   // 项目：student=快手19元 / parent=快手0元
   dates: [DATA.dates[DATA.dates.length-1]],  // 默认最新一天（日报口径）
   acct: 'all',
   dim: 'material',
@@ -508,13 +514,13 @@ function buildTodayStats() {
   const today = sel[sel.length - 1];
   // 当日素材池 = 当天上传（台账上传日期=today）的素材，主+子合并去重
   const pool = new Map();   // name -> {subAudit, mainAudit}
-  for (const l of (DATA.ledger_sub || [])) {
+  for (const l of (ledgerSub())) {
     if (l.upload !== today) continue;
     const e = pool.get(l.name) || {name: l.name, subAudit: null, mainAudit: null};
     e.subAudit = l.audit;
     pool.set(l.name, e);
   }
-  for (const l of (DATA.ledger_main || [])) {
+  for (const l of (ledgerMain())) {
     if (l.upload !== today) continue;
     const e = pool.get(l.name) || {name: l.name, subAudit: null, mainAudit: null};
     e.mainAudit = l.audit;
@@ -559,6 +565,9 @@ function buildTodayStats() {
   return todayStatsCache;
 }
 const selDates = () => new Set(state.dates);
+// 台账访问辅助：家长项目单台账存 ledger_main；学生项目子/主双台账
+const ledgerSub = () => (state.project === 'parent' ? [] : (DATA.ledger_sub || []));
+const ledgerMain = () => (DATA.ledger_main || []);
 
 /* 从嵌套 days 聚合指标+质量。支持三种结构：
    accounts: {date: metrics}
@@ -609,6 +618,24 @@ const AUDIT_LABELS = {过审: '过审', 上传卡审: '素材拒审·不可用',
 const auditLabel = x => AUDIT_LABELS[x] || x;
 
 /* ---------------- TAB 切换 ---------------- */
+function switchProject(proj) {
+  if (state.project === proj) return;
+  state.project = proj;
+  DATA = DATA_RAW[proj];
+  // 重置项目相关状态与缓存
+  state.dates = [DATA.dates[DATA.dates.length - 1]];
+  state.acct = 'all';
+  state.dim = 'material';
+  state.type = 'all';
+  state.person = 'all';
+  state.search = '';
+  pass3wData = null;
+  todayStatsCache = null;
+  passWeekSel = 'near3';
+  document.getElementById('projBtnStudent').classList.toggle('active', proj === 'student');
+  document.getElementById('projBtnParent').classList.toggle('active', proj === 'parent');
+  renderAll();
+}
 function switchTab(t) {
   state.tab = t;
   document.getElementById('tab1').style.display = t === 1 ? '' : 'none';
@@ -730,11 +757,11 @@ function renderKpi2() {
   const t = derive(tot, tq);
   // 素材页过审率/跑出率：素材池=台账∪报表（产出日在所选日期窗口内，排除AI/花火/无日期）
   const subByName = new Map(), mainByName = new Map();
-  for (const l of (DATA.ledger_sub || [])) {
+  for (const l of (ledgerSub())) {
     if (!subByName.has(l.name)) subByName.set(l.name, []);
     subByName.get(l.name).push(l);
   }
-  for (const l of (DATA.ledger_main || [])) {
+  for (const l of (ledgerMain())) {
     if (!mainByName.has(l.name)) mainByName.set(l.name, []);
     mainByName.get(l.name).push(l);
   }
@@ -1150,11 +1177,11 @@ function renderPersons() {
   }
   // 每个编导的过审统计：台账池按编导归集（同名合并去重，严格合并状态）
   const subByName = new Map(), mainByName = new Map();
-  for (const l of (DATA.ledger_sub || [])) {
+  for (const l of (ledgerSub())) {
     if (!subByName.has(l.name)) subByName.set(l.name, []);
     subByName.get(l.name).push(l);
   }
-  for (const l of (DATA.ledger_main || [])) {
+  for (const l of (ledgerMain())) {
     if (!mainByName.has(l.name)) mainByName.set(l.name, []);
     mainByName.get(l.name).push(l);
   }
@@ -1320,11 +1347,11 @@ function buildPass3w() {
   // 1. 素材池：双台账 + 报表（视频/图文，排除AI花火），产出日三级兜底
   const pool = new Map();   // name -> {name, produce, subAudit, mainAudit, upload}
   const subByName = new Map(), mainByName = new Map();
-  for (const l of (DATA.ledger_sub || [])) {
+  for (const l of (ledgerSub())) {
     if (!subByName.has(l.name)) subByName.set(l.name, []);
     subByName.get(l.name).push(l);
   }
-  for (const l of (DATA.ledger_main || [])) {
+  for (const l of (ledgerMain())) {
     if (!mainByName.has(l.name)) mainByName.set(l.name, []);
     mainByName.get(l.name).push(l);
   }
@@ -1481,6 +1508,8 @@ function buildPass3w() {
 // 当前账户筛选下的审核状态（全选=合并严格口径；单选=对应台账）
 function currentAuditOf(e) {
   const sub = e.subAudit, main = e.mainAudit;
+  // 家长项目：单台账（sub 为 null），直接取 main
+  if (state.project === 'parent') return main !== null && main !== undefined ? main : null;
   if (state.acct === 'all') {
     // 两边都过审才过审；卡审从严：上传卡审 > 投放卡审 > 过审
     if (sub === '过审' && main === '过审') return '过审';
@@ -1672,11 +1701,11 @@ let auditCharts = {};
 function buildAuditData() {
   // 合并台账：主+子，同名去重（严格合并状态）
   const subByName = new Map(), mainByName = new Map();
-  for (const l of (DATA.ledger_sub || [])) {
+  for (const l of (ledgerSub())) {
     if (!subByName.has(l.name)) subByName.set(l.name, []);
     subByName.get(l.name).push(l);
   }
-  for (const l of (DATA.ledger_main || [])) {
+  for (const l of (ledgerMain())) {
     if (!mainByName.has(l.name)) mainByName.set(l.name, []);
     mainByName.get(l.name).push(l);
   }
@@ -1720,7 +1749,10 @@ function buildAuditData() {
     }
     const audit = currentAuditOf(e);
     // 台账整理（byAudit/趋势/清单/类型）= 当日上传口径
-    if (e.upload && selSet.has(e.upload)) {
+    // 日期过滤：e.upload ≤ 所选最大日期（台账上传日期可能早于投放日期，如家长项目11/20上传、11/21开始投放）
+    const selArr = [...selSet].sort();
+    const inRange = selArr.length && e.upload && e.upload <= selArr[selArr.length - 1];
+    if (inRange) {
       if (audit) byAudit[audit] += 1;
       // 类型判定：优先报表 type；无报表记录时按名称（含图文=图文，其余视频）
       const mat = DATA.materials.find(m => m.name === name && (m.type === '视频' || m.type === '图文'));
@@ -1748,9 +1780,11 @@ function buildAuditData() {
   }
   // 卡审清单（同样日期+账户过滤，上传口径）
   const fails = [];
+  const selArr2 = [...selSet].sort();
   for (const [name, e] of pool) {
     if (excludePass3w(name)) continue;
-    if (e.upload && !selSet.has(e.upload)) continue;
+    const inRange2 = selArr2.length && e.upload && e.upload <= selArr2[selArr2.length - 1];
+    if (!inRange2) continue;
     if (state.acct !== 'all') {
       const hasLedger = state.acct === '125240890'
         ? (e.subAudit !== null && e.subAudit !== undefined)

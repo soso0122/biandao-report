@@ -38,6 +38,14 @@ SHEET_DAILY_RECORD = "当日数据记录-学生"   # 天级汇总，含「销售
 SHEET_LEDGER_SUB = "拒审台账-子账户"    # 子账户素材台账（过审三分类：过审/上传卡审/投放卡审）
 SHEET_LEDGER_MAIN = "拒审台账-主账户"    # 主账户素材台账（2026-11-12 用户新增）
 
+# 家长项目（快手0元）sheet（2026-11-22 新增）
+SHEET_ACC_DAILY_P = "账户表现-分日（家长）"
+SHEET_MAT_DAILY_P = "素材表现-分日（家长）"
+SHEET_ACC_HOURLY_P = "账户表现-分时（家长）"
+SHEET_MAT_HOURLY_P = "素材表现-分时（家长）"
+SHEET_DAILY_RECORD_P = "当日数据记录-家长"
+SHEET_LEDGER_P = "拒审台账-家长"        # 家长台账（单 sheet，2026-11-22 用户新增）
+
 PAGE_ROWS = 150          # 32 列 × 150 行 = 4800 单元格 < 5000 上限
 COL_END = "AF"           # 覆盖到 32 列
 
@@ -218,9 +226,14 @@ def parse_rows(header, rows):
             if v is None:
                 continue
             if h in ("分日", "分时"):
-                dt = excel_dt(v)
-                if dt:
-                    rec[h] = dt.strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(v, str):
+                    s = v.strip()
+                    # 家长sheet字符串日期：'2026-11-22 00:...' 或 '2026-11-22'
+                    rec[h] = s[:19].ljust(19, "0") if len(s) >= 16 else s + " 00:00:00"
+                else:
+                    dt = excel_dt(v)
+                    if dt:
+                        rec[h] = dt.strftime("%Y-%m-%d %H:%M:%S")
                 continue
             if isinstance(v, str):
                 v = v.strip()
@@ -253,57 +266,68 @@ def add_m(target, rec):
             target[k] += fnum(rec[col])
 
 
-def main():
-    client = ShimoClient()
-    client.start()
-    try:
-        header_acc, rows_acc = read_sheet(client, SHEET_ACC_DAILY)
-        header_mat, rows_mat = read_sheet(client, SHEET_MAT_DAILY)
-        # 「当日数据记录」：天级汇总（用户留存），取「销售反馈-出单」=深转真实回传
-        header_rec, rows_rec = read_sheet(client, SHEET_DAILY_RECORD)
-        header_ledger_sub, rows_ledger_sub = read_sheet(client, SHEET_LEDGER_SUB)
-        header_ledger_main, rows_ledger_main = read_sheet(client, SHEET_LEDGER_MAIN)
-        if header_acc is None:
-            raise SystemExit(f"读账户分日表失败: {rows_acc}")
-        if header_mat is None:
-            raise SystemExit(f"读素材分日表失败: {rows_mat}")
-        acc_recs = parse_rows(header_acc, rows_acc)
-        mat_recs = parse_rows(header_mat, rows_mat)
-        print(f"[石墨] 账户分日: {len(acc_recs)} 行; 素材分日: {len(mat_recs)} 行")
+def process_project(client, cfg):
+    """处理一个项目的全部 sheet → payload dict。cfg 含各 sheet 名与台账配置。"""
+    header_acc, rows_acc = read_sheet(client, cfg["acc_daily"])
+    header_mat, rows_mat = read_sheet(client, cfg["mat_daily"])
+    # 「当日数据记录」：天级汇总（用户留存），取「销售反馈-出单」=深转真实回传
+    header_rec, rows_rec = read_sheet(client, cfg["daily_record"])
+    if cfg.get("ledger_parent"):
+        # 家长项目：单台账
+        header_ledger_sub, rows_ledger_sub = None, None
+        header_ledger_main, rows_ledger_main = read_sheet(client, cfg["ledger_parent"])
+    else:
+        header_ledger_sub, rows_ledger_sub = read_sheet(client, cfg["ledger_sub"])
+        header_ledger_main, rows_ledger_main = read_sheet(client, cfg["ledger_main"])
+    if header_acc is None:
+        raise SystemExit(f"读账户分日表失败: {rows_acc}")
+    if header_mat is None:
+        raise SystemExit(f"读素材分日表失败: {rows_mat}")
+    acc_recs = parse_rows(header_acc, rows_acc)
+    mat_recs = parse_rows(header_mat, rows_mat)
+    print(f"[石墨] 账户分日: {len(acc_recs)} 行; 素材分日: {len(mat_recs)} 行")
 
-        # 从分日表发现账户
-        acct_ids = sorted({str(r["账户信息ID"]).strip()
-                           for r in acc_recs if r.get("账户信息ID") not in (None, "")} |
-                          {str(r["账户信息ID"]).strip()
-                           for r in mat_recs if r.get("账户信息ID") not in (None, "")})
-        print(f"[石墨] 账户: {acct_ids}")
+    # 从分日表发现账户
+    acct_ids = sorted({str(r["账户信息ID"]).strip()
+                       for r in acc_recs if r.get("账户信息ID") not in (None, "")} |
+                      {str(r["账户信息ID"]).strip()
+                       for r in mat_recs if r.get("账户信息ID") not in (None, "")})
+    print(f"[石墨] 账户: {acct_ids}")
 
-        # 解析「当日数据记录」：两行表头，第2行列名=日期(0)…出单(9)
-        # 出单=深转真实回传（销售反馈），天级口径
-        deep_real = {}   # {date: 出单数}
-        if header_rec is not None and rows_rec:
+    # 解析「当日数据记录」：两行表头，第2行列名=日期(0)…出单(9)
+    # 出单=深转真实回传（销售反馈），天级口径
+    # 日期列兼容：Excel序列数字（学生sheet）或字符串日期（家长sheet 'YYYY-MM-DD ...'）
+    deep_real = {}   # {date: 出单数}
+    if header_rec is not None and rows_rec:
             for r in rows_rec:
                 if not r or len(r) < 10:
                     continue
                 v0 = r[0]
-                if v0 is None or isinstance(v0, str):   # 跳过「日期」「总计」行
+                if v0 is None:
                     continue
-                d = excel_dt(v0)
-                if d is None:
-                    continue
+                if isinstance(v0, str):
+                    s = str(v0).strip()
+                    if not s or "日期" in s or "总计" in s:
+                        continue
+                    dstr = s[:10]
+                else:
+                    d = excel_dt(v0)
+                    if d is None:
+                        continue
+                    dstr = d.strftime("%Y-%m-%d")
                 try:
                     n = float(r[9] or 0)
                 except (TypeError, ValueError):
                     n = 0.0
-                deep_real[d.strftime("%Y-%m-%d")] = n
-        print(f"[石墨] 当日数据记录-出单(深转回传): {deep_real}")
+                deep_real[dstr] = n
+    print(f"[石墨] 当日数据记录-出单(深转回传): {deep_real}")
 
-        # 解析拒审台账（主账户+子账户）：全量素材池 + 审核状态（近3周模块分母/过审率）
-        # 列：0上传日期 1视频名称 2审核状态 3创建时间 4时长 5视频来源 6视频素材评价
-        #     7关联创意 8上传卡审 9投放卡审 10卡审详情 11视频ID 12视频标识 13视频名称
-        # 三分类（与台账 I/J 列一致）：
-        #   上传卡审=审核状态「审核未通过」；投放卡审=关联创意含「未通过」且状态非未通过；其余=过审
-        def parse_ledger(header, rows):
+    # 解析拒审台账（主账户+子账户）：全量素材池 + 审核状态（近3周模块分母/过审率）
+    # 列：0上传日期 1视频名称 2审核状态 3创建时间 4时长 5视频来源 6视频素材评价
+    #     7关联创意 8上传卡审 9投放卡审 10卡审详情 11视频ID 12视频标识 13视频名称
+    # 三分类（与台账 I/J 列一致）：
+    #   上传卡审=审核状态「审核未通过」；投放卡审=关联创意含「未通过」且状态非未通过；其余=过审
+    def parse_ledger(header, rows):
             out = []
             if header is None or not rows:
                 return out
@@ -313,8 +337,12 @@ def main():
                 name = str(r[13] or r[1] or "").strip()
                 if not name:
                     continue
-                d0 = excel_dt(r[0])
-                upload = d0.strftime("%Y-%m-%d") if d0 else ""
+                v0 = r[0]
+                if isinstance(v0, str):
+                    upload = str(v0).strip()[:10]
+                else:
+                    d0 = excel_dt(v0)
+                    upload = d0.strftime("%Y-%m-%d") if d0 else ""
                 status = str(r[2] or "").strip()
                 creative = str(r[7] or "").strip()
                 if status == "审核未通过":
@@ -328,23 +356,31 @@ def main():
                             "creative": creative})
             return out
 
-        ledger_sub = parse_ledger(header_ledger_sub, rows_ledger_sub)
-        ledger_main = parse_ledger(header_ledger_main, rows_ledger_main)
-        print(f"[石墨] 台账-子账户: {len(ledger_sub)} 行 "
-              f"(过审 {sum(1 for x in ledger_sub if x['audit']=='过审')}, "
-              f"上传卡审 {sum(1 for x in ledger_sub if x['audit']=='上传卡审')}, "
-              f"投放卡审 {sum(1 for x in ledger_sub if x['audit']=='投放卡审')})")
-        print(f"[石墨] 台账-主账户: {len(ledger_main)} 行 "
-              f"(过审 {sum(1 for x in ledger_main if x['audit']=='过审')}, "
-              f"上传卡审 {sum(1 for x in ledger_main if x['audit']=='上传卡审')}, "
-              f"投放卡审 {sum(1 for x in ledger_main if x['audit']=='投放卡审')})")
+    ledger_sub = parse_ledger(header_ledger_sub, rows_ledger_sub)
+    ledger_main = parse_ledger(header_ledger_main, rows_ledger_main)
+    if cfg.get("ledger_parent"):
+            print(f"[石墨] 台账-家长: {len(ledger_main)} 行 "
+                  f"(过审 {sum(1 for x in ledger_main if x['audit']=='过审')}, "
+                  f"上传卡审 {sum(1 for x in ledger_main if x['audit']=='上传卡审')}, "
+                  f"投放卡审 {sum(1 for x in ledger_main if x['audit']=='投放卡审')})")
+    else:
+            print(f"[石墨] 台账-子账户: {len(ledger_sub)} 行 "
+                  f"(过审 {sum(1 for x in ledger_sub if x['audit']=='过审')}, "
+                  f"上传卡审 {sum(1 for x in ledger_sub if x['audit']=='上传卡审')}, "
+                  f"投放卡审 {sum(1 for x in ledger_sub if x['audit']=='投放卡审')})")
+            print(f"[石墨] 台账-主账户: {len(ledger_main)} 行 "
+                  f"(过审 {sum(1 for x in ledger_main if x['audit']=='过审')}, "
+                  f"上传卡审 {sum(1 for x in ledger_main if x['audit']=='上传卡审')}, "
+                  f"投放卡审 {sum(1 for x in ledger_main if x['audit']=='投放卡审')})")
 
-        # 分时表：按账户读
-        hourly_acc = {}   # {acct: {date: {hour: metrics}}}
-        hourly_mat = {}   # {acct: {date: {hour: quality sums}}}（暂存）
-        mat_hourly_metrics = {}  # {acct: {date: {hour: {素材名称: metrics}}}}（2026-11-18 新增）
-        for aid in acct_ids:
-            h_header, h_rows = read_sheet(client, SHEET_ACC_HOURLY.format(aid))
+    # 分时表：按账户读
+    hourly_acc = {}   # {acct: {date: {hour: metrics}}}
+    hourly_mat = {}   # {acct: {date: {hour: quality sums}}}（暂存）
+    mat_hourly_metrics = {}  # {acct: {date: {hour: {素材名称: metrics}}}}（2026-11-18 新增）
+    acc_hourly_fmt = cfg.get("acc_hourly_fmt")
+    mat_hourly_fmt = cfg.get("mat_hourly_fmt")
+    for aid in acct_ids:
+            h_header, h_rows = read_sheet(client, acc_hourly_fmt.format(aid) if "{}" in acc_hourly_fmt else acc_hourly_fmt)
             if h_header is None:
                 print(f"[石墨] 账户{aid} 无分时账户表，跳过（{h_rows[:80]}）")
             else:
@@ -357,7 +393,7 @@ def main():
                     add_m(m, r)
                 print(f"[石墨] 账户{aid} 分时: {len(h_recs)} 行")
 
-            m_header, m_rows = read_sheet(client, SHEET_MAT_HOURLY.format(aid))
+            m_header, m_rows = read_sheet(client, mat_hourly_fmt.format(aid) if "{}" in mat_hourly_fmt else mat_hourly_fmt)
             if m_header is None:
                 print(f"[石墨] 账户{aid} 无分时素材表，跳过")
             else:
@@ -384,12 +420,12 @@ def main():
                         add_m(tgt, r)
                 print(f"[石墨] 账户{aid} 分时素材: {len(m_recs)} 行")
 
-        # ---------- 聚合：账户 / 计划 / 组（账户表，保持原有粒度，不拆AI） ----------
-        accounts, plans, groups = {}, {}, {}
-        # 账户表组级行：只存深转/有效获客（素材表没有的两列），
-        # 后续按 (日,账户,组名称,素材名称) 映射到素材表行
-        acc_va_dp = {}
-        for r in acc_recs:
+    # ---------- 聚合：账户 / 计划 / 组（账户表，保持原有粒度，不拆AI） ----------
+    accounts, plans, groups = {}, {}, {}
+    # 账户表组级行：只存深转/有效获客（素材表没有的两列），
+    # 后续按 (日,账户,组名称,素材名称) 映射到素材表行
+    acc_va_dp = {}
+    for r in acc_recs:
             d = r.get("分日", "")[:10]
             if not d:
                 continue
@@ -417,13 +453,13 @@ def main():
                 entry["va"] += va
                 entry["dp"] += dp
 
-        # ---------- 素材聚合（以素材表为准，按「创意名称」精确拆分系统自动） ----------
-        # 用户 2026-11-09 规则：创意名称含「系统自动」→ 平台AI；人工创意按原规则分析。
-        # 同名素材拆两条：正常（人工创意）+ 平台AI（系统自动创意）。
-        # 注意：有效获客/深转从账户表映射时，素材表同日同素材多创意行会重复累加，
-        # 因此这里只加素材表指标，va/dp 在聚合完成后统一补充（按 素材+日+账户+is_auto）。
-        materials = {}
-        for r in mat_recs:
+    # ---------- 素材聚合（以素材表为准，按「创意名称」精确拆分系统自动） ----------
+    # 用户 2026-11-09 规则：创意名称含「系统自动」→ 平台AI；人工创意按原规则分析。
+    # 同名素材拆两条：正常（人工创意）+ 平台AI（系统自动创意）。
+    # 注意：有效获客/深转从账户表映射时，素材表同日同素材多创意行会重复累加，
+    # 因此这里只加素材表指标，va/dp 在聚合完成后统一补充（按 素材+日+账户+is_auto）。
+    materials = {}
+    for r in mat_recs:
             d = r.get("分日", "")[:10]
             if not d:
                 continue
@@ -458,22 +494,22 @@ def main():
             if not mt["content"]:
                 mt["content"] = str(r.get("素材内容") or "").strip()
 
-        # 有效获客/深转补充：账户表无创意名称，按（素材名, 日, 账户）聚合 va/dp。
-        # 若同名素材同日有人工+AI两条行，按各自转化数占比拆分 va/dp（总量守恒、不重复）；
-        # 两条转化都为 0 时全给人工行。单条行则直接赋值。
-        va_dp_by_mat = {}
-        for (d, acct, grp, name, grp_auto), vd in acc_va_dp.items():
+    # 有效获客/深转补充：账户表无创意名称，按（素材名, 日, 账户）聚合 va/dp。
+    # 若同名素材同日有人工+AI两条行，按各自转化数占比拆分 va/dp（总量守恒、不重复）；
+    # 两条转化都为 0 时全给人工行。单条行则直接赋值。
+    va_dp_by_mat = {}
+    for (d, acct, grp, name, grp_auto), vd in acc_va_dp.items():
             key = (name, d, acct)
             e = va_dp_by_mat.setdefault(key, {"va": 0.0, "dp": 0.0})
             e["va"] += vd["va"]
             e["dp"] += vd["dp"]
-        # 找出同日同素材双行的情况
-        row_cv = {}
-        for (name, is_auto), mt in materials.items():
+    # 找出同日同素材双行的情况
+    row_cv = {}
+    for (name, is_auto), mt in materials.items():
             for d, accts in mt["days"].items():
                 for acct, mc in accts.items():
                     row_cv[(name, d, acct, is_auto)] = mc["m"]["cv"]
-        for (name, is_auto), mt in materials.items():
+    for (name, is_auto), mt in materials.items():
             for d, accts in mt["days"].items():
                 for acct, mc in accts.items():
                     vd = va_dp_by_mat.get((name, d, acct))
@@ -493,11 +529,11 @@ def main():
                         mc["m"]["dp"] = vd["dp"] * share
                         mc["m"]["va"] = vd["va"] * share
 
-        # ---------- 分类：类型 / 编导 ----------
-        # 类型互斥优先级（2026-11-10 定）：名称含「花火」→ 花火AI（最高）
-        # → 系统自动创意/AIGC → 平台AI → 内容非空 → 视频 → 否则图文
-        PERSONS = ["嘉丽", "小敏", "雅迪", "瑞晨"]
-        for (name, is_auto), mt in materials.items():
+    # ---------- 分类：类型 / 编导 ----------
+    # 类型互斥优先级（2026-11-10 定）：名称含「花火」→ 花火AI（最高）
+    # → 系统自动创意/AIGC → 平台AI → 内容非空 → 视频 → 否则图文
+    PERSONS = ["嘉丽", "小敏", "雅迪", "瑞晨"]
+    for (name, is_auto), mt in materials.items():
             n = name.strip()
             if "花火" in n:
                 mt["type"] = "花火AI"
@@ -513,30 +549,67 @@ def main():
                 # 视频与图文都按名称匹配编导（图文不能一律归其他）
                 mt["person"] = next((p for p in PERSONS if p in n), "其他")
 
-        dates = sorted({d for a in accounts.values() for d in a})
+    dates = sorted({d for a in accounts.values() for d in a})
 
+    payload = {
+        "source": "shimo",
+        "file_guid": FILE_GUID,
+        "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "dates": dates,
+        "accounts": [{"id": a, "days": accounts[a]} for a in sorted(accounts)],
+        "plans": [{"name": p, "days": plans[p]["days"], "names": sorted(plans[p]["names"])}
+                  for p in sorted(plans)],
+        "groups": [{"name": g, "days": groups[g]["days"]} for g in sorted(groups)],
+        "materials": [{"name": mt["name"], "type": mt["type"], "person": mt["person"],
+                           "is_auto": mt["is_auto"], "content": mt["content"], "days": mt["days"]}
+                          for mt in materials.values()],
+        "hourly": hourly_acc,
+        "hourly_mat": mat_hourly_metrics,
+        "deep_real": deep_real,
+        "ledger_sub": ledger_sub,
+        "ledger_main": ledger_main,
+    }
+    return payload
+
+
+def main():
+    client = ShimoClient()
+    client.start()
+    try:
+        cfg_student = {
+            "name": "student",
+            "acc_daily": SHEET_ACC_DAILY,
+            "mat_daily": SHEET_MAT_DAILY,
+            "acc_hourly_fmt": SHEET_ACC_HOURLY,
+            "mat_hourly_fmt": SHEET_MAT_HOURLY,
+            "daily_record": SHEET_DAILY_RECORD,
+            "ledger_sub": SHEET_LEDGER_SUB,
+            "ledger_main": SHEET_LEDGER_MAIN,
+        }
+        cfg_parent = {
+            "name": "parent",
+            "acc_daily": SHEET_ACC_DAILY_P,
+            "mat_daily": SHEET_MAT_DAILY_P,
+            "acc_hourly_fmt": SHEET_ACC_HOURLY_P,
+            "mat_hourly_fmt": SHEET_MAT_HOURLY_P,
+            "daily_record": SHEET_DAILY_RECORD_P,
+            "ledger_parent": SHEET_LEDGER_P,
+        }
+        print("========== 学生项目（快手19元） ==========")
+        student_payload = process_project(client, cfg_student)
+        print("========== 家长项目（快手0元） ==========")
+        parent_payload = process_project(client, cfg_parent)
         payload = {
             "source": "shimo",
             "file_guid": FILE_GUID,
             "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "dates": dates,
-            "accounts": [{"id": a, "days": accounts[a]} for a in sorted(accounts)],
-            "plans": [{"name": p, "days": plans[p]["days"], "names": sorted(plans[p]["names"])}
-                      for p in sorted(plans)],
-            "groups": [{"name": g, "days": groups[g]["days"]} for g in sorted(groups)],
-            "materials": [{"name": mt["name"], "type": mt["type"], "person": mt["person"],
-                           "is_auto": mt["is_auto"], "content": mt["content"], "days": mt["days"]}
-                          for mt in materials.values()],
-            "hourly": hourly_acc,
-            "hourly_mat": mat_hourly_metrics,
-            "deep_real": deep_real,
-            "ledger_sub": ledger_sub,
-            "ledger_main": ledger_main,
+            "student": student_payload,
+            "parent": parent_payload,
         }
         OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         print(f"[OK] {OUT_JSON} ({OUT_JSON.stat().st_size/1024:.0f} KB): "
-              f"账户{len(payload['accounts'])} 计划{len(payload['plans'])} "
-              f"组{len(payload['groups'])} 素材{len(payload['materials'])} 日期{dates[0]}~{dates[-1]}")
+              f"学生 素材{len(student_payload['materials'])} 日期{student_payload['dates'][0]}~{student_payload['dates'][-1]}; "
+              f"家长 素材{len(parent_payload['materials'])} 日期{parent_payload['dates'][0]}~{parent_payload['dates'][-1]}")
     finally:
         client.stop()
 
