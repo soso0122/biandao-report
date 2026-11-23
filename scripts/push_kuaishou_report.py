@@ -64,20 +64,22 @@ def extract_text():
             f"💬 企微开口：1次 {open_part('o1')} ｜ 3次 {open_part('o3')} ｜ 5次 {open_part('o5')} ｜ 10次 {open_part('o10')}"
         )
 
-    student_text = proj_text('student', '📊 快手19元')
-    parent_text = proj_text('parent', '📊 快手0元')
+    student_text = proj_text('student', '📊 快手19元（学生）')
+    parent_text = proj_text('parent', '📊 快手0元（家长）')
     text = (
-        f"{student_text}\n\n"
-        f"{parent_text}\n\n"
+        f"# {student_text.splitlines()[0]}\n"
+        f"{chr(10).join(student_text.splitlines()[1:])}\n\n"
+        f"# {parent_text.splitlines()[0]}\n"
+        f"{chr(10).join(parent_text.splitlines()[1:])}\n\n"
         f"点开查看完整明细 👉 https://soso0122.github.io/kuaishou-report/"
     )
     return text
 
 
 def send_text(text):
-    """curl 发送（避免 homebrew python 3.14 的 SSL 证书 bug）"""
+    """curl 发送 markdown 消息（支持标题加粗）"""
     import subprocess
-    payload = json.dumps({'msgtype': 'text', 'text': {'content': text}}, ensure_ascii=False)
+    payload = json.dumps({'msgtype': 'markdown', 'markdown': {'content': text}}, ensure_ascii=False)
     r = subprocess.run(
         ['curl', '-s', '-m', '15', '-X', 'POST', WEBHOOK,
          '-H', 'Content-Type: application/json', '-d', payload],
