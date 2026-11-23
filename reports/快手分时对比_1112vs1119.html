@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快手分时对比：上周四 vs 本周四</title>
+<script src="chart.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --ink: #1a2233; --muted: #8a94a6;
+    --green: #059669; --red: #dc2626; --amber: #d97706;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; padding: 24px; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--card); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 14px; display:flex; align-items:center; gap:8px; }
+  .card h2 .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:16px; }
+  .kpi { background: var(--card); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
+  .kpi .label { font-size: 12px; color: var(--muted); }
+  .kpi .val { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .kpi .delta { font-size: 12px; margin-top: 2px; }
+  .up { color: var(--green); } .down { color: var(--red); }
+  table { width:100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #eef0f4; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .good { color: var(--green); font-weight:600; } .bad { color: var(--red); font-weight:600; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 8px; }
+  canvas { max-height: 320px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>快手分时对比 · 上周四(11-12) vs 本周四(11-19)</h1>
+  <div class="sub">全账户（125110802 + 125240890）｜数据源：石墨「【快手】引流加微数据」｜单行为成本/转化率口径：转化率=转化÷行为</div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">花费</div><div class="val">¥432</div><div class="delta down">▼16.9% vs 上周四 ¥520</div></div>
+    <div class="kpi"><div class="label">转化</div><div class="val">30</div><div class="delta up">▲100% vs 15</div></div>
+    <div class="kpi"><div class="label">CPA</div><div class="val">¥14.39</div><div class="delta up">▼58.5% vs 34.64</div></div>
+    <div class="kpi"><div class="label">转化率</div><div class="val">3.21%</div><div class="delta up">▲52.8% vs 2.10%</div></div>
+    <div class="kpi"><div class="label">出单(销售反馈)</div><div class="val">6</div><div class="delta up">▲100% vs 3</div></div>
+    <div class="kpi"><div class="label">深转率</div><div class="val">20.0%</div><div class="delta">持平</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot" style="background:#6366f1"></span>分时花费对比（17-23点）</h2>
+      <canvas id="spendChart"></canvas>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:#059669"></span>分时CPA对比（17-23点）</h2>
+      <canvas id="cpaChart"></canvas>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:#d97706"></span>分时转化对比（17-23点）</h2>
+      <canvas id="convChart"></canvas>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:#dc2626"></span>分账户表现</h2>
+      <canvas id="acctChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>分时明细</h2>
+    <table>
+      <thead><tr><th>时段</th><th>上周四花费</th><th>上周四转化</th><th>上周四CPA</th><th>本周四花费</th><th>本周四转化</th><th>本周四CPA</th><th>花费环比</th><th>评价</th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+    <div class="note">
+      ※ CPA 有转化的时段才有值；「—」表示该时段无转化。<br>
+      ※ 结论：本周四花费减17%但转化翻倍、CPA砍半——20/21点「降量保活」起效，22点保持量价双优，主账户以52%花费贡献63%转化（CPA 11.84）。<br>
+      ※ 待优化：17点花费+68%但仅1转化；19点花费持平转化减半。
+    </div>
+  </div>
+</div>
+
+<script>
+const hours = ['17点','18点','19点','20点','21点','22点','23点'];
+const last = {sp:[18.98,36.23,55.28,114.29,163.06,131.65,0.15], cv:[1,1,2,3,3,4,1]};
+const thisWeek = {sp:[31.87,52.03,59.06,59.85,107.43,121.14,0.10], cv:[1,5,1,6,5,11,1]};
+const cpa = a => a.map((v,i)=> a.cv[i]? +(v/a.cv[i]).toFixed(2) : null);
+
+new Chart(document.getElementById('spendChart'), {
+  type:'bar',
+  data:{labels:hours, datasets:[
+    {label:'上周四', data:last.sp, backgroundColor:'#c7d2fe', borderRadius:4},
+    {label:'本周四', data:thisWeek.sp, backgroundColor:'#6366f1', borderRadius:4}]},
+  options:{plugins:{legend:{position:'bottom'}}, scales:{y:{title:{display:true,text:'元'}}}}
+});
+new Chart(document.getElementById('cpaChart'), {
+  type:'line',
+  data:{labels:hours, datasets:[
+    {label:'上周四', data:cpa(last), borderColor:'#94a3b8', backgroundColor:'#94a3b8', tension:.3, spanGaps:true},
+    {label:'本周四', data:cpa(thisWeek), borderColor:'#059669', backgroundColor:'#059669', tension:.3, spanGaps:true}]},
+  options:{plugins:{legend:{position:'bottom'}}, scales:{y:{title:{display:true,text:'元'}}}}
+});
+new Chart(document.getElementById('convChart'), {
+  type:'bar',
+  data:{labels:hours, datasets:[
+    {label:'上周四', data:last.cv, backgroundColor:'#fde68a', borderRadius:4},
+    {label:'本周四', data:thisWeek.cv, backgroundColor:'#d97706', borderRadius:4}]},
+  options:{plugins:{legend:{position:'bottom'}}, scales:{y:{title:{display:true,text:'个'}}}}
+});
+new Chart(document.getElementById('acctChart'), {
+  type:'bar',
+  data:{labels:['主账户125110802','新账户125240890'], datasets:[
+    {label:'花费(上周四)', data:[57.95,461.70], backgroundColor:'#c7d2fe', borderRadius:4},
+    {label:'花费(本周四)', data:[224.88,206.69], backgroundColor:'#6366f1', borderRadius:4},
+    {label:'转化(本周四)', data:[19,11], type:'line', borderColor:'#059669', yAxisID:'y1', tension:.3}]},
+  options:{plugins:{legend:{position:'bottom'}}, scales:{y:{title:{display:true,text:'元'}}, y1:{position:'right', title:{display:true,text:'转化数'}, grid:{drawOnChartArea:false}}}}
+});
+
+const tbody = document.getElementById('tbl');
+hours.forEach((h,i)=>{
+  const lc = cpa(last)[i], tc = cpa(thisWeek)[i];
+  const spChg = last.sp[i] ? ((thisWeek.sp[i]-last.sp[i])/last.sp[i]*100) : 0;
+  let verdict = '';
+  if (tc && lc && tc <= lc*0.75 && thisWeek.cv[i] >= last.cv[i]) verdict = '<span class="good">🟢提质</span>';
+  else if (thisWeek.cv[i] < last.cv[i] && thisWeek.sp[i] >= last.sp[i]) verdict = '<span class="bad">🔴待优化</span>';
+  else if (!tc) verdict = '—';
+  tbody.innerHTML += `<tr><td>${h}</td><td>${last.sp[i].toFixed(2)}</td><td>${last.cv[i]}</td><td>${lc??'—'}</td>`+
+    `<td>${thisWeek.sp[i].toFixed(2)}</td><td>${thisWeek.cv[i]}</td><td>${tc??'—'}</td>`+
+    `<td>${spChg>=0?'+':''}${spChg.toFixed(0)}%</td><td>${verdict}</td></tr>`;
+});
+</script>
+</body>
+</html>

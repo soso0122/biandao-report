@@ -34,7 +34,7 @@ SHEET_ACC_DAILY = "账户表现-分日（跨账户）"
 SHEET_MAT_DAILY = "素材表现-分日（跨账户）"
 SHEET_ACC_HOURLY = "账户表现-分时-{}"
 SHEET_MAT_HOURLY = "素材表现-分时-{}"
-SHEET_DAILY_RECORD = "当日数据记录"   # 天级汇总，含「销售反馈-出单」=深转真实回传
+SHEET_DAILY_RECORD = "当日数据记录-学生"   # 天级汇总，含「销售反馈-出单」=深转真实回传
 SHEET_LEDGER_SUB = "拒审台账-子账户"    # 子账户素材台账（过审三分类：过审/上传卡审/投放卡审）
 SHEET_LEDGER_MAIN = "拒审台账-主账户"    # 主账户素材台账（2026-11-12 用户新增）
 
