@@ -153,9 +153,10 @@ def read_sheet(client, sheet_name=None):
     sn = sheet_name or SHEET
     rows = []
     start = 1
+    PAGE = 130   # 37 列 × 130 行 = 4810 单元格 < 5000
     while True:
         r = client.call("shimo_get_spreadsheet_content",
-                        {"file_guid": FILE_GUID, "range": f"{sn}!A{start}:L{start + 199}"})
+                        {"file_guid": FILE_GUID, "range": f"{sn}!A{start}:AK{start + PAGE - 1}"})
         if not r:
             raise SystemExit("读表无响应")
         txt = [c.get("text", "") for c in (r.get("result", {}).get("content") or []) if c.get("type") == "text"]
@@ -167,21 +168,28 @@ def read_sheet(client, sheet_name=None):
             break
         nonempty = [v for v in vals if any(x not in (None, "") for x in v)]
         rows.extend(vals)
-        if len(nonempty) < 200:
+        if len(nonempty) < PAGE:
             break
-        start += 200
+        start += PAGE
     out = []
     for i, v in enumerate(rows):
         rn = i + 1
         b = str(v[COL_B]).strip() if len(v) > COL_B and v[COL_B] is not None else ""
+        n = str(v[13]).strip() if len(v) > 13 and v[13] is not None else ""   # N列视频名称
         c = str(v[COL_C]).strip() if len(v) > COL_C and v[COL_C] is not None else ""
+        p = str(v[15]).strip() if len(v) > 15 and v[15] is not None else ""    # P列审核状态（用户贴的原始区）
+        # C 列为空或公式镜像时用 P 列（家长 sheet：A–K 待回填，状态在 P 列）
+        status_src = c if c and not c.startswith("=") else p
         h = str(v[COL_H]).strip() if len(v) > COL_H and v[COL_H] is not None else ""
         i_cur = str(v[COL_I]).strip() if len(v) > COL_I and v[COL_I] is not None else ""
         j_cur = str(v[COL_J]).strip() if len(v) > COL_J and v[COL_J] is not None else ""
         vid = str(v[COL_K]).strip() if len(v) > COL_K and v[COL_K] is not None else ""
-        if i == 0 or b:
-            out.append({"rn": rn, "name": b, "norm": norm_sheet_name(b), "id": vid,
-                        "C": c, "H": h, "I": i_cur, "J": j_cur})
+        # B 列为空时用 N 列名称（家长 sheet：用户只贴了 L–AK 区，A–K 待回填）
+        name = b if b and not b.startswith("=") else n
+        if i == 0 or name or n:
+            out.append({"rn": rn, "name": name, "norm": norm_sheet_name(name), "id": vid,
+                        "C": status_src, "H": h, "I": i_cur, "J": j_cur,
+                        "B_raw": b, "N_raw": n})
     return out
 
 
@@ -215,6 +223,7 @@ def main():
         writes = []        # (rn, H value)  只含「粘贴里匹配到的行」或全量模式下的空值行
         writes_i = []      # (rn, I value)
         writes_j = []      # (rn, J value)
+        writes_ab = []     # (rn, [A,B,C,D,E,F,G]) 仅当该行 B 列为空时回填 A–G 区
         unmatched = []     # 台账有、粘贴无
         matched = []       # 本次粘贴匹配到的行号
         for s in rows:
@@ -228,7 +237,7 @@ def main():
                     continue        # 增量模式：未匹配的行不写（保留原值）
                 matched.append(s["rn"])
                 if len(cand) == 1:
-                    h_new = cand[0]["links"] or ""
+                    hit = cand[0]
                 else:
                     # 多条候选：按视频ID最长公共前缀唯一匹配
                     prefs = []
@@ -242,13 +251,30 @@ def main():
                         prefs.append((plen, c))
                     prefs.sort(key=lambda x: -x[0])
                     if prefs[0][0] > prefs[1][0]:                       # 最长前缀唯一
-                        h_new = prefs[0][1]["links"] or ""
+                        hit = prefs[0][1]
                     elif len({p[1]["links"] for p in prefs}) == 1:      # 关联值相同，写谁一样
-                        h_new = prefs[0][1]["links"] or ""
+                        hit = prefs[0][1]
                     else:
+                        hit = None
                         h_new = "❓待定"
                         print(f"  ⚠️ 行{s['rn']} {s['norm']} 多条候选且无法按ID区分，标记待定："
                               + " ".join(f"{c['id']}({c['links']})" for c in cand))
+                if hit is not None:
+                    h_new = hit["links"] or ""
+                    # B 列为空时回填 A–G 区（家长 sheet 场景）
+                    if not s["B_raw"]:
+                        created = hit["created"] or ""
+                        dur = hit["dur"] if hit["dur"] else "-"
+                        src = hit["source"] or "本地上传"
+                        writes_ab.append((s["rn"], [
+                            created,                    # A 上传日期
+                            hit["norm"],                # B 视频名称
+                            hit["status"],              # C 审核状态
+                            created,                    # D 创建时间
+                            dur,                        # E 时长
+                            src,                        # F 视频来源
+                            "原创；-",                  # G 视频素材评价
+                        ]))
                 if h_new != s["H"]:
                     writes.append((s["rn"], h_new))
 
@@ -335,7 +361,8 @@ def main():
 
         filled_h = [x for x in writes if x[1] not in ("", "❓待定")]
         print(f"\n计划：H列写 {len(writes)} 行（其中有效 {len(filled_h)}）；"
-              f"I列改 {len(writes_i)} 行；J列改 {len(writes_j)} 行；追加 {len(appends)} 行")
+              f"I列改 {len(writes_i)} 行；J列改 {len(writes_j)} 行；"
+              f"A–G回填 {len(writes_ab)} 行；追加 {len(appends)} 行")
 
         if not apply:
             if writes:
@@ -344,8 +371,18 @@ def main():
                 print("I列将写入（行: 值）:", [(rn, v) for rn, v in writes_i[:10]], "…" if len(writes_i) > 10 else "")
             if writes_j:
                 print("J列将写入（行: 值）:", [(rn, v) for rn, v in writes_j[:10]], "…" if len(writes_j) > 10 else "")
+            if writes_ab:
+                print("A–G将回填（行: B值）:", [(rn, v[1][:24]) for rn, v in writes_ab[:5]], "…" if len(writes_ab) > 5 else "")
             print("…（未加 --apply，仅预览）")
             return
+
+        # A–G 区回填（家长 sheet：B 为空时写入）
+        for rn, row_vals in writes_ab:
+            r = client.call("shimo_update_spreadsheet",
+                            {"file_guid": FILE_GUID,
+                             "range": f"{sheet_name}!A{rn}:G{rn}",
+                             "values": [row_vals]})
+        print(f"✅ A–G回填 {len(writes_ab)} 行")
 
         # 写 H 列：逐单元格（增量模式下 writes 行号稀疏，不能整列覆盖）
         for rn, v in writes:
