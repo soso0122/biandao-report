@@ -71,7 +71,7 @@ def extract_text():
         f"{chr(10).join(student_text.splitlines()[1:])}\n\n"
         f"# {parent_text.splitlines()[0]}\n"
         f"{chr(10).join(parent_text.splitlines()[1:])}\n\n"
-        f"点开查看完整明细 👉 https://soso0122.github.io/kuaishou-report/"
+        f"[点开查看完整明细 👉](https://soso0122.github.io/kuaishou-report/)"
     )
     return text
 

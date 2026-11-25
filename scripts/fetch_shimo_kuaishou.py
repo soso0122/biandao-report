@@ -294,13 +294,26 @@ def process_project(client, cfg):
                        for r in mat_recs if r.get("账户信息ID") not in (None, "")})
     print(f"[石墨] 账户: {acct_ids}")
 
-    # 解析「当日数据记录」：两行表头，第2行列名=日期(0)…出单(9)
-    # 出单=深转真实回传（销售反馈），天级口径
-    # 日期列兼容：Excel序列数字（学生sheet）或字符串日期（家长sheet 'YYYY-MM-DD ...'）
+    # 解析「当日数据记录」：两行表头（第1行分组「后台数据/销售反馈」，第2行列名）
+    # 日期=第1列索引；出单列按列名「出单」动态定位（学生表有「10次开口率」在出单前，
+    # 家长表没有，两项目列布局不同，不能写死列号）
+    # 日期列兼容：Excel序列数字或字符串日期（'YYYY-MM-DD ...'）
     deep_real = {}   # {date: 出单数}
     if header_rec is not None and rows_rec:
+        out_col = None
+        for r in rows_rec:
+            v0 = r[0] if r else None
+            if isinstance(v0, str) and v0.strip() == "日期":
+                for i, v in enumerate(r):
+                    if isinstance(v, str) and v.strip() == "出单":
+                        out_col = i
+                        break
+                break
+        if out_col is None:
+            print("[石墨] 当日数据记录: 未找到「出单」列，深转回传缺失")
+        else:
             for r in rows_rec:
-                if not r or len(r) < 10:
+                if not r or len(r) <= out_col:
                     continue
                 v0 = r[0]
                 if v0 is None:
@@ -309,14 +322,19 @@ def process_project(client, cfg):
                     s = str(v0).strip()
                     if not s or "日期" in s or "总计" in s:
                         continue
-                    dstr = s[:10]
+                    if s.replace(".", "", 1).isdigit():   # 字符串形式的Excel序列日期
+                        d = excel_dt(float(s))
+                        dstr = d.strftime("%Y-%m-%d") if d else s[:10]
+                    else:
+                        d = excel_dt(s)
+                        dstr = d.strftime("%Y-%m-%d") if d else s[:10]
                 else:
                     d = excel_dt(v0)
                     if d is None:
                         continue
                     dstr = d.strftime("%Y-%m-%d")
                 try:
-                    n = float(r[9] or 0)
+                    n = float(r[out_col] or 0)
                 except (TypeError, ValueError):
                     n = 0.0
                 deep_real[dstr] = n
