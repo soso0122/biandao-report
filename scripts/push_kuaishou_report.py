@@ -38,10 +38,15 @@ def fnum(v):
 def extract_text():
     """从 data/kuaishou_shimo_data.json 取两个项目最新一天 KPI，合并一条文字"""
     data = json.load(open(DATA_JSON, encoding='utf-8'))
+    # 全局最新日期：取两项目中较新者，落后于它的项目视为当天未投放
+    all_latest = max(sorted(p['dates'])[-1] for p in (data['student'], data['parent']))
 
     def proj_text(proj, label):
         d = data[proj]
         latest = sorted(d['dates'])[-1]
+        if latest < all_latest:
+            return f"{label} {all_latest[5:7]}/{all_latest[8:10]}\n⏸️ 今日未投放"
+        label = f"{label} {latest[5:7]}/{latest[8:10]}"
         m = {k: 0.0 for k in ('sp', 'cv', 'o1', 'o3', 'o5', 'o10', 'va')}
         for a in d['accounts']:
             day = a['days'].get(latest)
@@ -58,7 +63,7 @@ def extract_text():
             back = max(0, n - int(m['va']))
             return f"{n}（含回流 {back}）" if back > 0 else str(n)
         return (
-            f"{label} {latest[5:7]}/{latest[8:10]}\n"
+            f"{label}\n"
             f"💰 消耗：¥{m['sp']:,.2f} ｜ 转化：{int(m['cv'])} ｜ CPA：¥{cpa:,.2f}\n"
             f"🧾 深转出单：{int(deep)}（深转率 {deep_rate:.2f}%）\n"
             f"💬 企微开口：1次 {open_part('o1')} ｜ 3次 {open_part('o3')} ｜ 5次 {open_part('o5')} ｜ 10次 {open_part('o10')}"
